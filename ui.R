@@ -396,7 +396,7 @@ function(request) {
                      fluidRow(
                          titlePanel("Excluding or selecting clusters for reanalysis"),
                          br(),
-                         p("Sometimes, it is useful to exclude or to select the clusters that are more of interest.", "After excluding or selecting the cells of interest, it is recommended to repeat the clustering step using only the subset."),
+                         p("Sometimes, it is useful to exclude or to select the clusters that are of interest.", "After excluding or selecting the cells of interest, it is recommended to repeat the clustering step using only the subset."),
                          p("After selecting the clusters, click on the blue button (Reanalyze after selection/exclusion of clusters). Asc-Seurat will run the analyses of the new subset until the PCA step.", strong("Then, you need to set the new number of components using the elbow plot (above) and click on the button \"Run the clustering analysis\" again.")),
                          br(),
                          column(3,
