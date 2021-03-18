@@ -1,0 +1,4 @@
+﻿Subdirectory name (must be inside data/),Sample name (any name you prefer),Min. number of cells expressing a gene,Min. number of genes a cell must express to be included,Maximum number of genes a cell can express and still be included,Maximum percentage of genes belonging to the mitochondrial genome
+sample1_data,Sample1,3,250,2000,2
+sample2_data,Sample2,3,250,2000,2
+sample3_data,Sample3,3,250,2000,2

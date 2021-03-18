@@ -1,0 +1,52 @@
+/* Smaller font for preformatted text */
+pre, table.table {
+    font-size: smaller;
+}
+
+.shiny-notification {
+    background-color:#BF3EFF;
+    color:#FFFFFF;
+    height: 100px;
+    width: 400px;
+    position:fixed;
+    top: calc(100% - 50px);
+    left: calc(100% - 400px);
+}
+
+body {
+    min-height: 2000px;
+}
+
+.option-group {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 0px 5px;
+    margin: 5px -10px;
+    background-color: #f2f2f2;
+}
+
+.down-group {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 0px 5px;
+    margin: 5px -10px;
+    background-color: #eadaf7;
+}
+
+.icon {
+    display:inline;
+}
+
+.option-header {
+    color: #79d;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.down_butt {
+    background-color:#a14bf2;
+}
+
+.down_butt {
+    color: #ffffff;
+}

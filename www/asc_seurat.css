@@ -1,0 +1,73 @@
+pre, table.table {
+    font-size: smaller;
+}
+
+.shiny-notification {
+background-color:#BF3EFF;
+color:#FFFFFF;
+height: 100px;
+width: 400px;
+position:fixed;
+top: calc(100% - 50px);
+left: calc(100% - 400px);
+}
+
+body {
+    min-height: 2000px;
+    width: 90% !important;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    padding 5px;
+}
+
+.option-group {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 0px 5px;
+    margin: 5px -10px;
+    background-color: #f2f2f2;
+}
+
+.down-group {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 0px 5px;
+    margin: 5px -10px;
+    background-color: #eadaf7;
+}
+
+.icon {
+    display:inline;
+}
+
+.option-header {
+    color: #79d;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.down_butt {
+    background-color:#a14bf2;
+}
+
+.down_butt {
+    color: #ffffff;
+}
+
+/*
+ * Estes dois pontos, configuram o container principal.
+ * Até quanto eles se extendem.
+ * Os outros divs como body, por exemplo, serão relativos
+ * a estes main containers.
+ */
+.main-container {
+  max-width: 90% !important;
+  max-height: 100% !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+div.container {
+  width: 90%;
+  height: 100%;
+}

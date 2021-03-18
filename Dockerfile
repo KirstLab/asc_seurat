@@ -1,0 +1,136 @@
+# Ubuntu latest
+FROM r-base
+
+# Owner
+MAINTAINER Felipe Marques de Almeida <marques.felipe@aluno.unb.br>
+SHELL ["/bin/bash", "-c"]
+
+## update system libraries
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y dirmngr gnupg apt-transport-https ca-certificates curl wget software-properties-common libcurl4-openssl-dev libxml2-dev && \
+    apt-get clean
+
+# Set workdir
+WORKDIR /app
+COPY www /app/www
+
+# Install devtools
+RUN apt-get install -y libudunits2-dev imagemagick libglpk-dev libhdf5-dev
+RUN apt-get install -y libssl-dev
+RUN R -e 'install.packages("openssl", dep = T)'
+RUN R -e 'install.packages("devtools", dep = T)'
+
+# Install CRAN packages
+# biocmanager
+RUN R -e 'install.packages("BiocManager", dep = T)'
+RUN R -e 'library(BiocManager)'
+# tidyverse
+RUN apt-get install -y r-base-dev xml2 libxml2-dev libssl-dev libcurl4-openssl-dev unixodbc-dev
+RUN R -e 'install.packages("tidyverse", dep = T)'
+RUN R -e 'library(tidyverse)'
+# seurat
+RUN R -e 'install.packages("Seurat", dep = T)'
+RUN R -e 'library(Seurat)'
+RUN R -e 'install.packages("SeuratObject", dep = T)'
+RUN R -e 'library(SeuratObject)'
+# patchwork
+RUN R -e 'install.packages("patchwork", dep = T)'
+RUN R -e 'library(patchwork)'
+# ggplot2
+RUN R -e 'install.packages("ggplot2", dep = T)'
+RUN R -e 'library(ggplot2)'
+# svglite
+RUN apt-get install -y r-cran-svglite
+# circlize
+RUN R -e 'install.packages("circlize", dep = T)'
+RUN R -e 'library(circlize)'
+# reactable
+RUN R -e 'install.packages("reactable", dep = T)'
+RUN R -e 'library(reactable)'
+# sctransform
+RUN R -e 'install.packages("sctransform", dep = T)'
+RUN R -e 'library(sctransform)'
+# shiny
+RUN R -e 'install.packages("shiny", dep = T)'
+RUN R -e 'library(shiny)'
+RUN R -e 'install.packages("shinyWidgets", dep = T)'
+RUN R -e 'library(shinyWidgets)'
+RUN R -e 'install.packages("shinyFeedback", dep = T)'
+RUN R -e 'library(shinyFeedback)'
+RUN R -e 'install.packages("shinycssloaders", dep = T)'
+RUN R -e 'library(shinycssloaders)'
+# rclipboard
+RUN R -e 'install.packages("rclipboard", dep = T)'
+RUN R -e 'library(rclipboard)'
+# future
+RUN R -e 'install.packages("future", dep = T)'
+RUN R -e 'library(future)'
+# ggthemes
+RUN R -e 'install.packages("ggthemes", dep = T)'
+RUN R -e 'library(ggthemes)'
+# metap (must install multtest first)
+RUN R -e 'BiocManager::install("multtest")'
+RUN R -e 'library(multtest)'
+RUN R -e 'install.packages("metap", dep = T)'
+RUN R -e 'library(metap)'
+# DT
+RUN R -e 'install.packages("DT", dep = T)'
+RUN R -e 'library(DT)'
+# dplyr
+RUN R -e 'install.packages("dplyr", dep = T)'
+RUN R -e 'library(dplyr)'
+# hdf5r
+RUN apt-get install -y libhdf5-dev
+RUN R -e 'install.packages("hdf5r", dep = T)'
+RUN R -e 'library(hdf5r)'
+
+# Install Bioconductor packages
+# complex heatmap
+RUN apt-get install -y  r-cran-cluster r-bioc-complexheatmap
+RUN R -e 'BiocManager::install("ComplexHeatmap")'
+RUN R -e 'library(ComplexHeatmap)'
+# tradeseq
+RUN R -e 'BiocManager::install("tradeSeq")'
+RUN R -e 'library(tradeSeq)'
+# single cell experiment
+RUN R -e 'BiocManager::install("SingleCellExperiment")'
+RUN R -e 'library(SingleCellExperiment)'
+# slingshot
+RUN R -e 'BiocManager::install("slingshot")'
+RUN R -e 'library(slingshot)'
+# biomart
+RUN R -e 'BiocManager::install("biomaRt")'
+RUN R -e 'library(biomaRt)'
+# topgo
+RUN R -e 'BiocManager::install("topGO")'
+RUN R -e 'library(topGO)'
+
+# Install Github packages
+RUN R -e 'Sys.setenv(GITHUB_PAT = "b48dcc345ed2755770b0137d3ff94de1523a42c6"); devtools::install_github("dynverse/dynfeature")'
+RUN R -e 'Sys.setenv(GITHUB_PAT = "b48dcc345ed2755770b0137d3ff94de1523a42c6"); devtools::install_github("dynverse/dyno")'
+RUN R -e 'Sys.setenv(GITHUB_PAT = "b48dcc345ed2755770b0137d3ff94de1523a42c6"); devtools::install_github("dynverse/dynplot", ref = "devel", force = T)'
+
+# Compatibility -- downgrade dbply for biomart in R 3.6.3
+#RUN R -e 'devtools::install_url("https://cran.r-project.org/src/contrib/Archive/dbplyr/dbplyr_1.3.0.tar.gz")'
+
+# Install Docker
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
+	add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" && \
+	apt update && \
+	apt install -y docker-ce
+
+# Configuring Docker
+RUN usermod -aG docker root
+
+# Get server files
+COPY global.R /app/global.R
+COPY server.R /app/server.R
+COPY ui.R /app/ui.R
+
+# expose port
+EXPOSE 3838
+
+# Init image
+COPY /scripts/bscripts/init_app.sh /app/init_app.sh
+CMD ./init_app.sh

@@ -1,0 +1,13 @@
+.DS_Store
+.RData
+.Rhistory
+.Rproj.user/
+sc_shiny.Rproj
+RDS_files/
+data/
+shiny_bookmarks/
+docs/build/
+docs/make.bat
+docs/Makefile
+docs/_html/
+images/
