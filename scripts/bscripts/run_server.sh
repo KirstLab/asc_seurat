@@ -28,7 +28,7 @@ EOF
 
 # Defaults
 PORT="3838"
-DOCKER_IMAGE=fmalmeida/wendell-sc
+DOCKER_IMAGE=kirstlab/asc_seurat
 DOCKER_CONTAINER_NAME=Asc_Seurat
 
 # Download image
