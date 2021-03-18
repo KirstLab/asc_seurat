@@ -4,9 +4,9 @@
 Markers identification and differential expression analysis
 ***********************************************************
 
-After clustering the cells, users might be interest on identifying genes that are specifically expressed on one cluster (markers) or on genes that are differentially expressed among clusters of interest. Asc-Seurat allows the application of multiple algorithms to identify gene markers for individual clusters or to identify differentially expressed genes (DEGs) among clusters. For that, it deploys Seurat's functions `FindMarkers <https://satijalab.org/seurat/reference/FindMarkers.html>`_ and `FindAllMarkers <https://satijalab.org/seurat/reference/FindConservedMarkers.html>`_.
+After clustering the cells, users may be interested in identifying genes that are specifically expressed in one cluster (markers) or in genes that are differentially expressed among clusters of interest. Asc-Seurat can apply multiple algorithms to identify gene markers for individual clusters or to identify differentially expressed genes (DEGs) among clusters, using Seurat's functions `FindMarkers <https://satijalab.org/seurat/reference/FindMarkers.html>`_ and `FindAllMarkers <https://satijalab.org/seurat/reference/FindConservedMarkers.html>`_.
 
-On Asc-Seurat, allows users to filter gene markers and DEGs by the Fold change and minimal percentage of cells expressing a gene in the cluster(s). Moreover, users can define a significance level to exclude genes based on the adjusted p-value (see below).
+Asc-Seurat allows users to filter gene markers and DEGs by the fold change and minimal percentage of cells expressing a gene in the cluster(s). Moreover, users can define a significance level to exclude genes based on the adjusted p-value (see below).
 
 .. figure:: images/DE_one_sample_1.png
    :width: 80%
@@ -24,9 +24,9 @@ On Asc-Seurat, allows users to filter gene markers and DEGs by the Fold change a
    :width: 80%
    :align: center
 
-   Example of Asc-Seurat's interface showing the settings to the search for DEGs genes among clusters 0, 2 and 3.
+   Example of Asc-Seurat's interface showing the settings to search for DEGs genes among clusters 0, 2, and 3.
 
-After executing the search for marker or DEGs, an iterative table will be available showing the significant genes. Moreover, user can download the list of significant markers or DEGs as a csv file.
+After executing the search for marker or DEGs, an iterative table will be available showing the significant genes. Moreover, users can download the list of significant markers or DEGs as a csv file.
 
 .. figure:: images/DEG_table.png
    :width: 80%
