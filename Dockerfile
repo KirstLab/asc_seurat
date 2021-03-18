@@ -107,6 +107,7 @@ RUN usermod -aG docker root
 COPY global.R /app/global.R
 COPY server.R /app/server.R
 COPY ui.R /app/ui.R
+COPY /scripts/bscripts/init_app.sh /app/init_app.sh
 
 # expose port
 EXPOSE 3838
@@ -115,5 +116,4 @@ EXPOSE 3838
 RUN chmod a+rwx -R /app/*
 
 # Init image
-COPY /scripts/bscripts/init_app.sh /app/init_app.sh
 CMD ./init_app.sh
