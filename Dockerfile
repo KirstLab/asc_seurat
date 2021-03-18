@@ -1,25 +1,13 @@
 # Ubuntu latest
-FROM r-base
+FROM kirstlab/asc_seurat:dynverse
 
 # Owner
 MAINTAINER Felipe Marques de Almeida <marques.felipe@aluno.unb.br>
 SHELL ["/bin/bash", "-c"]
 
-## update system libraries
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y dirmngr gnupg apt-transport-https ca-certificates curl wget software-properties-common libcurl4-openssl-dev libxml2-dev && \
-    apt-get clean
-
 # Set workdir
 WORKDIR /app
 COPY www /app/www
-
-# Install devtools
-RUN apt-get install -y libudunits2-dev imagemagick libglpk-dev libhdf5-dev
-RUN apt-get install -y libssl-dev
-RUN R -e 'install.packages("openssl", dep = T)'
-RUN R -e 'install.packages("devtools", dep = T)'
 
 # Install CRAN packages
 # biocmanager
@@ -105,14 +93,6 @@ RUN R -e 'library(biomaRt)'
 # topgo
 RUN R -e 'BiocManager::install("topGO")'
 RUN R -e 'library(topGO)'
-
-# Install Github packages
-RUN R -e 'devtools::install_github("dynverse/dynfeature")'
-RUN R -e 'devtools::install_github("dynverse/dyno")'
-RUN R -e 'devtools::install_github("dynverse/dynplot", ref = "devel", force = T)'
-
-# Compatibility -- downgrade dbply for biomart in R 3.6.3
-#RUN R -e 'devtools::install_url("https://cran.r-project.org/src/contrib/Archive/dbplyr/dbplyr_1.3.0.tar.gz")'
 
 # Install Docker
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
