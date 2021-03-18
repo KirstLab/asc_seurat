@@ -107,9 +107,9 @@ RUN R -e 'BiocManager::install("topGO")'
 RUN R -e 'library(topGO)'
 
 # Install Github packages
-RUN R -e 'Sys.setenv(GITHUB_PAT = "b48dcc345ed2755770b0137d3ff94de1523a42c6"); devtools::install_github("dynverse/dynfeature")'
-RUN R -e 'Sys.setenv(GITHUB_PAT = "b48dcc345ed2755770b0137d3ff94de1523a42c6"); devtools::install_github("dynverse/dyno")'
-RUN R -e 'Sys.setenv(GITHUB_PAT = "b48dcc345ed2755770b0137d3ff94de1523a42c6"); devtools::install_github("dynverse/dynplot", ref = "devel", force = T)'
+RUN R -e 'devtools::install_github("dynverse/dynfeature")'
+RUN R -e 'devtools::install_github("dynverse/dyno")'
+RUN R -e 'devtools::install_github("dynverse/dynplot", ref = "devel", force = T)'
 
 # Compatibility -- downgrade dbply for biomart in R 3.6.3
 #RUN R -e 'devtools::install_url("https://cran.r-project.org/src/contrib/Archive/dbplyr/dbplyr_1.3.0.tar.gz")'
