@@ -111,6 +111,9 @@ COPY ui.R /app/ui.R
 # expose port
 EXPOSE 3838
 
+# Fix permissions
+RUN chmod a+rwx -R /app/*
+
 # Init image
 COPY /scripts/bscripts/init_app.sh /app/init_app.sh
 CMD ./init_app.sh
