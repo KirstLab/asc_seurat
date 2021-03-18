@@ -19,7 +19,7 @@ After installing Docker, users can download the Docker image containing Asc-Seur
 .. code-block:: bash
 
     # Download the docker image:
-    docker pull fmalmeida/wendell-sc
+    docker pull kirstlab/asc_seurat
 
 After the installation is finished, you can start the app on your working directory. See below for the instructions on how to start the app in the different operational systems.
 
@@ -42,7 +42,7 @@ For macOS and Linux
    cd my_project
 
    # Starts Asc-Seurat
-   docker run -v $(pwd):/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --name Asc_Seurat --rm -p 3838:3838 fmalmeida/wendell-sc
+   docker run -v $(pwd):/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --name Asc_Seurat --rm -p 3838:3838 kirstlab/asc_seurat
 
    # Or with our custom script (https://github.com/KirstLab/asc_seurat/scripts/bscripts/run_server.sh)
    ./run_server.sh -s
@@ -72,10 +72,10 @@ After certifying that everything is working, Asc-Seurat can be started with:
     cd my_project
 
     # If using Windows CMD
-    docker run -v %cd%:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 fmalmeida/wendell-sc
+    docker run -v %cd%:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 kirstlab/asc_seurat
 
     # If using Windows Powershell
-    docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 fmalmeida/wendell-sc
+    docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 kirstlab/asc_seurat
 
 .. tip::
 
