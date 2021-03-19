@@ -56,13 +56,32 @@ Download Asc-Seurat's docker image.
 
 ```sh
 # Starts Asc-Seurat on MacOS or Linux
-docker run -v $(pwd):/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --name Asc_Seurat --rm -p 3838:3838 kirstlab/asc_seurat
+docker run \
+  -v $(pwd):/app/user_work \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -d \
+  --name Asc_Seurat \
+  --rm \
+  -p 3838:3838 \
+  kirstlab/asc_seurat
 
 # Starts Asc-Seurat using Windows CMD
-docker run -v %cd%:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 kirstlab/asc_seurat
+docker run \
+  -v %cd%:/app/user_work \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -d \
+  --rm \
+  -p 3838:3838 \
+  kirstlab/asc_seurat
  
 # Starts Asc-Seurat using Windows Powershell
-docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 kirstlab/asc_seurat
+docker run \
+  -v ${PWD}:/app/user_work \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -d \
+  --rm \
+  -p 3838:3838 \
+  kirstlab/asc_seurat
 ```
 
 :heavy_check_mark: Then, open your preferred web browser and paste the address https://localhost:3838/
