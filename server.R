@@ -1717,7 +1717,7 @@ function(input, output, session) {
                          }
 
                          # Creates new folder to keep the plots organized. Adding date and time helps to avoid overwriting the data
-                         path_new <- paste0("./images/one_sample_plots", format(Sys.time(),'_%Y%-%m%-%d%__%H%M%S'))
+                         path_new <- paste0("./images/one_sample_plots", format(Sys.time(),'_%Y-%m-%d__%H%M%S'))
 
                          dir.create(path_new)
                          dir.create( paste0(path_new,"/feature_plots") )
@@ -3206,7 +3206,7 @@ function(input, output, session) {
                          }
 
                          # Creates new folder to keep the plots organized. Adding date and time helps to avoid overwriting the data
-                         path_new <- paste0("./images/integrated_sample_plots", format(Sys.time(),'_%Y%-%m%-%d%__%H%M%S'))
+                         path_new <- paste0("./images/integrated_sample_plots", format(Sys.time(),'_%Y-%m-%d__%H%M%S'))
 
                          dir.create(path_new)
                          dir.create( paste0(path_new,"/feature_plots") )
@@ -4427,7 +4427,7 @@ function(input, output, session) {
                          }
 
                          # Creates new folder to keep the plots organized. Adding date and time helps to avoid overwriting the data
-                         path_new <- paste0("./images/trajectories_plots", format(Sys.time(),'_%Y%-%m%-%d%__%H%M%S'))
+                         path_new <- paste0("./images/trajectories_plots", format(Sys.time(),'_%Y-%m-%d__%H%M%S'))
 
                          dir.create(path_new)
                          dir.create( paste0(path_new,"/Dimension_reduction") )
@@ -4783,7 +4783,7 @@ function(input, output, session) {
                          }
 
                          # Creates new folder to keep the plots organized. Adding date and time helps to avoid overwriting the data
-                         path_new <- paste0("./images/trajectories_plots", format(Sys.time(),'_%Y%-%m%-%d%__%H%M%S'))
+                         path_new <- paste0("./images/trajectories_plots", format(Sys.time(),'_%Y-%m-%d__%H%M%S'))
 
                          dir.create(path_new)
                          dir.create( paste0(path_new,"/Dimension_reduction") )
