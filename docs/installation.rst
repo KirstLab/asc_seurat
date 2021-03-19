@@ -32,6 +32,12 @@ After the installation is finished, you can start the app on your working direct
 Starting Asc-Seurat
 ===================
 
+.. warning::
+
+   Single-cell RNA-seq data analysis can be resource consuming. By default, Docker will be able to use (allocate) only a fraction of your RAM memory. During our tests, a minimum requirement of 8 Gb of RAM memory was necessary to analyze a dataset containing around eight thousand cells. Therefore, you need to adjust the amount of allocated memory according to your dataset. Please visit: https://docs.docker.com/docker-for-mac/space/ (MAC) or https://docs.docker.com/docker-for-windows/ (Windows) to learn how to make this adjustment.
+
+
+
 For macOS and Linux
 -------------------
 
@@ -47,7 +53,10 @@ For macOS and Linux
    # Or with our custom script (https://github.com/KirstLab/asc_seurat/scripts/bscripts/run_server.sh)
    ./run_server.sh -s
 
-If it does not open automatically, open your preferred web browser and paste the address http://localhost:3838/. Asc-Seurat should be ready.
+
+.. note::
+
+    After executing the "docker run" command, open your preferred web browser and paste the address http://localhost:3838/. Asc-Seurat should be ready.
 
 If you want to kill the Docker container, run the command below.
 
@@ -76,6 +85,17 @@ After certifying that everything is working, Asc-Seurat can be started with:
 
     # If using Windows Powershell
     docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 kirstlab/asc_seurat
+
+    .. note::
+
+        After executing the "docker run" command, open your preferred web browser and paste the address https://localhost:3838/. Asc-Seurat should be ready.
+
+    If you want to kill the Docker container, run the command below.
+
+    .. code-block:: bash
+
+       docker kill Asc_seurat
+
 
 .. tip::
 

@@ -106,8 +106,8 @@ function(request) {
                      tags$hr(),
                      h2("Tutorial and documentation"),
                      br(),
-                     p("A step-by-step introduction of Asc-Seurat's functionalities is available at ", a(tags$a(href="https:", "It will be a link to readthedocs!", target="_blank"))),
-                     p("For questions or issues related to Asc-Seurat's functionalities, please visit", a(tags$a(href="https:", "It will be a link to the GitHub page of the project.", target="_blank"))),
+                     p("A step-by-step introduction of Asc-Seurat's functionalities is available at ", a(tags$a(href="https://asc-seurat.readthedocs.io/en/latest/index.html", "https://asc-seurat.readthedocs.io.", target="_blank"))),
+                     p("For questions or issues related to Asc-Seurat's functionalities, please visit", a(tags$a(href="https://github.com/KirstLab/asc_seurat", "our GitHub.", target="_blank"))),
                      
                      br(),
                      
