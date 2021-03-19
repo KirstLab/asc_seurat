@@ -1,4 +1,4 @@
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![readthedocs](https://readthedocs.org/projects/asc-seurat/badge/?version=latest)](https://asc-seurat.readthedocs.io/en/latest/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![readthedocs](https://readthedocs.org/projects/asc-seurat/badge/?version=latest)](https://asc-seurat.readthedocs.io/en/latest/) [![DOI](https://zenodo.org/badge/340176419.svg)](https://zenodo.org/badge/latestdoi/340176419)
 
 <p align="center">
   <!-- <a href="https://github.com/othneildrew/Best-README-Template">
