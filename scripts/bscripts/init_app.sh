@@ -26,8 +26,5 @@ if [ ! -d "www" ]; then
   cp -R /app/www .
 fi
 
-# Fix permisions
-chmod a+rwx -R /app/user_work
-
 # Open server
 R -e "shiny::runApp('/app', host = '0.0.0.0', port = 3838, launch.browser = F)"
