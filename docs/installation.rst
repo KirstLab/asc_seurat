@@ -88,7 +88,7 @@ After certifying that everything is working, Asc-Seurat can be started with:
 
     .. note::
 
-        After executing the "docker run" command, open your preferred web browser and paste the address http://localhost:3838/. Asc-Seurat should be ready.
+        After executing the "docker run" command, open your preferred web browser and paste the address https://localhost:3838/. Asc-Seurat should be ready.
 
     If you want to kill the Docker container, run the command below.
 
