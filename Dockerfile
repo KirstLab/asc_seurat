@@ -115,7 +115,6 @@ EXPOSE 3838
 # Fix permissions
 RUN chmod a+rwx -R /app/*
 RUN chmod a+rwx -R /app
-RUN chmod a+rwx -R /app/user_work
 
 # Init image
 CMD ./init_app.sh
