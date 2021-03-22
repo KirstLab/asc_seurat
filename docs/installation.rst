@@ -34,7 +34,7 @@ Starting Asc-Seurat
 
 .. warning::
 
-   Single-cell RNA-seq data analysis can be resource consuming. By default, Docker will be able to use (allocate) only a fraction of your RAM memory. During our tests, a minimum requirement of 8 Gb of RAM memory was necessary to analyze a dataset containing around eight thousand cells. Therefore, you need to adjust the amount of allocated memory according to your dataset. Please visit: https://docs.docker.com/docker-for-mac/space/ (MAC) or https://docs.docker.com/docker-for-windows/ (Windows) to learn how to make this adjustment.
+   Single-cell RNA-seq data analysis can be resource consuming. By default, Docker will be able to use (allocate) only a fraction of your RAM memory. During our tests, a minimum requirement of 6 Gb of RAM memory was necessary to analyze a dataset containing around eight thousand cells. Therefore, you need to adjust the amount of allocated memory according to your dataset. Please visit: https://docs.docker.com/docker-for-mac/space/ (MAC) or https://docs.docker.com/docker-for-windows/ (Windows) to learn how to make this adjustment.
 
 
 
