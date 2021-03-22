@@ -86,15 +86,15 @@ After certifying that everything is working, Asc-Seurat can be started with:
     # If using Windows Powershell
     docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 kirstlab/asc_seurat
 
-    .. note::
+.. note::
 
-        After executing the "docker run" command, open your preferred web browser and paste the address https://localhost:3838/. Asc-Seurat should be ready.
+    After executing the "docker run" command, open your preferred web browser and paste the address https://localhost:3838/. Asc-Seurat should be ready.
 
-    If you want to kill the Docker container, run the command below.
+If you want to kill the Docker container, run the command below.
 
-    .. code-block:: bash
+.. code-block:: bash
 
-       docker kill Asc_seurat
+   docker kill Asc_seurat
 
 
 .. tip::
