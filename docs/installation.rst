@@ -67,10 +67,16 @@ If you want to kill the Docker container, run the command below.
 For Windows
 -----------
 
-To run Asc-Seurat on Windows via Docker it is necessary to use Windows 10. Moreover, Windows Subsystem for Linux (WSL) needs to be install. Before running Asc-Seurat, users need to guarantee that Docker and its WSL 2 components are properly installed and running. For that, check the two (sequential) tutorials below:
+To run Asc-Seurat on Windows via Docker it is necessary to use Windows 10. Moreover, Windows Subsystem for Linux (WSL) needs to be installed. Before running Asc-Seurat, users need to guarantee that Docker and its WSL 2 components are properly installed and running. For that, check the two (sequential) tutorials below:
 
 1. `Docker installation info <https://docs.docker.com/docker-for-windows/install/>`_
-2. `Define windows WSL 2 as default <https://docs.microsoft.com/pt-br/windows/wsl/install-win10#step-5---set-wsl-2-as-your-default-version>`_
+2. `Define windows WSL 2 as default <https://docs.microsoft.com/pt-br/windows/wsl/install-win10#step-5---set-wsl-2-as-your-default-version>`_ (If you followed the link above correctly, you only need to execute step 5 of this tutorial).
+
+.. tip::
+
+    The tutorials above contain all the necessary information to install Docker on Windows. However, it is also possible to find video-tutorials on YouTube. Check the following link for an example: https://youtu.be/5nX8U8Fz5S0
+
+
 
 After certifying that everything is working, Asc-Seurat can be started with:
 
