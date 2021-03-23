@@ -1,5 +1,5 @@
 .. _differental_expression_int:
 
-********************************
-Differential expression analysis (ongoing)
-********************************
+***********************************************************
+Markers identification and differential expression analysis (ongoing)
+***********************************************************
