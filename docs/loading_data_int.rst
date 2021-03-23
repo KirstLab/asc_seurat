@@ -4,7 +4,7 @@
 Loading the data and integration of multiple samples
 ****************************************************
 
-To analyze multiple samples, select the third tab in the web application, named :guilabel:`Integration of multiple samples`.
+To analyze multiple samples, select the third tab in the web application, named :any:`Integration of multiple samples`.
 
 .. note::
 
@@ -66,7 +66,7 @@ Saving integrated data for reanalysis
 
 The integration of multiple samples is a timing-consuming step of the analysis. The amount of time necessary to execute this step depends on the number of datasets and the number of cells in each dataset, and it can take several minutes to be concluded.
 
-Therefore, Asc-Seurat provides an option for users to save the integrated data, and skip the integration step the next time you need to use the same dataset. To save the data, users can click on the button :kbd:`Download RDS object containing the integrated data.` and save the rds file inside the :code:`RDS_files/` folder.
+Therefore, Asc-Seurat provides an option for users to save the integrated data, and skip the integration step the next time you need to use the same dataset. To save the data, users can click on the button :any:`Download RDS object containing the integrated data.` and save the rds file inside the :code:`RDS_files/` folder.
 
 Next time this data is necessary, users can select the option "Load file" and skip the integration step, as shown below.
 

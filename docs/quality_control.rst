@@ -17,4 +17,4 @@ After visualizing the distribution of cells, it is possible to set more restrict
    :width: 100%
    :align: center
 
-Asc-Seurat allows users to download each of the plots with high-resolution, by clicking on the :kbd:`Download plot` button.
+Asc-Seurat allows users to download each of the plots with high-resolution, by clicking on the :any:`Download plot` button.

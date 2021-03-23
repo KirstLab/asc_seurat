@@ -22,7 +22,7 @@ Asc-Seurat provides separated environments (tabs) for the analysis of a single s
 Loading the data
 ================
 
-To analyze an individual sample, select the second tab in the web application, named :guilabel:`One sample`. Then, select the sample to analyze and set the initial criteria to exclude cells that should not be load, as shown below.
+To analyze an individual sample, select the second tab in the web application, named :any:`One sample`. Then, select the sample to analyze and set the initial criteria to exclude cells that should not be load, as shown below.
 
  After inserting your datasets in the :code:`data/` directory, the samples will be available to load in Asc-Seurat, as shown below.
 
