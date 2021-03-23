@@ -8,9 +8,12 @@ To analyze multiple samples, select the third tab in the web application, named 
 
 .. note::
 
-    The integration is based on Seurat's functions `FindIntegrationAnchors <https://www.rdocumentation.org/packages/Seurat/versions/4.0.0/topics/FindIntegrationAnchors>`_ and `IntegrateData <https://www.rdocumentation.org/packages/Seurat/versions/4.0.0/topics/IntegrateData>`_. For more information, see `Seurat's integration tutorial <https://satijalab.org/seurat/articles/integration_introduction.html>`_ and `Stuart,T. et al. (2019) <https://www.cell.com/cell/fulltext/S0092-8674(19)30559-8>`_.
+    The integration is based on Seurat's functions `FindIntegrationAnchors <https://www.rdocumentation.org/packages/Seurat/versions/4.0.0/topics/FindIntegrationAnchors>`_ and `IntegrateData <https://www.rdocumentation.org/packages/Seurat/versions/4.0.0/topics/IntegrateData>`_. For more information, see `Seurat's integration tutorial <https://satijalab.org/seurat/articles/integration_introduction.html>`_ and `Stuart, T. et al. (2019) <https://www.cell.com/cell/fulltext/S0092-8674(19)30559-8>`_.
 
-For the integration of multiple samples, the process is a little different. You still need to add your datasets in the :code:`data/` directory, creating a subdirectory for each sample. However, you also need to provide a configuration file containing the parameter values for each sample. During the installation, an example file named *configuration_file_for_integration_analysis.csv* will be created in your directory and can be used as a model to create your own file.
+Location of your dataset
+========================
+
+For the integration of multiple samples, the process is a little different. You still need to add your datasets in the :code:`data/` directory, creating a subdirectory for each sample. However, you also need to provide a configuration file containing the parameter values for each sample. During the installation, an example file named *configuration_file_for_integration_analysis.csv* will be created in your directory and can be used as a model to create your file.
 
 .. tip::
 
@@ -26,3 +29,47 @@ Also, the columns need to be in a specific order as listed below.
  #. **Min. number of genes a cell must express to be included**: Include cells only if they expressed at least this number of genes.
  #. **Maximum number of genes a cell can express and still be included**: Remove cells that express more than this number of genes. This is useful to remove cells that you suspect are doublets.
  #. **Maximum percentage of genes belonging to the mitochondrial genome**: Here, the regular expression (`Regex <https://en.wikipedia.org/wiki/Regular_expression>`_) is a sequence of characters that is used to identify the genes belonging to the mitochondrial genome. For example, when using the human genome, this sequence should be "^MT-".
+
+Loading the data and performing integration
+===========================================
+
+To demonstrate the necessary steps to load and integrate multiple datasets using Asc-Seurat, we used two groups of cells from `Kang et al, 2017 <https://www.nature.com/articles/nbt.4042>`_, that are also used in `Seurat's tutorial <https://satijalab.org/seurat/archive/v3.1/immune_alignment.html>`_ demonstrating the comparison of multiple samples. Two datasets are used, both containing peripheral blood mononuclear cells (PBMCs). However, the first dataset contains the cells of the control group (Control) while the second dataset contains cells treated with interferon beta (Treatment).
+
+As mentioned above, the first step is two create two folders inside the :code:`data/` folder. The folders were named :code:`example_PBMC_control` and :code:`example_PBMC_treatment`, each one containing the three necessary input files (shown in the image below).
+
+.. figure:: images/data_folder_integration.png
+   :width: 40%
+   :align: center
+
+   Organization of the :code:`data/` folder the different datasets.
+
+After that, it is necessary to create a configuration file in the csv format. During the installation, an example file named *configuration_file_for_integration_analysis.csv* is created in your directory and can be used as a model to create your file. For this example, the configuration file contains the information shown below.
+
++------------------------------------------+-----------------------------------+----------------------------------------+---------------------------------------------------------+---------------------------------------------------------------+------------------------------------------------------------------+
+| Subdirectory name (must be inside data/) | Sample name (any name you prefer) | Min. number of cells expressing a gene | Min. number of genes a cell must express to be included | Max. number of genes a cell can express and still be included | Max. percentage of transcripts belonging to mitochondrial genome |
++==========================================+===================================+========================================+=========================================================+===============================================================+==================================================================+
+| example_PBMC_control                     | Control                           |                    3                   |                           250                           |                              2500                             |                                 5                                |
++------------------------------------------+-----------------------------------+----------------------------------------+---------------------------------------------------------+---------------------------------------------------------------+------------------------------------------------------------------+
+| example_PBMC_treatment                   | Treatment                         |                    3                   |                           250                           |                              2500                             |                                 5                                |
++------------------------------------------+-----------------------------------+----------------------------------------+---------------------------------------------------------+---------------------------------------------------------------+------------------------------------------------------------------+
+
+Once the configuration file is ready, users only need to load it in the app and select the samples they want to integrate (see image below). Also, it is necessary to select the method to use to identify the most variable genes, the regex string to detect mitochondrial transcripts, the number of most variable genes e o número de Principal Components to be used during integration (see below). Note that while default values are provided, users need to set these parameters based on their evaluation of the individual samples that are being integrated.
+
+.. figure:: images/int_loading_data.png
+   :width: 100%
+   :align: center
+
+   Loading configuration file and defining parameters for the integration of multiple samples.
+
+Saving integrated data for reanalysis
+=====================================
+
+The integration of multiple samples is a timing-consuming step of the analysis. The amount of time necessary to execute this step depends on the number of datasets and the number of cells in each dataset, and it can take several minutes to be concluded.
+
+Therefore, Asc-Seurat provides an option for users to save the integrated data, and skip the integration step the next time you need to use the same dataset. To save the data, users can click on the button :kbd:`Download RDS object containing the integrated data.` and save the rds file inside the :code:`RDS_files/` folder.
+
+Next time this data is necessary, users can select the option "Load file" and skip the integration step, as shown below.
+
+.. figure:: images/int_loading_data_2.png
+   :width: 100%
+   :align: center

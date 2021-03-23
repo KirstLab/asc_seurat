@@ -58,6 +58,11 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
 
    biomart
 
+Reference
+=========
+
+[1] Pereira WJ, Almeida FM, Balmant KM, Rodriguez DC, Triozzi PM, Schmidt HW, Dervinis C, Pappas Jr. GJ, Kirst M. `Asc-Seurat – Analytical single-cell Seurat-based web application <https://www.biorxiv.org/content/10.1101/2021.03.19.436196v1>`_. BioRxiv, 2021.
+
 ------------
 
 Support Contact
