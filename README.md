@@ -60,7 +60,7 @@ docker run -v $(pwd):/app/user_work -v /var/run/docker.sock:/var/run/docker.sock
 
 # Starts Asc-Seurat using Windows CMD
 docker run -v %cd%:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --name Asc_Seurat --rm -p 3838:3838 kirstlab/asc_seurat
- 
+
 # Starts Asc-Seurat using Windows Powershell
 docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --name Asc_Seurat --rm -p 3838:3838 kirstlab/asc_seurat
 ```
@@ -71,6 +71,8 @@ docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock
 
 Please, visit https://asc-seurat.readthedocs.io/en/latest/ for a complete documentation.
 
+## Reference
+[1] Pereira WJ, Almeida FM, Balmant KM, Rodriguez DC, Triozzi PM, Schmidt HW, Dervinis C, Pappas Jr. GJ, Kirst M. [Asc-Seurat – Analytical single-cell Seurat-based web application](https://www.biorxiv.org/content/10.1101/2021.03.19.436196v1). biorxiv, 2021.
 
 <!-- LICENSE -->
 ## License
