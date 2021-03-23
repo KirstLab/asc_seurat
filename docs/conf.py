@@ -18,7 +18,7 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'Asc-Seurat: Analytical single-cell Seurat-based web application'
-copyright = 'PUT COPYRIGHT (GENERALLY THE PUBLICATION)'
+copyright = 'Asc-Seurat, 2021. Pereira WJ, Almeida FM, Balmant KM, Rodriguez DC, Triozzi PM, Schmidt HW, Dervinis C, Pappas Jr. GJ, Kirst M'
 author = 'Wendell J. Pereira and Felipe M. Almeida'
 
 
