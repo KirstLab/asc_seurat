@@ -32,4 +32,6 @@ After executing the search for marker or DEGs, an iterative table will be availa
    :width: 80%
    :align: center
 
+   List of the 10 most significant markers identified for cluster 3 of the PBMC dataset (as defined in :ref:`clustering`).
+
 The list of genes contained in the csv can then be used to visualize their gene expression in a series of plots, as shown in the section :ref:`expression_visualization`.
