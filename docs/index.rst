@@ -35,8 +35,6 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
    clustering
    differential_expression
    expression_visualization
-   trajectory_inference
-   expression_visualization_within_trajectory
 
 .. toctree::
    :hidden:
@@ -48,8 +46,13 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
    clustering_int
    differential_expression_int
    expression_visualization_int
-   trajectory_inference_int
-   expression_visualization_within_trajectory_int
+
+.. toctree::
+   :hidden:
+   :caption: Trajectory inference
+   :maxdepth: 4
+
+   trajectory_inference
 
 .. toctree::
    :hidden:
