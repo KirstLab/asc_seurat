@@ -4,9 +4,9 @@
 Expression visualization
 ************************
 
-Asc-Seurat provides a variety of plots for gene expression visualization of the integrated data. From a list of selected genes, it is possible to visualize in a heatmap the average of each gene expression in each cluster. It also provides plots for the visualization of gene expression at the cell level. Moreover, violin plots and dot plots allow the visualization of each cluster's expression, with emphasis on the inter-cluster comparison.
+Asc-Seurat provides a variety of plots for gene expression visualization of the integrated data. From a list of selected genes, it is possible to visualize the average of each gene expression in each cluster in a heatmap. It also provides plots for the visualization of gene expression at the cell level. Moreover, violin plots and dot plots allow the visualization of each cluster's expression, emphasizing the inter-cluster comparison.
 
-For the integrated dataset, besides the identification of markers for each cluster and DEGs among clusters, it is also possible to identify DEGs among samples (See :ref:`differental_expression_int`). Below are show examples of plots that Asc-Seurat generates to allow the expression visualization in all these cases.
+For the integrated dataset, besides identifying markers for each cluster and DEGs among clusters, it is also possible to identify DEGs among samples (See :ref:`differental_expression_int`). Below are shown examples of plots that Asc-Seurat generates to allow the expression visualization in all these cases.
 
 Expression visualization of genes identified as markers
 =======================================================
@@ -14,9 +14,9 @@ Expression visualization of genes identified as markers
 Format of the input file containing genes for expression visualization
 ----------------------------------------------------------------------
 
-Asc-Seurat expects as input a csv (comma-separated value) file containing at least two columns. The first column must contain the gene ID as present in your dataset, and the second column is a grouping variable. A third optional column can contain the common names of each gene. Any additional column will be ignored. **No header is allowed for this file**.
+Asc-Seurat expects as input a csv (comma-separated value) file containing at least two columns. The first column must contain the gene ID as present in the dataset, and the second column is a grouping variable. An optional third column can contain the common names of each gene. Any additional column will be ignored. **No header is allowed for this file**.
 
-Below is shown an example of an input file used for expression visualization. It contains ten markers identified for clusters 4 of the PBMC integrated dataset (Control and Treatment). In this case, the dataset uses the gene name as the identifier and this is the information on the first column. The second column is used to group de marker according to their clusters.
+Below is shown an example of an input file used for expression visualization. It contains ten markers identified for cluster 4 of the PBMC integrated dataset (Control and Treatment). In this case, the dataset uses the gene name as an identifier, and this is the information contained in the first column. The second column is used to group de marker according to their clusters.
 
 .. table:: Example of an input file for gene expression visualization showing the required columns.
    :widths: 33 33 33
@@ -44,7 +44,7 @@ Below is shown an example of an input file used for expression visualization. It
    | C7orf50   | Cluster_4 |           |
    +-----------+-----------+-----------+
 
-After loading the input file, users can then select what group(s) of genes to explore, as well as, select specific genes from each group. Moreover, if a third column is provided in the input file, users can use the common name of the genes instead of the gene IDs to select the genes to be shown.
+After loading the input file, users can then select what group(s) of genes to explore and select specific genes from each group. Moreover, if a third column is provided in the input file, users can use the genes' common name instead of the gene IDs to select the genes to be shown.
 
 Heatmap
 -------
@@ -53,18 +53,18 @@ Once users selected their genes of interest, they can generate a heatmap of the 
 
 .. note::
 
-    For the integrated dataset, the heatmap shows the average of expression of all samples together. It is only helpful to identify if the markers of the cell types are making sense with the number of generated clusters.
+    For the integrated dataset, the heatmap shows the average expression of all samples together. It is only helpful to identify if the cell types' markers are making sense with the number of generated clusters.
 
 .. figure:: images/heat_map_int.png
    :width: 100%
    :align: center
 
-   Asc-Seurat's interface demonstrating the filtering options provided to select the genes for expression visualization. The heatmap shows the expression profile of the then most significant markers for cluster 4 of the integrated datasets.
+   Asc-Seurat's interface showing the filtering options provided to select the genes for expression visualization. The heatmap shows the expression profile of the then most significant markers for cluster 4 of the integrated datasets.
 
 Gene expression at the cell level - Feature plots
 -------------------------------------------------
 
-From the list of genes contained on the heatmap, users can select genes to further explore by visualizing the expression at the cell level. For each selected gene, a feature plot showing the profile of each sample will be generated using Seurat's `Feature plots <https://satijalab.org/seurat/reference/FeaturePlot.html>`_ function. The UMAP plot is shown side-by-side with the feature plots, so users can quickly compare the expression profile with the identified clusters.
+From the list of genes on the heatmap, users can select genes to further explore by visualizing the expression at the cell level. For each selected gene, a feature plot showing each sample's profile will be generated using Seurat's `Feature plots <https://satijalab.org/seurat/reference/FeaturePlot.html>`_ function. The UMAP plot is shown side-by-side with the feature plots, so users can quickly compare the expression profile with the identified clusters.
 
 .. figure:: images/markers_cluster4_expression_among_samples.png
    :width: 100%
@@ -75,13 +75,13 @@ From the list of genes contained on the heatmap, users can select genes to furth
 Visualization of the expression among clusters
 ----------------------------------------------
 
-For each selected gene, Asc-Seurat will also generate plots for the visualization of the distribution of cells within each cluster according to the expression of the gene (violin plot) and the percentage of cells in each cluster expressing the gene (dot plot) in each sample. Seurat's functions `VlnPlot() <https://satijalab.org/seurat/reference/VlnPlot.html>`_ and `DotPlot() <https://satijalab.org/seurat/reference/DotPlot.html>`_ are deployed in this step.
+For each selected gene, Asc-Seurat will also generate plots to visualize the distribution of cells within each cluster according to the expression of the gene (violin plot) and the percentage of cells in each cluster expressing the gene (dot plot) in each sample. Seurat's functions `VlnPlot() <https://satijalab.org/seurat/reference/VlnPlot.html>`_ and `DotPlot() <https://satijalab.org/seurat/reference/DotPlot.html>`_ are deployed in this step.
 
 .. figure:: images/markers_cluster4_expression_among_samples_2.png
    :width: 100%
    :align: center
 
-   Visualization of the distribution of cells within each cluster according to the expression of the gene (violin plot; left) and the percentage of cells in each cluster expressing the gene (dot plot; right). in each sample. The three genes shown are the same used for the feature plots.
+   Visualization of cells' distribution within each cluster according to the gene expression (violin plot; left) and the percentage of cells in each cluster expressing the gene (dot plot; right) in each sample. The three genes shown are the same used for the feature plots.
 
 Expression visualization of differentially expressed genes
 ==========================================================
@@ -89,7 +89,7 @@ Expression visualization of differentially expressed genes
 Format of the input file containing genes for expression visualization
 ----------------------------------------------------------------------
 
-As before, a csv file is necessary as input for the expression visualization of DEGs. In this case, it contains ten genes identified as DEGs between the PBMC Treatment and PBMC Control datasets in the clusters 4.
+As before, a csv file is necessary as input for the expression visualization of DEGs. In this case, it contains ten genes identified as DEGs between the PBMC Treatment and PBMC Control datasets in cluster 4.
 
 .. table:: Example of an input file for gene expression visualization of DEGs.
    :widths: 33 33 33
@@ -120,22 +120,22 @@ As before, a csv file is necessary as input for the expression visualization of 
 Heatmap
 -------
 
-All ten genes were selected for visualization in the heatmap. Once more, it is important to mention that heatmap shows the average of expression among all samples. However, by investigating the heatmap below, it is possible to notice that while this genes are the most significant DEGs between samples in the cluster 4, they are widely expressed in other clusters too.
+All ten genes were selected for visualization in the heatmap. Once more, it is important to mention that the heatmap shows the average expression among all samples. However, by investigating the heatmap below, it is possible to notice that while these genes are the most significant DEGs between samples in cluster 4, they are widely expressed in other clusters too.
 
 
 .. figure:: images/DEGs_among_samples_cluster4_heatmap.png
    :width: 100%
    :align: center
 
-   Heatmap showing the expression profile of the ten most significant DEGs between Treatment and Control in the cluster 4 of the integrated datasets.
+   Heatmap showing the expression profile of the ten most significant DEGs between Treatment and Control in cluster 4 of the integrated datasets.
 
 
 Gene expression at the cell level - Feature plots
 -------------------------------------------------
 
-To compare the expression profile among samples, the visualization at the cell level is more relevant, as show bellow.
+To compare the expression profile among samples, the visualization at the cell level is more relevant, as shown below.
 
-From the list of genes contained on the heatmap, three genes were selected. While the expression is not localized in cluster 4, it is clear the increment of the expression in the Treatment dataset. The UMAP plot is shown side-by-side with the feature plots allowing the comparison of the expression profile with the identified clusters.
+From the list of genes contained on the heatmap, three genes were selected. While the expression is not localized in cluster 4, it is clear the increment of the expression in the Treatment dataset. The UMAP plot is shown side-by-side with the feature plots, allowing comparing the expression profile with the identified clusters.
 
 .. figure:: images/DEGs_among_samples_cluster4_feature.png
    :width: 100%
@@ -146,13 +146,13 @@ From the list of genes contained on the heatmap, three genes were selected. Whil
 Visualization of the expression among clusters
 ----------------------------------------------
 
-As in the feature plot, the violin and dot plots show clearly the increased level of expression in the cells of the PBMC Treatment sample in comparison with the PBMC control.
+As in the feature plot, the violin and dot plots clearly show the increased level of expression in the cells of the PBMC Treatment sample compared to the PBMC control.
 
 .. figure:: images/DEGs_among_samples_cluster4_violin.png
    :width: 100%
    :align: center
 
-   Visualization of the distribution of cells within each cluster according to the expression of the gene (violin plot; left) and the percentage of cells in each cluster expressing the gene (dot plot; right). in each sample. The three genes shown are the same used for the feature plots.
+   Visualization of cells' distribution within each cluster according to the gene expression (violin plot; left) and the percentage of cells in each cluster expressing the gene (dot plot; right) in each sample. The three genes shown are the same used for the feature plots.
 
 .. tip::
 
