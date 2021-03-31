@@ -1,7 +1,7 @@
 .. _trajectory_inference:
 
 ********************
-Trajectory inference (ongoing)
+Trajectory inference
 ********************
 
 For the trajectory inference analysis, users can either execute it through capabilities of the embedded `slingshot <https://bioconductor.org/packages/release/bioc/html/slingshot.html>`_ Bioconductor package or select another model contained in `dynverse <https://dynverse.org/>`_, executed using a docker image provided by the later. In both options, users only need to select the model and initial parameters (see below). However, the direct execution of slingshot is faster than the execution of models via dynverse’s docker image.
