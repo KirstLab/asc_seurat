@@ -10,11 +10,11 @@ After integrating the datasets, a `violin plot <https://satijalab.org/seurat/ref
  * nCount_RNA: the number of molecules detected per cell
  * percent.mt: the percentage of transcripts that map to mitochondrial genes
 
-After visualizing the distribution of cells, it is possible to set more restrictive parameters (on the right side of the plot) and filter cells based on the number of expressed genes per cell and the percentage of transcripts from mitochondrial genes. By clicking on :guilabel:`Show plot of filtered data`, users can see visualize the distribution of cells after filtering and readjust the parameters. The figure below shows the distribution of cells of the PBMC integrated (containing the Control and Treatment datasets, see :ref:`loading_data_int`) dataset before and after filtering.
+After visualizing the distribution of cells, it is possible to set more restrictive parameters (on the right side of the plot) and filter cells based on the number of expressed genes per cell and the percentage of transcripts from mitochondrial genes. By clicking on :guilabel:`Show plot of filtered data`, users can see the distribution of cells after filtering and then readjust the parameters. The figure below shows the distribution of cells of the PBMC integrated (containing the Control and Treatment datasets, see :ref:`loading_data_int`) dataset before and after filtering.
 
 .. figure:: images/quality_control_int.png
    :alt: Quality control.
    :width: 100%
    :align: center
 
-Asc-Seurat allows users to download each of the plots with high-resolution, by clicking on the :any:`Download plot` button.
+Asc-Seurat allows users to download each of the plots with high-resolution by clicking on the :any:`Download plot` button.
