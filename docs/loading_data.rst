@@ -36,7 +36,7 @@ To analyze an individual sample, select the second tab in the web application, n
  After inserting the datasets in the :code:`data/` directory, the samples will be available to load in Asc-Seurat, as shown below.
 
 .. figure:: images/loading_one_sample.png
-   :width: 90%
+   :width: 100%
    :align: center
 
    Example of how to load an individual sample for analysis and of the requested initial parameters.
