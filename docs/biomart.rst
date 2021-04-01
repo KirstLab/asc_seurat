@@ -12,7 +12,7 @@ Functional annotation of genes
 The annotation module of Asc-Seurat was designed to be simple to use (See image below). Nonetheless, a basic understanding of how BioMart queries are built is required so that users can select the filters and attributes needed. Please, visit biomaRt's `vignettes <https://www.bioconductor.org/packages/devel/bioc/vignettes/biomaRt/inst/doc/accessing_ensembl.html>`_ for an overview.
 
 .. image:: images/biomart_mod_interface.png
-  :width: 95%
+  :width: 100%
   :align: center
 
 As shown in the image above, Asc-Seurat contains a sidebar on which users can select the best parameters for annotating their genes. Initially, users should select the database to use (Phytozome or one of Ensembl's databases). Then, Asc-Seurat will load it and display the datasets (species) available for the selected database.
@@ -28,7 +28,7 @@ After defining the filter and the attributes, users can provide a csv file conta
 To execute the annotation, users need to click on :guilabel:`Annotate selected genes!`. An iterative table containing the requested information will be generated. Also, users can download the list of annotated genes as a csv or an Excel file (see below).
 
 .. image:: images/biomart_results.png
-  :width: 95%
+  :width: 100%
   :align: center
 
 GO terms enrichment analysis
@@ -47,5 +47,5 @@ If users choose to execute this analysis, they need to provide a second csv file
 At the end of the GO enrichment analysis, an iterative table containing all enriched GO terms is generated, which can be downloaded in the csv format or as an Excel file. Moreover, a plot showing the most significant GO terms is generated. Users can adjust the number of significant GO terms shown for each GO category in the plot (see below for an example using 5 GO terms per category).
 
 .. image:: images/enriched_terms.png
-  :width: 95%
+  :width: 100%
   :align: center
