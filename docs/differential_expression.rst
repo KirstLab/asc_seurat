@@ -29,7 +29,7 @@ Asc-Seurat allows users to filter gene markers and DEGs by the fold change and m
 An iterative table will be available after executing the search for marker or DEGs, showing the significant genes. Moreover, users can download the list of significant markers or DEGs as a csv file.
 
 .. figure:: images/DEG_table.png
-   :width: 80%
+   :width: 100%
    :align: center
 
    List of the ten most significant markers identified for cluster 3 of the PBMC dataset (as defined in :ref:`clustering`).

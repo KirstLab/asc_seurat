@@ -33,8 +33,7 @@ As mentioned above, only the most variable genes are used in the PCA (Principal 
 
 As shown below, users can easily download the elbow plot. Also, users should set the number of PCs to include during clustering in the windows at the plot's right side.
 
-.. figure:: images/PCA.png
-   :alt: Quality control.
+.. figure:: images/pca.png
    :width: 100%
    :align: center
 
