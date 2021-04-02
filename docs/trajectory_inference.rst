@@ -62,9 +62,13 @@ After loading the input file, users can then select what group(s) of genes to ex
 
 After choosing the genes, a heatmap showing the expression in the cells sorted by their position in the inferred trajectory is shown. Then, users can select genes for individual visualization.
 
+As an example, it is shown the expression of the same ten DEGs identified for cluster 4 in the comparison of Control and Treatment for the PBMC integrated dataset (see :ref:`differental_expression_int`).
+
 .. figure:: images/heatmap_trajectory_inputted_genes.png
    :width: 100%
    :align: center
+
+Next, three of those genes were selected to shown the expression on the cells in the inferred trajectory.
 
 .. figure:: images/trajectory_expression_of_selected_genes_inputted_genes.png
   :width: 100%
