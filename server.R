@@ -1,5 +1,5 @@
 # Asc-Seurat
-# Version 1.3
+# Version 1.0
 set.seed(1407)
 
 # CRAN

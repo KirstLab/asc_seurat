@@ -1,6 +1,5 @@
 # Asc-Seurat
-# Version 1.3
-
+# Version 1.0
 set.seed(1407)
 
 suppressMessages(require("shiny"))
@@ -85,7 +84,7 @@ function(request) {
                      br(),
                      p("Asc-Seurat, pronounced \"ask Seurat\", is based on the popular R package \"Seurat\", from the Satija Lab. It includes many, but not all, features of the Seurat package."), 
                      p("It also takes advantage of \"Dynverse\", a collection of R packages that allows the execution of multiple trajectory inference models."),
-                     p("Finally, Asc_Seurat uses BioMart, through the biomaRt R package, to promote the functional annotation of genes from a myriad of species."),
+                     p("Finally, Asc_Seurat uses BioMart, through the biomaRt R package, to promote the functional annotation of genes from many species."),
                      br(),
                      
                      p(
@@ -98,7 +97,7 @@ function(request) {
                          "and its publication",
                          a(tags$a(href="https://doi.org/10.1038/s41587-019-0071-9", "here;", target="_blank")),
                          "and BioMart's documentation",
-                         a(tags$a(href="https://www.ensembl.org/biomart/martview/dc4f7144c82d3d4b4c1bd8f27ca07b6c", "here", target="_blank")),
+                         a(tags$a(href="https://www.ensembl.org/biomart/martview/dc4f7144c82d3d4b4c1bd8f27ca07b6c", "here,", target="_blank")),
                          "and biomaRt's vignettes",
                          a(tags$a(href="https://bioconductor.org/packages/release/bioc/html/biomaRt.html", "here.", target="_blank"))
                      ),
@@ -111,7 +110,7 @@ function(request) {
                      
                      br(),
                      
-                     p("Note that both Seurat and dynverse teams are also present on GitHub. For questions or issues related to Seurat's or dynverse's functionalities, please visit", a(tags$a(href="https://github.com/satijalab/seurat/issues", "Seurat's GitHub page", target="_blank")), "or", a(tags$a(href="https://github.com/dynverse/dyno/issues", "Dynverse's GitHub page", target="_blank"))),
+                     p("Note that both Seurat and dynverse teams are also present on GitHub. For questions or issues related to Seurat's or dynverse's functionalities, please visit", a(tags$a(href="https://github.com/satijalab/seurat/issues", "Seurat's GitHub page", target="_blank")), "or", a(tags$a(href="https://github.com/dynverse/dyno/issues", "Dynverse's GitHub page.", target="_blank"))),
                      tags$hr(),
                      h2("Funding"),
                      br(),
@@ -143,10 +142,10 @@ function(request) {
             tabPanel("One sample",
                      fluidRow(
                          br(),
-                         p(strong("Note that at any time, you can save a bookmark (purple button at the right bottom) that will save your parameter choices. Using the saved bookmark, it is possible to re-load all selected parameters and reexecute the analysis, to reproduce your results.")),
+                         p(strong("Note that at any time, users can save a bookmark (purple button at the right bottom) that will save your parameter choices. Using the saved bookmark, it is possible to re-load all selected parameters and re-execute the analysis, to reproduce the results.")),
                          br(),
                          p("Choose the sample to be analyzed and the initial requirements to load the data. Note that cells that do not match the parameters will not be load."),
-                         p("These parameters are used to exclude poor cells and allow the data to load quickly. You can add more restrictive parameters after visualizing the distributions in the next section."),
+                         p("These parameters are used to exclude low-quality cells and allow the data to load quickly. Users can add more restrictive parameters after visualizing the distributions in the next section."),
                          #br(),
                          p(strong("After selecting the parameters, click on the blue button to load the data.")),
                          br(),
@@ -184,7 +183,7 @@ function(request) {
                      fluidRow(
                          titlePanel("Screening plot to define filtering parameters"),
                          br(),
-                         p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of expressed genes that are from the mitochondria."),
+                         p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of reads that map to the mitochondrial genome."),
                          p("The parameters can be set on the right side of the plot and must be set using a higher value than the ones above. Otherwise, they will have no effect since the cells were already excluded."),
                          br(),
                          p("After setting the parameters, click on \"Show plot of filtered data\" to visualize the data after filtering."),
@@ -215,7 +214,7 @@ function(request) {
                          condition = "input.run_vinplot!= 0",
                          
                          fluidRow(
-                             titlePanel("Screening plot showing the remanining cells after filtering"),
+                             titlePanel("Screening plot showing the remaining cells after filtering"),
                              column(width = 10,
                                     my_withSpinner( plotOutput("VlnPlot_filt"))
                              ),
@@ -318,8 +317,8 @@ function(request) {
                      fluidRow(
                          titlePanel("Clustering"),
                          br(),
-                         p("Be aware that this parameter is central in the cluster definition. It is recommended to try different values and define the most appropriate according to the expectations of the cell populations present in your sample."),
-                         p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
+                         p("Be aware that this parameter is central in the cluster definition. It is recommended to try different values and define the most appropriate according to the expectations of the cell populations present in the sample."),
+                         p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
                          br(),
                          column(width = 3,
                                 div(class = "option-group",
@@ -396,8 +395,8 @@ function(request) {
                      fluidRow(
                          titlePanel("Excluding or selecting clusters for reanalysis"),
                          br(),
-                         p("Sometimes, it is useful to exclude or to select the clusters that are of interest.", "After excluding or selecting the cells of interest, it is recommended to repeat the clustering step using only the subset."),
-                         p("After selecting the clusters, click on the blue button (Reanalyze after selection/exclusion of clusters). Asc-Seurat will run the analyses of the new subset until the PCA step.", strong("Then, you need to set the new number of components using the elbow plot (above) and click on the button \"Run the clustering analysis\" again.")),
+                         p("Sometimes, it is helpful to exclude or select the clusters that are of interest. After excluding or selecting the cells of interest, it is recommended to repeat the clustering step using only the subset."),
+                         p("After selecting the clusters, click on the blue button (Reanalyze after selection/exclusion of clusters). Asc-Seurat will run the analyses of the new subset until the PCA step.", strong("Then, users need to set the new number of components using the elbow plot (above) and click on the button \"Run the clustering analysis\" again.")),
                          br(),
                          column(3,
                                 div(class = "option-group",
@@ -450,7 +449,7 @@ function(request) {
                          p("The button below allows for saving the processed data in a file that can be used for the pseudo-time analysis."),
                          p("Asc-Seurat will save only the most recently processed data."),
                          br(),
-                         p(strong("Note:", "The processed data needs to be saved in the folder", code("RDS_files/"), "so it can load automatically in the tab \"Trajectoty inference\"" )),
+                         p(strong("Note:", "The processed data needs to be saved in the folder", code("RDS_files/"), "so it can load automatically in the tab \"Trajectory inference.\"" )),
                          column(6,
                                 br(),
                                 downloadButton("downloadRDS",
@@ -484,7 +483,7 @@ function(request) {
                                                      "Select the analysis to perform?",
                                                      choices = list("Identify markers for all clusters" = 0,
                                                                     "Identify markers for one specific cluster" = 1,
-                                                                    "Identify markers distinguishing a cluster from a other(s) cluster(s)" = 2),
+                                                                    "Identify markers distinguishing a cluster from other(s) cluster(s)" = 2),
                                                      selected = c(0)))),
                              conditionalPanel (
                                  condition = "input.find_markers_tab1_opt == 1",
@@ -529,7 +528,7 @@ function(request) {
                                                                      "no" = "FALSE"),
                                                          selected = "TRUE")),
                                         numericInput("find_markers_tab1_return.thresh",
-                                                     label = "Select the (adjusted) p-value treshold. Leave it blank if no filtering is required",
+                                                     label = "Select the (adjusted) p-value threshold. Leave it blank if no filtering is required",
                                                      value = "",
                                                      step = 0.01),
                                     ),
@@ -556,7 +555,7 @@ function(request) {
                      fluidRow(
                          titlePanel("Expression of markers"),
                          br(),
-                         p("In this section, you can vizualize the gene expression of selected genes (e.g. tissue markers). Start by loading a", strong("csv"), "file with at least two columns. The first column must be the gene ID, the second is a grouping variable (e.g. the tissue name). A third column can be used to store the common name of the gene but is optional."),
+                         p("In this section, users can visualize the gene expression of selected genes (e.g., tissue markers). Start by loading a", strong("csv"), "file with at least two columns. The first column must be the gene ID, and the second is a grouping variable (e.g., the tissue name). A third column can be used to store the common name of the gene but is optional."),
                          br(),
                          column(width = 4,
                                 div(class = "option-group",
@@ -612,7 +611,7 @@ function(request) {
                              #       br(),
                              titlePanel("Heatmap"),
                              br(),
-                             strong("Note that the scale of colors of the heatmap are adjusted based on the expression of the selected genes."),
+                             strong("Note that the scale of colors of the heatmap is adjusted based on the expression of the selected genes."),
                              br(),
                              column(width = 10,
                                     my_withSpinner( uiOutput("heat_map_ui"))),
@@ -642,9 +641,9 @@ function(request) {
                          fluidRow(
                              titlePanel("Visualization of gene expression of each cell and additional plots"),
                              br(),
-                             p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. We recommend selecting no more than 20 genes, so the page scrolls smoothly."),
-                             br(),
-                             p("Only genes selected for the heapmap can be selected for the additional plots."),
+                             # p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. We recommend selecting no more than 20 genes, so the page scrolls smoothly."),
+                             # br(),
+                             p("Only genes selected for the heatmap can be selected for the additional plots."),
                              br(),
                              column(width = 3,
                                     my_withSpinner( uiOutput("marker_to_feature_plot") )),
@@ -657,7 +656,7 @@ function(request) {
                                                      selected = c("data")))),
                              column(width = 3,
                                     actionButton("run_feature_plot",
-                                                 HTML("Show the expression of genes per cell"),
+                                                 HTML("Show the expression of genes at the cell level"),
                                                  style="background-color: #d6fffe"))
                              
                          )
@@ -692,7 +691,7 @@ function(request) {
                          fluidRow(
                              titlePanel("Downloading additional plots"),
                              
-                             p("In this section it is possible to download the feature, violin and dot plots of each selected gene."),
+                             p("In this section, it is possible to download the feature, violin, and dot plots of each selected gene."),
                              p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
                              br(),
                              column(width = 2,
@@ -785,21 +784,21 @@ function(request) {
             
             tabPanel("Integration of multiple samples",
                      br(),
-                     p(strong("Note that at any time, you can save a bookmark (purple button at the right bottom) that will save your parameter choices. Using the saved bookmark, it is possible to re-load all selected parameters and reexecute the analysis, to reproduce your results.")),
+                     p(strong("Note that at any time, you can save a bookmark (purple button at the right bottom) that will save your parameter choices. Using the saved bookmark, it is possible to re-load all selected parameters and re-execute the analysis, to reproduce the results.")),
                      br(),
                      p("It is necessary to choose adequate parameters before loading the data for integration to avoid bias due to poor cells interfering in the anchoring step.", strong("Therefore, we recommend exploring each sample separately in the one sample tab and defining the best parameters before the integration.")),
                      br(),
-                     p("To load the sample, it is necessary to have a configuration file in the csv format. In this file, each row contains the information of one sample and each column is one parameter for filtering the sample before integration.", strong("The file must have 6 columns and a header, as described below:")),
+                     p("To load the sample, it is necessary to have a configuration file in the csv format. In this file, each row contains the information of one sample, and each column is one parameter for filtering the sample before integration.", strong("The file must have six columns and a header, as described below:")),
                      tags$ul(
                          tags$li(strong("Folder name:"), "Name of the folder where the raw data is (must be a subfolder of data/)"),
-                         tags$li(strong("Sample name:"), "If your samples are part of a timepoint series, and you want to use this information in the trajectory analysis, the names need to be numeric (0 instead of 0h, for example. If you have replicates that should be combined, use the same name for all replicates)."),
+                         tags$li(strong("Sample name:"), "If the samples are part of a timepoint series, and you want to use this information in the trajectory analysis, the names need to be numeric (0 instead of 0h, for example. If you have replicates that should be combined, use the same name for all replicates)."),
                          tags$li(strong("Minimum number of cells expressing a gene")),
                          tags$li(strong("Minimum number of genes a cell must express to be included")),
                          tags$li(strong("Maximum number of genes a cell can express and still be included")),
                          tags$li(strong("Maximum percentage of genes belonging to the mitochondrial genome"))
                      ),
                      br(),
-                     p("Alternatively, it is possible to load previously integrated data, saving sometime by not running the integration step. For that, save a RDS file containing the integrated data."), #strong("Note that it must be saved before the execution of PCA and clustering steps. Otherwise, some of the functions will not work.")
+                     p("Alternatively, it is possible to load previously integrated data, saving some time by not running the integration step. For that, save an RDS file containing the integrated data."), #strong("Note that it must be saved before the execution of PCA and clustering steps. Otherwise, some of the functions will not work.")
                      p("After selecting the parameters, click on the blue button to load the data."),
                      br(),
                      fluidRow(
@@ -807,7 +806,7 @@ function(request) {
                                 div(class = "option-group",
                                     radioButtons("integration_options",
                                                  "Run a new integration analysis or read a previously saved file?",
-                                                 choices = list("Run new analysis" = 0,
+                                                 choices = list("Run a new analysis" = 0,
                                                                 "Load file" = 1),
                                                  selected = c(0) ))),
                          
@@ -865,7 +864,7 @@ function(request) {
                          
                          column(width = 3,
                                 actionButton("load_rds_file",
-                                             HTML("Load the integrated data <br> or <br> Execute new integration"),
+                                             HTML("Load the integrated data <br> or <br> execute a new integration"),
                                              style="background-color: #d6fffe")),
                          
                      ), # ends fluidRow
@@ -875,9 +874,9 @@ function(request) {
                          
                          fluidRow(
                              tags$hr(),
-                             p("Since the integration is a time-consuming step, it is useful to save the integrated data before running any additional analyses. The main advantage of saving the data at this point is that if you need to restart the analysis (e. g. to change parameters), you can skip the integration step by loading the RDS file instead."),
+                             p("Since the integration is a time-consuming step, it is helpful to save the integrated data before running any additional analyses. The main advantage of saving the data is that if you need to restart the analysis (e. g., to change parameters), you can skip the integration step by loading the RDS file instead."),
                              br(),
-                             p(strong("The rds files must be saved in the folder"), code("RDS_files"), ". Otherwise, it will not be possible to read them with the \"Load file\" option"),
+                             p(strong("The rds files must be saved in the folder"), code("RDS_files."), "Otherwise, it will not be possible to read them with the \"Load file\" option."),
                              column(6,
                                     downloadButton("download_int_data",
                                                    "Download RDS object containing the integrated data.")
@@ -901,7 +900,7 @@ function(request) {
                                                  value = "")),
                                 div(class = "option-group",
                                     numericInput("max_count_tab2",
-                                                 label = "Exclude any cell that expressed more than this number of genes (i.e. possible doublets)",
+                                                 label = "Exclude any cell that expressed more than this number of genes (i.e., possible doublets)",
                                                  value = "")),
                                 div(class = "option-group",
                                     numericInput("max_mito_perc_tab2",
@@ -919,7 +918,7 @@ function(request) {
                          condition = "input.run_vinplot_tab2!= 0",
                          
                          fluidRow(
-                             titlePanel("Screening plot showing the remanining cells after filtering"),
+                             titlePanel("Screening plot showing the remaining cells after filtering"),
                              column(width = 10,
                                     my_withSpinner(  plotOutput("VlnPlot_filt_tab2") )
                              ),
@@ -947,7 +946,7 @@ function(request) {
                      fluidRow(
                          titlePanel("Normalizing, centering, and dimension reduction analysis (PCA)"),
                          br(),
-                         p("Note that only the most variable genes are use in the dimension reduction step (PCA)."),
+                         p("Note that only the most variable genes are used in the dimension reduction step (PCA)."),
                          br(),
                          column(width = 4,
                                 div(class = "option-group",
@@ -981,7 +980,7 @@ function(request) {
                          condition = "input.run_pca_tab2!= 0",
                          
                          fluidRow(
-                             titlePanel("Elbow plot showing the variantion explained by each component"),
+                             titlePanel("Elbow plot showing the variation explained by each component"),
                              br(),
                              p("Choose the number of components that explain the most variation."),
                              br(),
@@ -1022,7 +1021,7 @@ function(request) {
                          titlePanel("Clustering"),
                          br(),
                          p("Be aware that this parameter is central in the cluster definition. It is recommended to try different values and define the most appropriate according to the expectations of the cell populations present in your sample."),
-                         p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), ":", em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
+                         p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), ":", em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
                          br(),
                          column(width = 3,
                                 div(class = "option-group",
@@ -1054,7 +1053,7 @@ function(request) {
                              )
                          ), # Fluid row
                          fluidRow(
-                             titlePanel("Clustering plots (UMAP) separeted by sample"),
+                             titlePanel("Clustering plots (UMAP) separated by sample"),
                              column(width = 12,
                                     
                                     my_withSpinner(  plotOutput("umap_three_samples") )
@@ -1097,7 +1096,7 @@ function(request) {
                          
                          fluidRow(
                              titlePanel("Number of cells per cluster"),
-                             p("First row shows the cluster ID. The second row shows the number of cells per cluster."),
+                             p("The first row shows the cluster ID. The second row shows the number of cells per cluster."),
                              column(12,
                                     my_withSpinner( verbatimTextOutput("cluster_size_tab2") ))
                          ), # Fluid row
@@ -1106,7 +1105,7 @@ function(request) {
                      fluidRow(
                          titlePanel("Excluding or selecting clusters for reanalysis"),
                          br(),
-                         p("Sometimes, it is useful to exclude or select the clusters that are more of interest.", "After selecting or excluding the cells of interest, it is recommended to repeat the clustering step using only the subset."),
+                         p("Sometimes, it is helpful to exclude or select the clusters that are more of interest.", "After selecting or excluding the cells of interest, it is recommended to repeat the clustering step using only the subset."),
                          p("After selecting the clusters, click on the blue button (Reanalyze after selection/exclusion of clusters). Asc-Seurat will run the analyses of the new subset until the PCA step.", strong("Then, you will need to set the new number of components using the elbow plot (above) and click on the button \"Run the clustering analysis\" again.")),
                          
                          column(3,
@@ -1158,7 +1157,7 @@ function(request) {
                          p("The button below allows for saving the processed data in a file that can be used for the pseudo-time  (trajectory inference) analysis."),
                          p("Asc-Seurat will save the most recently processed data."),
                          br(),
-                         p(strong("Note:", "The processed data needs to be saved in the folder", code("RDS_files/"), "so it can load automatically in the tab \"Trajectoty inference\"" )),
+                         p(strong("Note:", "The processed data needs to be saved in the folder", code("RDS_files/"), "so it can load automatically in the tab \"Trajectory inference\"." )),
                          
                          column(6,
                                 br(),
@@ -1185,14 +1184,14 @@ function(request) {
                          condition = "input.find_markers_tab2 == 1",
                          fluidRow(
                              br(),
-                             p("Check the Seurat's vignettes", a(tags$a(href="https://satijalab.org/seurat/v3.2/de_vignette.html", "here!", target="_blank")), "and the function's manual",  a(tags$a(href="https://www.rdocumentation.org/packages/Seurat/versions/3.1.4/topics/FindAllMarkers", "here!", target="_blank")),  "to see the options for each parameters of this section. "),
+                             p("Check Seurat's vignettes", a(tags$a(href="https://satijalab.org/seurat/v3.2/de_vignette.html", "here", target="_blank")), "and the function's",  a(tags$a(href="https://www.rdocumentation.org/packages/Seurat/versions/3.1.4/topics/FindAllMarkers", "manual", target="_blank")),  "to see the options for each parameter of this section. "),
                              br(),
                              column(3,
                                     div(class = "option-group",
                                         radioButtons("find_markers_or_DE_tab2",
                                                      "Detect conserved markers or D.E. genes",
                                                      choices = c("Conserved markers" = 0,
-                                                                 "D.E. genes between treat vs control" = 1),
+                                                                 "D.E. genes between treat vs. control" = 1),
                                                      selected = 0
                                         ))),
                              conditionalPanel(
@@ -1242,7 +1241,7 @@ function(request) {
                                                 multiple = FALSE,
                                                 options = list(`actions-box` = TRUE)),
                                             numericInput("find_markers_or_DE_tab2_pvalue",
-                                                         label = "Select the (adjusted) p-value treshold. Leave it blank if no filtering is required",
+                                                         label = "Select the (adjusted) p-value threshold. Leave it blank if no filtering is required",
                                                          value = 0.05),
                                             
                                         ))),
@@ -1272,7 +1271,7 @@ function(request) {
                      fluidRow(
                          titlePanel("Expression of markers"),
                          br(),
-                         p("In this section, you can vizualize the gene expression of selected genes (e.g. tissue markers). Start by loading a", strong("csv"), "file with at least two columns. The first column must be the gene ID, the second is a grouping variable (e.g. the tissue name). A third column can be used to store the common name of the gene but is optional."),
+                         p("In this section, users can visualize the gene expression of selected genes (e.g., tissue markers). Start by loading a", strong("csv"), "file with at least two columns. The first column must be the gene ID, and the second is a grouping variable (e.g., the tissue name). A third column can be used to store the common name of the gene but is optional."),
                          br(),
                          column(width = 4,
                                 div(class = "option-group",
@@ -1330,10 +1329,10 @@ function(request) {
                              #          br(),
                              titlePanel("Heatmap"),
                              br(),
-                             strong("Note that the scale of colours of the heatmap are ajusted based on the expression of the selected genes."),
+                             strong("Note that the scale of colors of the heatmap is adjusted based on the expression of the selected genes."),
                              br(),
-                             p("For now, the heat map show the average of expression of all samples together. It is only helpfull to identify if the markers or the cell types are making sense with the number of clusters."),
-                             p("To vizualize the expression in the clusters by sample, use the feature plots"),
+                             p("For now, the heat map shows the average expression of all samples together. It is only helpful to identify if the markers or cell types make sense with the number of clusters."),
+                             p("To visualize the expression in the clusters by sample, use the feature plots."),
                              #        p(strong("obs."), "The heatmap will crash if only one (or zero) gene of your list is found in the dataset. I am going to fix that soon. For now, use the feature plots if you want to check a single gene."),
                              column(width = 10,
                                     my_withSpinner(  uiOutput("heat_map_ui_tab2") )),
@@ -1364,9 +1363,9 @@ function(request) {
                          fluidRow(
                              titlePanel("Visualization of gene expression of each cell and additional plots"),
                              br(),
-                             p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. It is recommended to select no more than 20 genes, so the page scrolls smoothly."),
-                             br(),
-                             p("Only genes selected for the heapmap can be selected for the additional plots."),
+                             # p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. It is recommended to select no more than 20 genes, so the page scrolls smoothly."),
+                             # br(),
+                             p("Only genes selected for the heatmap can be selected for the additional plots."),
                              br(),
                              column(width = 3,
                                     my_withSpinner( uiOutput("marker_to_feature_plot_tab2") )),
@@ -1379,7 +1378,7 @@ function(request) {
                                                      selected = c("data")))),
                              column(width = 3,
                                     actionButton("run_feature_plot_tab2",
-                                                 HTML("Show the expression of genes per cell"),
+                                                 HTML("Show the expression of genes at the cell level"),
                                                  style="background-color: #d6fffe"))
                              
                          )
@@ -1404,7 +1403,7 @@ function(request) {
                          fluidRow(
                              titlePanel("Downloading additional plots"),
                              
-                             p("In this section it is possible to download the feature, violin and dot plots of each selected gene."),
+                             p("In this section, it is possible to download the feature, violin, and dot plots of each selected gene."),
                              p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
                              br(),
                              column(width = 2,
@@ -1489,18 +1488,18 @@ function(request) {
             #### trajectory inference ####
             tabPanel("Trajectory inference",
                      br(),
-                     p(strong("Note that at any time, you can save a bookmark (purple button at the right bottom) that will save your parameter choices. Using the saved bookmark, it is possible to re-load all selected parameters and reexecute the analysis, to reproduce your results.")),
+                     p(strong("Note that at any time, you can save a bookmark (purple button at the right bottom) that will save your parameter choices. Using the saved bookmark, it is possible to re-load all selected parameters and re-execute the analysis, to reproduce the results.")),
                      
                      fluidRow(
                          titlePanel("Trajectory inference analysis"),
                          # br(),
                          # p("In this tab it is possible to execute the trajectory inference (pseudo-time) analysis using slingshot. For more information about the package, click here", a(tags$a(href="https://www.bioconductor.org/packages/release/bioc/html/sli", "here."))),
                          # br(),
-                         p("For the trajectory inference analyses you need to use data containing the cluster information that can be obtained in the other tabs of Asc-Seurat. The file must be a RDS file located in the", code("RDS_files/"),"that can be generated using the previous tabs of Asc-Seurat."),
+                         p("For the trajectory inference analyses, users need to use data containing the cluster information obtained in the other tabs of Asc-Seurat. The file must be an RDS file located in the", code("RDS_files/"),"that can be generated using the previous tabs of Asc-Seurat."),
                          br(),
-                         p("For this analysis, it is possible to indicate what cluster is expected to be at the begining and/or at the end of the trajectory. Depending of the selected model, some of this information might be required."),
+                         p("For this analysis, it is possible to indicate what cluster is expected to be at the beginning and/or end of the trajectory. Depending on the selected model, some of this information might be required."),
                          br(),
-                         p("To start the analysis, select the file containing your data and click on", code("Run trajectory inference model"), "button."),
+                         p("To start the analysis, select the file containing the data and click on", code("Run trajectory inference model"), "button."),
                          column(width = 3,
                                 my_withSpinner( uiOutput("load_integrated_ui_tab3") ),
                                 div(class = "option-group",
@@ -1584,7 +1583,7 @@ function(request) {
                          condition = "input.run_ti_model != 0",
                          fluidRow(
                              
-                             titlePanel("Visualization of the infered trajectory"),
+                             titlePanel("Visualization of the inferred trajectory"),
                              
                              #p("Below, it is possible to visualize the trajectory in three different representation of the data."),
                              
@@ -1652,7 +1651,7 @@ function(request) {
                      conditionalPanel (
                          condition = "input.run_ti_model != 0",
                          
-                         p("More than one lineage of cells can be present in the infered trajectory. If that is the case, the order of the cluster that represent the development pathway of each lineage will be show bellow. Clusters that appear in muliple row represent segments of the trajectory that are shared among lineages."),
+                         p("More than one lineage of cells can be present in the inferred trajectory. IIf that is the case, the order of the clusters representing the development pathway of each lineage will be shown below. Clusters that appear in multiple rows represent segments of the trajectory that are shared among lineages."),
                          
                          fluidRow(
                              column(12,
@@ -1667,7 +1666,7 @@ function(request) {
                          
                          p("In this section, it is possible to observe the expression of genes in the cells that are part of each lineage/trajectory. You can either provide a list of genes of interest or use the package dynfeature to search for genes that are \"important\" in explaining the trajectory."),
                          br(),
-                         p("These genes can be identified in three different ways. 1) Global overview: genes that are important to define the whole trajectory; 2) Lineage/branch: genes that are important to define a branch interest; 3) Genes that are important to define the bifurcation points (points where the trajectory splits in different branches)"),
+                         p("These genes can be identified in three different ways. 1) Global overview: genes that are important to define the whole trajectory; 2) Lineage/branch: genes that are important to define a branch interest; 3) Genes that are important to define the bifurcation points (points where the trajectory splits into different branches)"),
                          br(),
                          # p("D.E. genes == differentialy expressed genes"),
                          p(strong("Note."), "Dynfeature does not calculate a p-value for the tested genes. Instead, it defines an \"importance value\" that can be used to rank the genes by their relevance."),
@@ -1679,8 +1678,8 @@ function(request) {
                                 div(class = "option-group",
                                     radioButtons("ti_expre_opt",
                                                  "Select the type of analysis:",
-                                                 choices = list("Vizualization of a list of genes" = 0,
-                                                                "Idenfitication of important genes using Dynfeature" = 1
+                                                 choices = list("Visualization of a list of genes" = 0,
+                                                                "Identification of important genes using Dynfeature" = 1
                                                                 #,"D.E. genes based on tradSEQ" = 2
                                                  ),
                                                  selected = c(0)
@@ -1727,8 +1726,8 @@ function(request) {
                                     conditionalPanel(
                                         condition = "input.load_markers_tab3 > 0",
                                         actionButton("run_heatmap_tab3",
-                                                     HTML("Show heatmap with the average \
-                                                             of expression per cluster"),
+                                                     HTML("Show heatmap demonstrating the expression \
+                                                             within the trajectory"),
                                                      style="background-color: #d6fffe")))
                              
                          ), # Fluid row
@@ -1767,13 +1766,13 @@ function(request) {
                          fluidRow(
                              titlePanel("Visualization of gene expression of each cell in the trajectory"),
                              br(),
-                             p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. We recommend selecting no more than 20 genes, so the page scrolls smoothly."),
-                             br(),
+                             # p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. We recommend selecting no more than 20 genes, so the page scrolls smoothly."),
+                             # br(),
                              column(width = 3,
                                     my_withSpinner( uiOutput("marker_to_feature_plot_tab3") )),
                              column(width = 3,
                                     actionButton("run_feature_plot_tab3",
-                                                 HTML("Show the expression of genes per cell"),
+                                                 HTML("Show the expression of genes at the cell level"),
                                                  style="background-color: #d6fffe"))
                              
                          )
@@ -1806,11 +1805,11 @@ function(request) {
                          fluidRow (
                              titlePanel("Expression of markers"),
                              br(),
-                             p("For each of the below analyzes, it is possible to save the list of all expressed genes with their \"importance\" values. It is also possible to save the list of the top N genes."),
+                             p("For each of the below analyses, it is possible to save the list of all expressed genes with their \"importance\" values. It is also possible to save the list of the top N genes."),
                              br(),
-                             p("For the branch/linage analysis, you can provide the beginning (from) and end (to) of the branch/linage of interested. You can also select only one, either from or to, as long as the other box is blank"),
+                             p("For the branch/linage analysis, you can provide the beginning (from) and end (to) of the branch/linage of interest. You can also select only one, either from or to, as long as the other box is blank."),
                              br(),
-                             p("For the bifurcation analysis, you can provide the number of the cluster where a branching happened to select the genes more relevant to this point. If left in blank, the analysis will identify the \"importance\" values for each branching point."),
+                             p("For the bifurcation analysis, you can provide the cluster number where a branching happened to select the genes more relevant to this point. If left in blank, the analysis will identify the \"importance\" values for each branching point."),
                              br(),
                              
                              column(width = 3,
@@ -1863,7 +1862,7 @@ function(request) {
                              br(),
                              #       p(strong("obs."), "The heatmap will crash if only one (or zero) gene from your list is found in the dataset. A fix is in progress for the next update. For now, use the feature plots if you want to check a single gene."),
                              #       br(),
-                             p("Be careful with the name of the genes."),
+                             #p("Be careful with the name of the genes."),
                              titlePanel("Heatmap of the trajectory"),
                              
                              br(),
@@ -1897,14 +1896,14 @@ function(request) {
                          fluidRow(
                              titlePanel("Additional plots"),
                              br(),
-                             p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. We recommend selecting no more than 20 genes, so the page scrolls smoothly."),
-                             br(),
+                             # p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. We recommend selecting no more than 20 genes, so the page scrolls smoothly."),
+                             # br(),
                              
                              column(width = 3,
                                     my_withSpinner( uiOutput("marker_to_feature_plot_tab3_dynv") )),
                              column(width = 3,
                                     actionButton("run_feature_plot_tab3_dynv",
-                                                 HTML("Show the expression of genes per cell"),
+                                                 HTML("Show the expression of genes at the cell level"),
                                                  style="background-color: #d6fffe"))
                              
                          )
@@ -2144,9 +2143,9 @@ function(request) {
                          mainPanel(
                              width = 9,
                              h3("About"),
-                             markdown("This annotation module is based on the [biomaRt R package](https://www.bioconductor.org/packages/devel/bioc/vignettes/biomaRt/inst/doc/accessing_ensembl.html) that is tailored to rapidly access the data available in Ensembl. The package needs active internet conection, and sometimes users can face delays while loading the complete list of parameters in the sidebar, as well as sometimes not get annotation results, due to conection problems to the biomaRt server."),
-                             markdown("In order to facilitate analyses, this module uses by default data with the ensembl or phytozome default gene IDs, which, in the package, are respectively called as `ensembl_gene_id` and `gene_name1` dataset attributes. However, we understand that users sometimes have different gene names or ids that do not correspond to these features. In that cases, users should select in the dropdown menu in the sideber of the BioMart filter that best suits the input data. The gene filter will be used to match the first column of the input csv. More information about dataset filters and attributes can be found in [the package vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/biomaRt/inst/doc/accessing_ensembl.html#searching-for-filters-and-attributes)."),
-                             markdown("Please make sure that your query species is available in the database and that its dataset is properly selected in the dataset selection menu that is available in the sidebar."),
+                             markdown("This annotation module is based on the [biomaRt R package](https://www.bioconductor.org/packages/devel/bioc/vignettes/biomaRt/inst/doc/accessing_ensembl.html) that is tailored to access the data available in Ensembl, or Phytozome, rapidly. The package needs an active internet connection. Users can face delays while loading the complete list of parameters in the sidebar and sometimes not get annotation results due to connection problems to the biomaRt server."),
+                             markdown("A basic understanding of how BioMart queries are built is required to select the filters and attributes needed. Visit biomaRt’s [vignettes](https://www.bioconductor.org/packages/devel/bioc/vignettes/biomaRt/inst/doc/accessing_ensembl.html) for an overview."),
+                             markdown("Please make sure that your query species is available in the database and that its dataset is appropriately selected in the dataset selection menu that is available in the sidebar.."),
                              my_withSpinner(uiOutput("biomartresultsheader"), hide_ui = T),
                              my_withSpinner(uiOutput("triggerbutton"), hide_ui = T),
                              HTML(paste("<br/>")),
