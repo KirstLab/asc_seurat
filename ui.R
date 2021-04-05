@@ -474,7 +474,7 @@ function(request) {
                          condition = "input.find_markers_tab1 == 1",
                          fluidRow(
                              br(),
-                             p("Check the Seurat's vignettes", a(tags$a(href="https://satijalab.org/seurat/v3.2/de_vignette.html", "here!", target="_blank")), "and the function's manual",  a(tags$a(href="https://www.rdocumentation.org/packages/Seurat/versions/3.1.4/topics/FindAllMarkers", "here!",target="_blank")),  "to see the options for each parameters of this section. "),
+                             p("Check the Seurat's vignettes", a(tags$a(href="https://satijalab.org/seurat/v3.2/de_vignette.html", "here", target="_blank")), "and the function's manual",  a(tags$a(href="https://www.rdocumentation.org/packages/Seurat/versions/3.1.4/topics/FindAllMarkers", "here",target="_blank")),  "to see the options for each parameters of this section. "),
                              
                              br(),
                              column(3,
