@@ -14,7 +14,7 @@ COPY www /app/www
 RUN R -e 'install.packages("BiocManager", dep = T)'
 RUN R -e 'library(BiocManager)'
 # tidyverse
-RUN apt-get install -y r-base-dev xml2 libxml2-dev libssl-dev libcurl4-openssl-dev unixodbc-dev
+RUN apt-get update && apt-get install -y r-base-dev xml2 libxml2-dev libssl-dev libcurl4-openssl-dev unixodbc-dev
 RUN R -e 'install.packages("tidyverse", dep = T)'
 RUN R -e 'library(tidyverse)'
 # seurat
@@ -29,7 +29,7 @@ RUN R -e 'library(patchwork)'
 RUN R -e 'install.packages("ggplot2", dep = T)'
 RUN R -e 'library(ggplot2)'
 # svglite
-RUN apt-get install -y r-cran-svglite
+RUN apt-get update && apt-get install -y r-cran-svglite
 # circlize
 RUN R -e 'install.packages("circlize", dep = T)'
 RUN R -e 'library(circlize)'
@@ -69,13 +69,13 @@ RUN R -e 'library(DT)'
 RUN R -e 'install.packages("dplyr", dep = T)'
 RUN R -e 'library(dplyr)'
 # hdf5r
-RUN apt-get install -y libhdf5-dev
+RUN apt-get update && apt-get install -y libhdf5-dev
 RUN R -e 'install.packages("hdf5r", dep = T)'
 RUN R -e 'library(hdf5r)'
 
 # Install Bioconductor packages
 # complex heatmap
-RUN apt-get install -y  r-cran-cluster r-bioc-complexheatmap
+RUN apt-get update && apt-get install -y  r-cran-cluster r-bioc-complexheatmap
 RUN R -e 'BiocManager::install("ComplexHeatmap")'
 RUN R -e 'library(ComplexHeatmap)'
 # tradeseq
