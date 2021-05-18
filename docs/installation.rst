@@ -21,6 +21,10 @@ After installing Docker, users can download the Docker image containing Asc-Seur
     # Download the docker image:
     docker pull kirstlab/asc_seurat
 
+.. tip::
+
+    You can install a specific version of Asc-Seurat by adding the version tag at the end of the command, i.e., :code:`docker pull kirstlab/asc_seurat:v.1.0`.
+
 After the installation is finished, users can start the app on their working directory. See below for the instructions on how to start the app in the different operational systems.
 
 .. note::
@@ -35,8 +39,6 @@ Starting Asc-Seurat
 .. warning::
 
    Single-cell RNA-seq data analysis can be resource-consuming. By default, Docker will use (allocate) only a fraction of your RAM memory. A minimum requirement of 8 Gb of RAM memory was necessary to analyze a dataset containing around eight thousand cells during our tests. Therefore, users need to adjust the amount of allocated memory according to their dataset. Please visit: https://docs.docker.com/docker-for-mac/space/ (MAC) or https://docs.docker.com/docker-for-windows/ (Windows) to learn how to make this adjustment.
-
-
 
 For macOS and Linux
 -------------------
@@ -70,13 +72,11 @@ For Windows
 To run Asc-Seurat on Windows via Docker, it is necessary to use Windows 10. Moreover, Windows Subsystem for Linux (WSL) needs to be installed. Before running Asc-Seurat, users need to guarantee that Docker and its WSL 2 components are correctly installed and running. For that, check the two (sequential) tutorials below:
 
 1. `Docker installation info <https://docs.docker.com/docker-for-windows/install/>`_
-2. `Define windows WSL 2 as default <https://docs.microsoft.com/pt-br/windows/wsl/install-win10#step-5---set-wsl-2-as-your-default-version>`_ (If you followed the link above correctly, you only need to execute step 5 of this tutorial).
+2. `Define windows WSL 2 as default <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-5---set-wsl-2-as-your-default-version>`_ (If you followed the link above correctly, you only need to execute step 5 of this tutorial).
 
 .. tip::
 
     The tutorials above contain all the necessary information to install Docker on Windows. However, it is also possible to find video-tutorials on YouTube. Check the following link for an example: https://youtu.be/5nX8U8Fz5S0 .
-
-
 
 After certifying that everything is working, Asc-Seurat can be started with:
 

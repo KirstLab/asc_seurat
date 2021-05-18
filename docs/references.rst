@@ -50,6 +50,7 @@ CRAN
  * patchwork: https://cran.r-project.org/web/packages/patchwork/index.html
  * rclipboard: https://cran.r-project.org/web/packages/rclipboard/index.html
  * reactable: https://cran.r-project.org/web/packages/reactable/index.html
+ * scales: https://cran.r-project.org/web/packages/scales/index.html
  * sctransform: https://cran.r-project.org/web/packages/sctransform/index.html
  * SeuratObject: https://cran.r-project.org/web/packages/SeuratObject/index.html
  * shiny: https://cran.r-project.org/web/packages/shiny/index.html
@@ -57,11 +58,13 @@ CRAN
  * shinyFeedback: https://cran.r-project.org/web/packages/shinyFeedback/index.html
  * shinyWidgets: https://cran.r-project.org/web/packages/shinyWidgets/index.html
  * tidyverse: https://cran.r-project.org/web/packages/tidyverse/index.html
+ * utils: https://cran.r-project.org/web/packages/R.utils/index.html
 
 Bioconductor
 ------------
 
  * ComplexHeatmap: https://bioconductor.org/packages/release/bioc/html/ComplexHeatmap.html
+ * glmGamPoi: https://bioconductor.org/packages/release/bioc/html/glmGamPoi.html
  * multtest: https://bioconductor.org/packages/release/bioc/html/multtest.html
  * SingleCellExperiment: https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html
  * slingshot: https://bioconductor.org/packages/release/bioc/html/slingshot.html

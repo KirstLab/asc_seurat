@@ -61,6 +61,29 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
 
    biomart
 
+.. toctree::
+   :hidden:
+   :caption: Advanced plots
+   :maxdepth: 4
+
+   Advanced_plots
+
+Release notes
+=============
+
+    * v2.0 - **Released on May 18th, 2021**.
+
+        - Inclusion of SCTransform normalization
+        - Addition of stacked violin plots
+        - Addition of multiple-genes dot plot
+        - Improvements on the user interface
+        - Improvements in the app stability
+        - Fix of minor bugs.
+
+    * v1.0 - **Released on March 19th, 2021**.
+
+        - Release of Asc-Seurat.
+
 Reference
 =========
 
