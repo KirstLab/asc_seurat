@@ -1,5 +1,5 @@
 # Asc-Seurat
-# Version 1.1
+# Version 2.0
 set.seed(1407)
 options(shiny.maxRequestSize=100000*1024^2) # changes the maximum size of a inputFile
 options(shiny.sanitize.errors = TRUE)
@@ -1439,7 +1439,7 @@ function(input, output, session) {
         }
         
         if ( !is.na(input$max_count_tab2) ) {
-
+            
             
             # Filtering features and cells based on the counts and % of mito contamination.
             data_sc <- base::subset(data_sc,
@@ -2749,14 +2749,14 @@ function(input, output, session) {
     sc_data_traj_inf <- eventReactive(input$run_ti_model, {
         
         #if ( input$rds_location_tab3 == 0 ) {
-            
-            showNotification("Loading the clustered data",
-                             id = "tab3_m1",
-                             duration = NULL)
-            
-            load_rds <- req(input$load_integrated_tab3)
-            sc_data <- readRDS( paste0("./RDS_files/", load_rds) )
-            
+        
+        showNotification("Loading the clustered data",
+                         id = "tab3_m1",
+                         duration = NULL)
+        
+        load_rds <- req(input$load_integrated_tab3)
+        sc_data <- readRDS( paste0("./RDS_files/", load_rds) )
+        
         # } else if ( input$rds_location_tab3 == 1 ) {
         #     
         #     ext <- tools::file_ext(input$file_input_rds_tab3$name)
@@ -3036,7 +3036,7 @@ function(input, output, session) {
         if ( input$ti_sample_number == 0 ) {
             
             plot_dendro(model,
-                              grouping = sc_meta_cluster) +
+                        grouping = sc_meta_cluster) +
                 ggtitle("Trajectory")#,
             
         } else if (input$ti_sample_number == 1) {
@@ -3044,19 +3044,19 @@ function(input, output, session) {
             if ( input$ti_graphs_color_choice == 1 ) {
                 
                 plot_dendro(model,
-                                 grouping = sc_meta_cluster) +
+                            grouping = sc_meta_cluster) +
                     ggtitle("Trajectory")#,
                 
             } else if (input$ti_graphs_color_choice == 0 ) {
                 sc_cells_time_vec <- sc_cells_time_vec()
                 
                 plot_dendro(model,
-                                 grouping = sc_cells_time_vec) +
+                            grouping = sc_cells_time_vec) +
                     ggtitle("Trajectory")#,
                 
             }
         }
-
+        
         
     })
     
@@ -4107,7 +4107,7 @@ function(input, output, session) {
                                        is.null(input$select_genes_add_plot_to_down_tab3_dynv),
                                        "Please, select one or more genes")
         req(input$select_genes_add_plot_to_down_tab3_dynv)
-
+        
         withProgress(message = "Please wait, preparing the data for download.",
                      value = 0.5, {
                          
@@ -4125,7 +4125,7 @@ function(input, output, session) {
                          
                          model <- model()
                          
-                       
+                         
                          
                          for( i in 1:length(genes) ){
                              

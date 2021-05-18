@@ -1,5 +1,5 @@
 # Asc-Seurat
-# Version 1.1
+# Version 2.0
 set.seed(1407)
 
 suppressMessages( require("shiny") )
@@ -119,7 +119,7 @@ function(request) {
                              style='border-right: 40px solid transparent'),
                      ),
                      tags$hr(),
-                     p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
             ),
             
             ######################################
@@ -609,7 +609,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
                      # Ends page
             ),
             
@@ -1225,7 +1225,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
             ), # ends tab
             
             ##############################
@@ -1727,7 +1727,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
             ),
             
             ##########################
@@ -1828,7 +1828,7 @@ function(request) {
                              bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                              
                              tags$hr(),
-                             p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
+                             p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
                          )
                      )
             )

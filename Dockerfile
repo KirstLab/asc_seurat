@@ -2,12 +2,13 @@
 FROM kirstlab/asc_seurat:dynverse
 
 # Owner
-MAINTAINER Felipe Marques de Almeida <marques.felipe@aluno.unb.br>
+MAINTAINER Wendell Jacinto Pereira <wendelljpereira@gmail.com>
 SHELL ["/bin/bash", "-c"]
 
 # Set workdir
 WORKDIR /app
 COPY www /app/www
+COPY R /app/R
 
 # Install CRAN packages
 # biocmanager
@@ -93,6 +94,13 @@ RUN R -e 'library(biomaRt)'
 # topgo
 RUN R -e 'BiocManager::install("topGO")'
 RUN R -e 'library(topGO)'
+# glmGamPoi
+RUN R -e 'BiocManager::install("glmGamPoi")'
+RUN R -e 'library(glmGamPoi)'
+
+# Matrix - This version is required to avoid conflicts with Seurat 4.0
+RUN R -e 'remove.packages("Matrix")'
+RUN R -e 'install.packages("https://cran.r-project.org/src/contrib/Archive/Matrix/Matrix_1.3-2.tar.gz", repos=NULL, type="source")'
 
 # Install Docker
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \

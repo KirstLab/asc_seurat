@@ -13,7 +13,7 @@ cat << EOF
 Simple script for starting the ASC-seurat shiny app.
 It must be executed in the working dir (where the data dir for analysis are stored)
 
- Syntax: run_server.sh [-h|s|d] [-p <number>]
+ Syntax: run_server.sh [-h|s|d] [-p <number>] [-t <tag>]
 
  Options:
 
@@ -22,13 +22,15 @@ It must be executed in the working dir (where the data dir for analysis are stor
  -s/--start			Start asc_seurat server
  -r/--remove			Removes the started asc_seurat server
  -d/--download			Only download the required docker image
+ -t/--tag           Tag name pointing to Asc-Seurat version.
 
 EOF
 }
 
 # Defaults
+TAG="v2.0"
 PORT="3838"
-DOCKER_IMAGE=kirstlab/asc_seurat
+DOCKER_IMAGE=kirstlab/asc_seurat:${TAG}
 DOCKER_CONTAINER_NAME=Asc_Seurat
 
 # Download image
@@ -82,32 +84,40 @@ case $ARGS in
       Help
       shift
       ;;
-		-d|--download)
-			Download
-			shift
-			;;
-		-s|--start)
-			Start
-			shift
-			;;
-		-r|--remove)
-			Remove
-			shift
-			;;
-		-p|--port)
-			if [ "$2" ]; then
-		      if [ "$2" -eq "$2"  ] 2>/dev/null ; then
-            PORT=$2
-            shift 2
-          else
-            echo -e '\nERROR: "-p/--port" requires a numeric argument'
-            echo -e "argument parsed: $2 \n"
-            exit 1
-          fi
-	    else
-		      echo -e '\nERROR: "-p/--port" requires a numeric argument\n'
-    	fi
-			;;
+	-d|--download)
+		Download
+		shift
+		;;
+	-s|--start)
+		Start
+		shift
+		;;
+	-r|--remove)
+		Remove
+		shift
+		;;
+	-p|--port)
+		if [ "$2" ]; then
+	      if [ "$2" -eq "$2"  ] 2>/dev/null ; then
+        PORT=$2
+        shift 2
+      else
+        echo -e '\nERROR: "-p/--port" requires a numeric argument'
+        echo -e "argument parsed: $2 \n"
+        exit 1
+      fi
+    else
+	      echo -e '\nERROR: "-p/--port" requires a numeric argument\n'
+	fi
+		;;
+    -t|--tag)
+		#if [ "$2" ]; then
+	    TAG=$2
+        DOCKER_IMAGE=kirstlab/asc_seurat:${TAG}
+        shift 2
+    #else
+    #	fi
+		;;
     *)
       printf "******************************\n"
       printf "Error: Invalid argument $1\n"
