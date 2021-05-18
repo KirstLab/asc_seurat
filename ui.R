@@ -10,9 +10,8 @@ suppressMessages( require("rclipboard") )
 suppressMessages( require("shinycssloaders") )
 suppressMessages( require("shinyFeedback") )
 
-source("R/ui_functions.R")
-source("R/improved_dot_and_violin_plots.R")
-#source("R/load_rds_module.R")
+source("/app/R/ui_functions.R")
+source("/app/R/improved_dot_and_violin_plots.R")
 
 function(request) {
     

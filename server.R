@@ -47,17 +47,17 @@ suppressMessages( require(glmGamPoi) ) # Bioconductor
 ## Allows parallelization of some of Seurat's functions
 plan("multicore")
 
-source("R/feature_plot.R")
-source("R/adapted_slingshot.R")
-source("R/biomart_section.R")
-source("R/lognormalization_function.R")
-source("R/SCTransform_function.R")
-source("R/server_functions.R")
-source("R/functions_load_markers_list.R")
-source("R/finding_markers.R")
-source("R/improved_dot_and_violin_plots.R")
-source("R/integration_lognorm.R")
-source("R/integration_SCTransform.R")
+source("/app/R/feature_plot.R")
+source("/app/R/adapted_slingshot.R")
+source("/app/R/biomart_section.R")
+source("/app/R/lognormalization_function.R")
+source("/app/R/SCTransform_function.R")
+source("/app/R/server_functions.R")
+source("/app/R/functions_load_markers_list.R")
+source("/app/R/finding_markers.R")
+source("/app/R/improved_dot_and_violin_plots.R")
+source("/app/R/integration_lognorm.R")
+source("/app/R/integration_SCTransform.R")
 
 ###########################
 ### Load phytozome mart ###
