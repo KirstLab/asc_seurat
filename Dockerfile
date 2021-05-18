@@ -102,8 +102,8 @@ RUN R -e 'BiocManager::install("glmGamPoi")'
 RUN R -e 'library(glmGamPoi)'
 
 # Matrix - This version is required to avoid conflicts with Seurat 4.0
-#RUN R -e 'remove.packages("Matrix")'
-#RUN R -e 'install.packages("https://cran.r-project.org/src/contrib/Archive/Matrix/Matrix_1.3-2.tar.gz", repos=NULL, type="source")'
+RUN R -e 'remove.packages("Matrix")'
+RUN R -e 'install.packages("https://cran.r-project.org/src/contrib/Archive/Matrix/Matrix_1.3-3.tar.gz", repos=NULL, type="source")'
 
 # Install Docker
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
