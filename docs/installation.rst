@@ -70,7 +70,7 @@ For Windows
 To run Asc-Seurat on Windows via Docker, it is necessary to use Windows 10. Moreover, Windows Subsystem for Linux (WSL) needs to be installed. Before running Asc-Seurat, users need to guarantee that Docker and its WSL 2 components are correctly installed and running. For that, check the two (sequential) tutorials below:
 
 1. `Docker installation info <https://docs.docker.com/docker-for-windows/install/>`_
-2. `Define windows WSL 2 as default <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-5---set-wsl-2-as-your-default-version>`_ (If you followed the link above correctly, you only need to execute step 5 of this tutorial).
+2. `Define windows WSL 2 as default <https://docs.microsoft.com/pt-br/windows/wsl/install-win10#step-5---set-wsl-2-as-your-default-version>`_ (If you followed the link above correctly, you only need to execute step 5 of this tutorial).
 
 .. tip::
 

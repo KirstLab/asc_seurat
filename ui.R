@@ -1,38 +1,30 @@
 # Asc-Seurat
-# Version 1.0
+# Version 1.1
 set.seed(1407)
 
-suppressMessages(require("shiny"))
-suppressMessages(require("shinyWidgets") )
-suppressMessages(require("DT") )
-suppressMessages(require("reactable") )
-suppressMessages(require("rclipboard") )
-suppressMessages(require("shinycssloaders") )
-suppressMessages(require("shinyFeedback") )
+suppressMessages( require("shiny") )
+suppressMessages( require("shinyWidgets") )
+suppressMessages( require("DT") )
+suppressMessages( require("reactable") )
+suppressMessages( require("rclipboard") )
+suppressMessages( require("shinycssloaders") )
+suppressMessages( require("shinyFeedback") )
 
-# help function
-my_withSpinner <- function(ui_object_name = ui_object_name, hide_ui = FALSE) {
-    
-    shinycssloaders::withSpinner(
-        ui_object_name,
-        type = 4,
-        color = "#6504b0",
-        size = 0.75,
-        hide.ui = hide_ui
-    )
-}
+source("R/ui_functions.R")
+source("R/improved_dot_and_violin_plots.R")
+#source("R/load_rds_module.R")
 
 function(request) {
     
-    shinyFeedback::useShinyFeedback()
-    
-    ##############################################
-    #### Properly load user data using docker ####
-    ##############################################
+    ## This set the app to properly work with docker
     if (dir.exists('/app/user_work')) {
         setwd('/app/user_work')
     }
+    
     fluidPage(
+        
+        shinyFeedback::useShinyFeedback(),
+        
         ####################
         #### Custom CSS ####
         ####################
@@ -63,14 +55,12 @@ function(request) {
             gradient = "radial",
             direction = c("top", "left")),
         
-        # Application title
+        ########################
+        # Asc-Seurat interface #
+        ########################
+        
         titlePanel(title = "Asc-Seurat - Analytical single-cell Seurat-based web application"),
         br(),
-        # titlePanel(title = div( img(src = 'NITFIX_logo.png',
-        #                             height = "10%",
-        #                             width = "10%",
-        #                             style='border-right: 10px solid transparent'),
-        #                         "- Single-cell RNA-seq") ),
         
         tabsetPanel(
             
@@ -121,18 +111,16 @@ function(request) {
                      ## Adds the images
                      a(
                          img(src = 'University_of_Florida.png',
-                             # height = "%",
                              width = "30%",
                              align = "center",
                              style='border-right: 40px solid transparent'),
                          img(src = 'Universidade_de_Brasilia.png',
-                             # height = "15%",
                              width = "20%",
                              align = "center",
                              style='border-right: 40px solid transparent'),
                      ),
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 1.0"), "- Released on March 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
             ),
             
             ######################################
@@ -146,7 +134,6 @@ function(request) {
                          br(),
                          p("Choose the sample to be analyzed and the initial requirements to load the data. Note that cells that do not match the parameters will not be load."),
                          p("These parameters are used to exclude low-quality cells and allow the data to load quickly. Users can add more restrictive parameters after visualizing the distributions in the next section."),
-                         #br(),
                          p(strong("After selecting the parameters, click on the blue button to load the data.")),
                          br(),
                          
@@ -155,29 +142,28 @@ function(request) {
                                     uiOutput('select_sample_tab1'))
                          ),
                          column(width = 2,
-                                div(class = "option-group",
-                                    textInput("proj_name",
-                                              label = "Project name",
-                                              value = ""))),
+                                input_project_name("proj_name")
+                                # div(class = "option-group",
+                                #     textInput("proj_name",
+                                #               label = "Project name",
+                                #               value = ""))
+                         ),
                          column(width = 2,
                                 div(class = "option-group",
                                     numericInput("min_cells",
                                                  label = "Min. number of cells expressing a gene for the gene to be included",
-                                                 value = 3))),
+                                                 value = 3))
+                         ),
                          column(width = 2,
                                 div(class = "option-group",
                                     numericInput("min_features",
                                                  label = "Min. number of genes a cell must express to be included",
-                                                 value = 200))),
-                         column(width = 3,
-                                div(class = "option-group",
-                                    textInput("mito_regex",
-                                              label = "Common identifier of mitochondrial genes",
-                                              value = "MT")),
-                                actionButton("load_10X",
-                                             HTML("Load data of the selected sample"),
-                                             style="background-color: #d6fffe"))
-                         
+                                                 value = 200))
+                         ),
+                         column( width = 3, textInput_regex("mito_regex") ,
+                                 actionButtonInput("load_10X",
+                                                   HTML("Load data of the selected sample"))
+                         )
                      ), # fluid row
                      
                      fluidRow(
@@ -194,49 +180,38 @@ function(request) {
                          ),
                          column(width = 2,
                                 div(class = "option-group",
-                                    my_withSpinner( uiOutput("min_count_ui"))
-                                ),
-                                div(class = "option-group",
-                                    my_withSpinner( uiOutput("max_count_ui"))
-                                ),
-                                div(class = "option-group",
-                                    numericInput("max_mito_perc",
-                                                 label = "Exclude any cell with more than this percentage of transcripts belonging to the mitochondrial genes",
-                                                 value = 2)),
-                                #column(width = 2,
-                                actionButton("run_vinplot",
-                                             HTML("Show plot of filtered data"),
-                                             style="background-color: #d6fffe"))
-                         #)
-                         
+                                    numericInput("min_count",
+                                                 label = "Keep only cells that expressed at least this number of genes",
+                                                 value = 200),
+                                    numericInput("max_count",
+                                                 label = "Exclude any cell that expressed more than this number of genes (i.e. possible doublets)",
+                                                 value = 2200)),
+                                
+                                #  my_withSpinner( uiOutput("min_count_ui")),
+                                #  my_withSpinner( uiOutput("max_count_ui"))),
+                                
+                                #lognorm_UI("lognorm_sing_sample"),
+                                numericInput_max_mito_perc("max_mito_perc"),
+                                actionButtonInput("run_vinplot",
+                                                  HTML("Show plot of filtered data"))
+                         )
                      ), # fluid row
                      conditionalPanel(
                          condition = "input.run_vinplot!= 0",
                          
-                         fluidRow(
+                         fluidRow (
                              titlePanel("Screening plot showing the remaining cells after filtering"),
                              column(width = 10,
-                                    my_withSpinner( plotOutput("VlnPlot_filt"))
+                                    my_withSpinner( plotOutput("VlnPlot_filt") )
                              ),
                              # download plot
                              column(2,
-                                    div(class = "down-group",
-                                        numericInput("p1_height","Height (cm)",step=0.5,value=15),
-                                        numericInput("p1_width","Width (cm)",step=0.5,value=25),
-                                        selectInput("p1_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p1_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE),
-                                        downloadButton("p1_down", HTML("Download Plot")))),
-                             
+                                    numericInput_plot_height("p1_height"),
+                                    numericInput_plot_width("p1_width", value=25),
+                                    selectInput_plot_res("p1_res"),
+                                    selectInput_plot_format("p1_format"),
+                                    downloadButton("p1_down", HTML("Download Plot") )
+                             )
                          ), # fluid row
                          
                      ), # Ends conditional
@@ -246,32 +221,29 @@ function(request) {
                          br(),
                          p("Note that only the most variable genes are used in the dimension reduction step (PCA)."),
                          br(),
-                         column(width = 4,
-                                div(class = "option-group",
-                                    radioButtons("normaliz_method",
-                                                 "Select the normalization method",
-                                                 choices = list(#"SCTransform (recommended)" = "SCTransform",
-                                                     "LogNormalize" = "LogNormalize"),
-                                                 selected = c("LogNormalize")))),
-                         column(width = 4,
-                                div(class = "option-group",
-                                    numericInput("scale_factor",
-                                                 label = "Scale factor",
-                                                 value = 10000))),
-                         column(width = 4,
-                                div(class = "option-group",
-                                    radioButtons("most_var_method",
-                                                 "Select the method to detect the most variable genes",
-                                                 choices = list("vst" = "vst",
-                                                                "mean.var.plot (mvp)" = "mvp",
-                                                                "dispersion (disp)" = "disp"),
-                                                 selected = c("vst")),
-                                    numericInput("n_of_var_genes",
-                                                 label = "Number of variable genes for PCA",
-                                                 value = 3000)),
-                                actionButton("run_pca",
-                                             HTML("Run the PCA analysis"),
-                                             style="background-color: #d6fffe"))
+                         column(width = 3,
+                                select_norm_methods("normaliz_method")
+                                
+                                # div(class = "option-group",
+                                #     radioButtons("normaliz_method",
+                                #                  "Select the normalization method",
+                                #                  choices = list("LogNormalize" = 0,
+                                #                                 "SCTransform"  = 1),
+                                #                  selected = 0))
+                         ),
+                         conditionalPanel(
+                             condition = "input.normaliz_method == 0",
+                             column(width = 4,
+                                    numericInput_scale_factor("scale_factor"),
+                                    radioInput_most_var_method("most_var_method"),
+                                    numericInput_var_genes("n_of_var_genes")
+                             ),
+                         ),
+                         column(width = 3,
+                                actionButtonInput("run_pca",
+                                                  HTML("Run the PCA analysis"))
+                         )
+                         
                      ), # Fluid row,
                      
                      conditionalPanel(
@@ -284,32 +256,22 @@ function(request) {
                              br(),
                              column(width = 6,
                                     my_withSpinner( plotOutput("n_of_PCAs") )
-                                    
                              ),
                              # Plot download
                              column(2,
-                                    div(class = "down-group",
-                                        numericInput("p2_height","Height (cm)",step=0.5,value=12),
-                                        numericInput("p2_width","Width (cm)",step=0.5,value=18),
-                                        selectInput("p2_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p2_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE),
-                                        downloadButton("p2_down", HTML("Download Plot")))),
+                                    
+                                    #   download_ElbowPlot_UI("down_elbow1")
+                                    numericInput_plot_height("p2_height", value=12),
+                                    numericInput_plot_width("p2_width", value=18),
+                                    selectInput_plot_res("p2_res"),
+                                    selectInput_plot_format("p2_format"),
+                                    downloadButton("p2_down", HTML("Download Plot"))
+                                    
+                             ),
                              
                              column(width = 3,
-                                    div(class = "option-group",
-                                        numericInput("n_of_PCs",
-                                                     label = "Select the number of components",
-                                                     value = 30)))
+                                    numericInput_n_of_PCs("n_of_PCs")
+                             )
                              
                          ) # Fluid row
                      ), # Ends conditional
@@ -321,16 +283,12 @@ function(request) {
                          p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
                          br(),
                          column(width = 3,
-                                div(class = "option-group",
-                                    numericInput("resolution_clust",
-                                                 label =
-                                                     "Select the resolution for clustering",
-                                                 value = 1.2,
-                                                 step = 0.1))),
+                                numericInput_resolution_clust("resolution_clust")
+                         ),
                          column(width = 3,
-                                actionButton("run_clustering",
-                                             HTML("Run the clustering analysis"),
-                                             style="background-color: #d6fffe"))
+                                actionButtonInput("run_clustering",
+                                                  HTML("Run the clustering analysis"))
+                         )
                          
                      ), # Fluid row
                      
@@ -340,14 +298,10 @@ function(request) {
                          fluidRow(
                              titlePanel("Clustering plots"),
                              column(width = 6,
-                                    
                                     my_withSpinner( plotOutput("umap") )
-                                    
                              ),
                              column(width = 6,
-                                    
                                     my_withSpinner( plotOutput("tSNE") )
-                                    
                              )
                          ), # Fluid row
                          fluidRow(
@@ -359,35 +313,28 @@ function(request) {
                                                      "Select the plot to download",
                                                      choices = list("UMAP" = "UMAP",
                                                                     "t-SNE" = "t-SNE"),
-                                                     selected = c("UMAP")))),
+                                                     selected = c("UMAP")))
+                             ),
+                             column(2,
+                                    numericInput_plot_height("p3_height", value=10),
+                                    numericInput_plot_width("p3_width", value=18)
+                             ),
+                             column(2,
+                                    selectInput_plot_res("p3_res"),
+                                    selectInput_plot_format("p3_format")
+                             ),
                              column(2,
                                     div(class = "down-group",
-                                        numericInput("p3_height","Height (cm)",step=0.5,value=10),
-                                        numericInput("p3_width","Width (cm)",step=0.5,value=12))),
-                             column(2,
-                                    div(class = "down-group",
-                                        selectInput("p3_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p3_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE))),
-                             column(2,
-                                    div(class = "down-group",
-                                        downloadButton("p3_down", HTML("Download Plot")))),
+                                        downloadButton("p3_down", HTML("Download Plot")))
+                             ),
                          ),
                          
                          fluidRow(
                              titlePanel("Number of cells per cluster"),
                              p("First row shows the cluster ID. The second row shows the number of cells per cluster."),
                              column(12,
-                                    my_withSpinner( verbatimTextOutput("cluster_size") ))
+                                    my_withSpinner( verbatimTextOutput("cluster_size") )
+                             )
                          ), # Fluid row
                          
                      ), # Ends conditional
@@ -399,48 +346,28 @@ function(request) {
                          p("After selecting the clusters, click on the blue button (Reanalyze after selection/exclusion of clusters). Asc-Seurat will run the analyses of the new subset until the PCA step.", strong("Then, users need to set the new number of components using the elbow plot (above) and click on the button \"Run the clustering analysis\" again.")),
                          br(),
                          column(3,
-                                div(class = "option-group",
-                                    radioButtons("filter_clusters",
-                                                 "Do you want to select or exclude clusters of cells and reanalyze the data?",
-                                                 choices = list("Yes" = 1,
-                                                                "No" = 0),
-                                                 selected = 0),
-                                    
-                                    
-                                )
+                                radioButtons_filter_clusters("filter_clusters")
                          ),
                          
                          conditionalPanel(
                              condition = "input.filter_clusters != 0",
                              
                              column(3,
-                                    div(class = "option-group",
-                                        radioButtons("filter_clusters_opt",
-                                                     "Do you want to select or exclude the clusters?",
-                                                     choices = list("Select" = "select",
-                                                                    "Exclude" = "exclude"),
-                                                     selected = c("select")),
-                                        
-                                        
-                                    )
+                                    radioButtons_filter_clusters_opt("filter_clusters_opt")
                              ),
                              
                              column( 3,
                                      div(class = "option-group",
-                                         my_withSpinner( uiOutput("cluster_list_ui") )
-                                     )
+                                         my_withSpinner( uiOutput("cluster_list_ui") ))
                              ),
                              
                              column( 3,
                                      div(class = "option-group",
-                                         actionButton("rerun_after_filtering",
-                                                      HTML("Reanalyze after selection/exclusion of clusters"),
-                                                      style="background-color: #d6fffe")
-                                     )
+                                         actionButtonInput("rerun_after_filtering",
+                                                           HTML("Reanalyze after selection/exclusion of clusters")))
                              ),
                              
                          ) # ends conditional
-                         
                      ),
                      
                      fluidRow(
@@ -460,15 +387,9 @@ function(request) {
                      fluidRow(
                          titlePanel("Identification of markers / Differential expression analysis"),
                          column(3,
-                                div(class = "option-group",
-                                    radioButtons("find_markers_tab1",
-                                                 "Do you want to identify markers or D.E. genes?",
-                                                 choices = list("Yes" = 1,
-                                                                "No" = 0),
-                                                 selected = c(0)),
-                                    
-                                )
-                         )),
+                                radioButtons_find_markers("find_markers_tab1")
+                         )
+                     ),
                      
                      conditionalPanel(
                          condition = "input.find_markers_tab1 == 1",
@@ -507,19 +428,13 @@ function(request) {
                              
                              column(3,
                                     div(class = "option-group",
-                                        numericInput("find_markers_tab1_logfc.threshold",
+                                        numericInput("find_markers_tab1_logfc_threshold",
                                                      label = "Select the (log) fold change threshold",
                                                      value = 0.25),
-                                        numericInput("find_markers_tab1_min.pct",
+                                        numericInput("find_markers_tab1_min_pct",
                                                      label = "Select the minimal percentage of cells expressing a gene for this gene to be tested",
                                                      value = 0.1),
-                                        pickerInput(
-                                            inputId = "find_markers_tab1_test.use",
-                                            label = "Select the statistical test",
-                                            choices = c("wilcox", "bimod", "roc", "t"),
-                                            selected = "wilcox",
-                                            multiple = FALSE,
-                                            options = list(`actions-box` = TRUE)),
+                                        pickerInput_find_markers_test("find_markers_tab1_test.use"),
                                         conditionalPanel(
                                             condition = "input.find_markers_tab1_opt != 0",
                                             radioButtons("find_markers_tab1_filt_pos",
@@ -527,15 +442,14 @@ function(request) {
                                                          choices = c("yes" = "TRUE",
                                                                      "no" = "FALSE"),
                                                          selected = "TRUE")),
-                                        numericInput("find_markers_tab1_return.thresh",
-                                                     label = "Select the (adjusted) p-value threshold. Leave it blank if no filtering is required",
-                                                     value = "",
+                                        numericInput("find_markers_tab1_return_thresh",
+                                                     label = "Select the (adjusted) p-value threshold",
+                                                     value = "0.05",
                                                      step = 0.01),
                                     ),
-                                    actionButton("run_ident_markers_tab1",
-                                                 HTML("Search for markers/D.E. genes"),
-                                                 style="background-color: #d6fffe")),
-                             
+                                    
+                                    actionButtonInput("run_ident_markers_tab1",
+                                                      HTML("Search for markers/D.E. genes"))),
                          ), # ends conditional
                      ), # ends fluidrow
                      
@@ -557,48 +471,37 @@ function(request) {
                          br(),
                          p("In this section, users can visualize the gene expression of selected genes (e.g., tissue markers). Start by loading a", strong("csv"), "file with at least two columns. The first column must be the gene ID, and the second is a grouping variable (e.g., the tissue name). A third column can be used to store the common name of the gene but is optional."),
                          br(),
-                         column(width = 4,
-                                div(class = "option-group",
-                                    fileInput("markers_list",
-                                              label = "Input the list of markers in the format: 'GeneID,Group,Name' (no header)",
-                                              accept = c("text/csv",
-                                                         "text/comma-separated-values,text/plain",
-                                                         ".csv"))
-                                ),
-                                div(class = "option-group",
-                                    actionButton("load_markers",
-                                                 HTML("Load markers"),
-                                                 style="background-color: #d6fffe"))),
                          column(width = 3,
+                                fileInput_markers_list("markers_list"),
+                                div(class = "option-group",
+                                    actionButtonInput("load_markers",
+                                                      HTML("Load markers")))),
+                         column(width = 2,
                                 conditionalPanel(
                                     condition = "input.load_markers > 0",
                                     my_withSpinner( uiOutput('marker_group_selec') ),
-                                    my_withSpinner( uiOutput("marker_filter_genes_q") ),
-                                    my_withSpinner( uiOutput("marker_genes_ids"))
-                                )),
-                         column(width = 4,
-                                conditionalPanel(
-                                    condition = "input.filter_genes_q == 0",
+                                    define_if_use_all_genes_or_select("filter_genes_q"),
+                                    
+                                    conditionalPanel(
+                                        condition = "input.filter_genes_q == 0",
+                                        define_what_id_to_use("genes_ids")
+                                    ))),
+                         conditionalPanel(
+                             condition = "input.filter_genes_q == 0",
+                             
+                             column(width = 3,
                                     my_withSpinner( uiOutput('marker_genes_selec') )
-                                )),
+                             )
+                         ),
                          column(width = 2,
                                 conditionalPanel(
                                     condition = "input.load_markers > 0",
-                                    div(class = "option-group",
-                                        radioButtons("slot_selection_heatmap",
-                                                     "Select the expression values to show",
-                                                     choices = list("counts" = "counts",
-                                                                    "normalized" = "data",
-                                                                    "normalized and scaled" = "scale.data"),
-                                                     selected = c("scale.data"))))),
+                                    radioButtons_slot_selection_heatmap("slot_selection_heatmap"))),
                          column(width = 2,
                                 conditionalPanel(
                                     condition = "input.load_markers > 0",
-                                    actionButton("run_heatmap",
-                                                 HTML("Show heatmap with the average \
-                                                             of expression per cluster"),
-                                                 style="background-color: #d6fffe")))
-                         
+                                    actionButtonInput("run_heatmap",
+                                                      HTML("Show heatmap"))))
                      ), # Fluid row
                      
                      #heat map
@@ -607,32 +510,18 @@ function(request) {
                          condition = "input.run_heatmap > 0",
                          fluidRow(
                              br(),
-                             #       p(strong("obs."), "The heatmap will crash if only one (or zero) gene from your list is found in the dataset. A fix is in progress for the next update. For now, use the feature plots if you want to check a single gene."),
-                             #       br(),
                              titlePanel("Heatmap"),
                              br(),
                              strong("Note that the scale of colors of the heatmap is adjusted based on the expression of the selected genes."),
                              br(),
                              column(width = 10,
                                     my_withSpinner( uiOutput("heat_map_ui"))),
-                             # download plot
                              column(2,
-                                    div(class = "down-group",
-                                        numericInput("p4_height","Height (cm)",step=0.5,value=15),
-                                        numericInput("p4_width","Width (cm)",step=0.5,value=20),
-                                        selectInput("p4_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p4_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE),
-                                        downloadButton("p4_down", HTML("Download Plot")))),
+                                    numericInput_plot_height("p4_height", value=15),
+                                    numericInput_plot_width("p4_width", value=20),
+                                    selectInput_plot_res("p4_res"),
+                                    selectInput_plot_format("p4_format"),
+                                    downloadButton("p4_down", HTML("Download Plot"))),
                              
                              column(width = 10,
                                     verbatimTextOutput("test"))
@@ -641,32 +530,22 @@ function(request) {
                          fluidRow(
                              titlePanel("Visualization of gene expression of each cell and additional plots"),
                              br(),
-                             # p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. We recommend selecting no more than 20 genes, so the page scrolls smoothly."),
-                             # br(),
                              p("Only genes selected for the heatmap can be selected for the additional plots."),
                              br(),
                              column(width = 3,
                                     my_withSpinner( uiOutput("marker_to_feature_plot") )),
                              column(width = 2,
-                                    div(class = "option-group",
-                                        radioButtons("slot_selection_feature_plot",
-                                                     "Select the expression values to show",
-                                                     choices = list("counts" = "counts",
-                                                                    "normalized (recommended)" = "data"),
-                                                     selected = c("data")))),
+                                    radioButtons_slot_selection_feature_plot("slot_selection_feature_plot")),
                              column(width = 3,
-                                    actionButton("run_feature_plot",
-                                                 HTML("Show the expression of genes at the cell level"),
-                                                 style="background-color: #d6fffe"))
-                             
+                                    actionButtonInput("run_feature_plot",
+                                                      HTML("Show the expression of genes at the cell level")))
                          )
-                     ),# Ends conditional
+                     ), # Ends conditional
                      
                      conditionalPanel (
                          condition = "input.run_feature_plot > 0",
                          fluidRow(
                              titlePanel("Feature plots"),
-                             
                              column(width = 4,
                                     my_withSpinner( uiOutput("feature_plot") )),
                              column(width = 4,
@@ -695,88 +574,45 @@ function(request) {
                              p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
                              br(),
                              column(width = 2,
-                                    div(class = "option-group",
-                                        radioButtons("down_add_plots_tab1",
-                                                     "Do you want to download the plots?",
-                                                     choices = list("Yes" = 1,
-                                                                    "No" = 0),
-                                                     selected = 0))),
+                                    radioButtons_down_add_plots("down_add_plots_tab1")),
                              conditionalPanel (
                                  condition = "input.down_add_plots_tab1 == 1",
                                  column(width = 2,
                                         my_withSpinner( uiOutput("select_genes_add_plot_to_down_ui") ),
-                                        #uiOutput("select_genes_add_plot_to_down_ui")
                                  ),
                                  column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the feature plots")),
-                                            numericInput("add_p_tab1_feat_height","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab1_feat_width","Width (cm)",step=0.5,value=14),
-                                            selectInput("add_p_tab1_feat_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab1_feat_format",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
+                                        div(class = "option-group", 
+                                            p(strong("Select the options for the feature plots")) ),
+                                        numericInput_plot_height("add_p_tab1_feat_height", value=10),
+                                        numericInput_plot_width("add_p_tab1_feat_width", value=14),
+                                        selectInput_plot_res("add_p_tab1_feat_res"),
+                                        selectInput_plot_format("add_p_tab1_feat_format")),
                                  column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the violin plots")),
-                                            numericInput("add_p_tab1_violin_height","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab1_violin_width","Width (cm)",step=0.5,value=18),
-                                            selectInput("add_p_tab1_violin_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab1_violin_format",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
+                                        div(class = "option-group", 
+                                            p(strong("Select the options for the violin plots")) ),
+                                        numericInput_plot_height("add_p_tab1_violin_height", value=10),
+                                        numericInput_plot_width("add_p_tab1_violin_width", value=14),
+                                        selectInput_plot_res("add_p_tab1_violin_res"),
+                                        selectInput_plot_format("add_p_tab1_violin_format")),
                                  column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the dot plots")),
-                                            numericInput("add_p_tab1_dot_height","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab1_dot_width","Width (cm)",step=0.5,value=14),
-                                            selectInput("add_p_tab1_dot_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab1_dot_format",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
+                                        div(class = "option-group", 
+                                            p(strong("Select the options for the dot plots")) ),
+                                        numericInput_plot_height("add_p_tab1_dot_height", value=10),
+                                        numericInput_plot_width("add_p_tab1_dot_width", value=14),
+                                        selectInput_plot_res("add_p_tab1_dot_res"),
+                                        selectInput_plot_format("add_p_tab1_dot_format")),
                                  column(width = 3,
-                                        actionButton("start_down_add_plots_tab1",
-                                                     HTML("Download additional plots"),
-                                                     style="background-color: #d6fffe"))
-                                 
-                             )),
+                                        actionButtonInput("start_down_add_plots_tab1",
+                                                          HTML("Download additional plots")))))
+                         
                      ),
                      
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
-                     
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 1.0"), "- Released on March 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
                      # Ends page
-                     
-                     
             ),
-            
-            # Set the second tav
             
             ####################################
             ### Integrative analysis - Tab 2 ###
@@ -798,7 +634,7 @@ function(request) {
                          tags$li(strong("Maximum percentage of genes belonging to the mitochondrial genome"))
                      ),
                      br(),
-                     p("Alternatively, it is possible to load previously integrated data, saving some time by not running the integration step. For that, save an RDS file containing the integrated data."), #strong("Note that it must be saved before the execution of PCA and clustering steps. Otherwise, some of the functions will not work.")
+                     p("Alternatively, it is possible to load previously integrated data, saving some time by not running the integration step. For that, save an RDS file containing the integrated data."), 
                      p("After selecting the parameters, click on the blue button to load the data."),
                      br(),
                      fluidRow(
@@ -808,64 +644,89 @@ function(request) {
                                                  "Run a new integration analysis or read a previously saved file?",
                                                  choices = list("Run a new analysis" = 0,
                                                                 "Load file" = 1),
-                                                 selected = c(0) ))),
+                                                 selected = c(0) )),
+                                conditionalPanel (
+                                    condition = "input.integration_options == 0",
+                                    
+                                    div(class = "option-group",
+                                        fileInput("samples_list_integration",
+                                                  label = "Read the configuration file containing the samples' information",
+                                                  accept = c(
+                                                      'text/csv',
+                                                      'text/comma-separated-values',
+                                                      'text/tab-separated-values',
+                                                      'csv',
+                                                      'tsv') ) ),
+                                    
+                                    my_withSpinner( uiOutput('select_sample_tab2') )
+                                    #),
+                                ),
+                         ),
                          
                          conditionalPanel(
                              condition = "input.integration_options == 1",
                              column(width = 3,
-                                    my_withSpinner( uiOutput("load_integrated_ui") )
+                                    my_withSpinner( uiOutput("load_integrated_ui") ),
+                                    div(class = "option-group",
+                                        selectInput(
+                                            inputId = "load_rds_int_normalization",
+                                            label = "Inform the normalization method used to generate the integrated dataset",
+                                            choices = list("",
+                                                           "LogNormalization" = 0,
+                                                           "SCtransform" = 1),
+                                            selected = "",
+                                            multiple = F))
                              )),
+                         
+                         # conditionalPanel (
+                         #     condition = "input.integration_options == 0",
+                         #     
+                         #     column(width = 3,
+                         #            my_withSpinner( uiOutput('select_sample_tab2') )
+                         #     ),
+                         # ),
                          
                          conditionalPanel (
                              condition = "input.integration_options == 0",
-                             
-                             column(width = 3,
-                                    div(class = "option-group",
-                                        fileInput("samples_list_integration",
-                                                  label = "Read the configuration file containing the samples' information",
-                                                  accept = c("text/csv",
-                                                             "text/comma-separated-values,text/plain",
-                                                             ".csv")))),
-                             column(width = 3,
-                                    my_withSpinner(  uiOutput('select_sample_tab2') )),
-                             column(width = 3,
-                                    div(class = "option-group",
-                                        radioButtons("most_var_method_integration",
-                                                     "Select the method to detect the most variable genes",
-                                                     choices = list("vst" = "vst",
-                                                                    "mean.var.plot (mvp)" = "mvp",
-                                                                    "dispersion (disp)" = "disp"),
-                                                     selected = c("vst")))),
-                             br(),
-                             p("To choose the number of components for the integration, use the largest number of components used for the PCA of a single sample."),
-                             br(),
-                             column(width = 2,
-                                    div(class = "option-group",
-                                        textInput("int_project_name",
-                                                  label = "Type the project name",
-                                                  value = "sc-RNA-seq"))),
-                             column(width = 2,
-                                    div(class = "option-group",
-                                        textInput("int_regex_mito",
-                                                  label = "Type regex to detect mitochondrial genes",
-                                                  value = "MT"))),
-                             column(width = 2,
-                                    div(class = "option-group",
-                                        numericInput("n_of_var_genes_integration",
-                                                     label = "N of variable genes for integration",
-                                                     value = 3000))),
-                             column(width = 2,
-                                    div(class = "option-group",
-                                        numericInput("n_of_PCs_integration",
-                                                     label = "N of components for the integration",
-                                                     value = 30))),
+                             fluidRow(
+                                 column(width = 2,
+                                        textInput_regex("int_regex_mito"),
+                                        numericInput_var_genes("n_of_var_genes_integration",
+                                                               label = "N of variable genes for integration"),
+                                        numericInput_n_of_PCs("n_of_PCs_integration",
+                                                              "N of components for the integration"),
+                                        input_project_name("int_project_name")
+                                        # div(class = "option-group",
+                                        #     textInput("int_project_name",
+                                        #               label = "Type the project name",
+                                        #               value = "")
+                                        # )
+                                 ),
+                                 column(width = 3,
+                                        select_norm_methods("normaliz_method_tab2"),
+                                        
+                                        conditionalPanel(
+                                            condition = "input.normaliz_method_tab2 == 0",
+                                            # column(width = 3,
+                                            numericInput_scale_factor("scale_factor_tab2"),
+                                            radioInput_most_var_method("most_var_method_tab2"),
+                                            #numericInput_var_genes("n_of_var_genes_tab2"),
+                                            
+                                            #            actionButtonInput("run_pca_tab2",
+                                            #                              HTML("Run the PCA analysis")))
+                                        ),
+                                 ),
+                             ),
                              
                          ), # ends conditional
                          
+                         
                          column(width = 3,
-                                actionButton("load_rds_file",
-                                             HTML("Load the integrated data <br> or <br> execute a new integration"),
-                                             style="background-color: #d6fffe")),
+                                actionButtonInput("load_rds_file",
+                                                  HTML("Load the integrated data <br> or <br> execute a new integration"))),
+                         # column(width = 3,
+                         #        actionButtonInput("load_rds_file",
+                         #                          HTML("Load the integrated data <br> or <br> execute a new integration"))),
                          
                      ), # ends fluidRow
                      
@@ -901,16 +762,18 @@ function(request) {
                                 div(class = "option-group",
                                     numericInput("max_count_tab2",
                                                  label = "Exclude any cell that expressed more than this number of genes (i.e., possible doublets)",
-                                                 value = "")),
-                                div(class = "option-group",
-                                    numericInput("max_mito_perc_tab2",
-                                                 label = "Exclude any cell with more than this percentage of transcripts belonging to the mitochondrial genes",
-                                                 value = ""))),
+                                                 value = "")
+                                ),
+                                numericInput_max_mito_perc("max_mito_perc_tab2", value = "")),
                          column(width = 2,
-                                actionButton("run_vinplot_tab2",
-                                             HTML("Show plot of filtered data"),
-                                             style="background-color: #d6fffe"))
-                         
+                                actionButtonInput("run_vinplot_tab2",
+                                                  HTML("Show plot of filtered data")),
+                                conditionalPanel(
+                                    condition = "input.run_vinplot_tab2 == 0",
+                                    actionButtonInput("run_pca_tab2_1",
+                                                      HTML("Run the PCA analysis"))
+                                ),
+                         ),
                      ), # ends fluidRow
                      
                      # fluid row
@@ -923,61 +786,42 @@ function(request) {
                                     my_withSpinner(  plotOutput("VlnPlot_filt_tab2") )
                              ),
                              column(2,
-                                    div(class = "down-group",
-                                        numericInput("p5_height","Height (cm)",step=0.5,value=8),
-                                        numericInput("p5_width","Width (cm)",step=0.5,value=15),
-                                        selectInput("p5_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p5_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE),
-                                        downloadButton("p5_down", HTML("Download Plot"))))
+                                    numericInput_plot_height("p5_height", value=8),
+                                    numericInput_plot_width("p5_width", value=15),
+                                    selectInput_plot_res("p5_res"),
+                                    selectInput_plot_format("p5_format"),
+                                    downloadButton("p5_down", HTML("Download Plot")),
+                                    actionButtonInput("run_pca_tab2_2",
+                                                      HTML("Run the PCA analysis")))
                              
                          ), # fluid row
                      ), # Ends conditional
                      
-                     fluidRow(
-                         titlePanel("Normalizing, centering, and dimension reduction analysis (PCA)"),
-                         br(),
-                         p("Note that only the most variable genes are used in the dimension reduction step (PCA)."),
-                         br(),
-                         column(width = 4,
-                                div(class = "option-group",
-                                    radioButtons("normaliz_method_tab2",
-                                                 "Select the normalization method",
-                                                 choices = list(#"SCTransform (recommended)" = "SCTransform",
-                                                     "LogNormalize" = "LogNormalize"),
-                                                 selected = c("LogNormalize")))),
-                         column(width = 4,
-                                div(class = "option-group",
-                                    numericInput("scale_factor_tab2",
-                                                 label = "Scale factor",
-                                                 value = 10000))),
-                         column(width = 4,
-                                div(class = "option-group",
-                                    radioButtons("most_var_method_tab2",
-                                                 "Select the method to detect the most variable genes",
-                                                 choices = list("vst" = "vst",
-                                                                "mean.var.plot (mvp)" = "mvp",
-                                                                "dispersion (disp)" = "disp"),
-                                                 selected = c("vst")),
-                                    numericInput("n_of_var_genes_tab2",
-                                                 label = "Number of variable genes for PCA",
-                                                 value = 3000)),
-                                actionButton("run_pca_tab2",
-                                             HTML("Run the PCA analysis"),
-                                             style="background-color: #d6fffe"))
-                     ), # Fluid row,
+                     
+                     #            select_norm_methods("normaliz_method_tab2")
+                     #            
+                     #            # div(class = "option-group",
+                     #            #     radioButtons("normaliz_method_tab2",
+                     #            #                  "Select the normalization method",
+                     #            #                  choices = list(#"SCTransform (recommended)" = "SCTransform",
+                     #            #                      "LogNormalize" = "LogNormalize"),
+                     #            #                  selected = c("LogNormalize")))
+                     #            
+                     #     ),
+                     #     conditionalPanel(
+                     #         condition = "input.normaliz_method_tab2 == 0",
+                     #         column(width = 4,
+                     #                numericInput_scale_factor("scale_factor_tab2")),
+                     #         column(width = 4,
+                     #                radioInput_most_var_method("most_var_method_tab2"),
+                     #                numericInput_var_genes("n_of_var_genes_tab2"),
+                     #                actionButtonInput("run_pca_tab2",
+                     #                                  HTML("Run the PCA analysis")))
+                     #     ),
+                     # ), # Fluid row,
                      
                      conditionalPanel(
-                         condition = "input.run_pca_tab2!= 0",
+                         condition = "input.run_pca_tab2_1 != 0 || input.run_pca_tab2_2 != 0",
                          
                          fluidRow(
                              titlePanel("Elbow plot showing the variation explained by each component"),
@@ -990,28 +834,13 @@ function(request) {
                                     
                              ),
                              column(2,
-                                    div(class = "down-group",
-                                        numericInput("p6_height","Height (cm)",step=0.5,value=6),
-                                        numericInput("p6_width","Width (cm)",step=0.5,value=10),
-                                        selectInput("p6_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p6_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE),
-                                        downloadButton("p6_down", HTML("Download Plot")))),
+                                    numericInput_plot_height("p6_height", value=6),
+                                    numericInput_plot_width("p6_width", value=10),
+                                    selectInput_plot_res("p6_res"),
+                                    selectInput_plot_format("p6_format"),
+                                    downloadButton("p6_down", HTML("Download Plot"))),
                              column(width = 3,
-                                    div(class = "option-group",
-                                        numericInput("n_of_PCs_tab2",
-                                                     label = "Select the number of PCs",
-                                                     value = 30)))
-                             
+                                    numericInput_n_of_PCs("n_of_PCs_tab2"))
                          ) # Fluid row
                      ), # Ends conditional
                      
@@ -1024,16 +853,10 @@ function(request) {
                          p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), ":", em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
                          br(),
                          column(width = 3,
-                                div(class = "option-group",
-                                    numericInput("resolution_clust_tab2",
-                                                 label =
-                                                     "Select the resolution for clustering",
-                                                 value = 1.2,
-                                                 step = 0.1))),
+                                numericInput_resolution_clust("resolution_clust_tab2")),
                          column(width = 3,
-                                actionButton("run_clustering_tab2",
-                                             HTML("Run the clustering analysis"),
-                                             style="background-color: #d6fffe"))
+                                actionButtonInput("run_clustering_tab2",
+                                                  HTML("Run the clustering analysis")))
                      ), # Fluid row
                      
                      conditionalPanel(
@@ -1072,26 +895,13 @@ function(request) {
                                                                     "UMAP split by sample"= "UMAP2"),
                                                      selected = "UMAP"))),
                              column(2,
-                                    div(class = "down-group",
-                                        numericInput("p7_height","Height (cm)",step=0.5,value=10),
-                                        numericInput("p7_width","Width (cm)",step=0.5,value=12))),
+                                    numericInput_plot_height("p7_height", value=10),
+                                    numericInput_plot_width("p7_width", value=12)),
                              column(2,
-                                    div(class = "down-group",
-                                        selectInput("p7_res","Resolution (DPI)", choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p7_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE))),
+                                    selectInput_plot_res("p7_res"),
+                                    selectInput_plot_format("p7_format")),
                              column(2,
-                                    div(class = "down-group",
-                                        downloadButton("p7_down", HTML("Download Plot")))),
+                                    downloadButton("p7_down", HTML("Download Plot"))),
                          ),# Fluid row
                          
                          fluidRow(
@@ -1109,26 +919,14 @@ function(request) {
                          p("After selecting the clusters, click on the blue button (Reanalyze after selection/exclusion of clusters). Asc-Seurat will run the analyses of the new subset until the PCA step.", strong("Then, you will need to set the new number of components using the elbow plot (above) and click on the button \"Run the clustering analysis\" again.")),
                          
                          column(3,
-                                div(class = "option-group",
-                                    radioButtons("filter_clusters_tab2",
-                                                 "Do you want to select or exclude clusters of cells and reanalyze the data?",
-                                                 choices = list("Yes" = 1,
-                                                                "No" = 0),
-                                                 selected = 0),
-                                )
+                                radioButtons_filter_clusters("filter_clusters_tab2")
                          ),
                          
                          conditionalPanel(
                              condition = "input.filter_clusters_tab2 != 0",
                              
                              column(3,
-                                    div(class = "option-group",
-                                        radioButtons("filter_clusters_opt_tab2",
-                                                     "Do you want to select or exclude the clusters?",
-                                                     choices = list("Select" = "select",
-                                                                    "Exclude" = "exclude"),
-                                                     selected = c("select")),
-                                    )
+                                    radioButtons_filter_clusters_opt("filter_clusters_opt_tab2")
                              ),
                              
                              column( 3,
@@ -1139,9 +937,8 @@ function(request) {
                              
                              column( 3,
                                      div(class = "option-group",
-                                         actionButton("rerun_after_filtering_tab2",
-                                                      HTML("Reanalyze after selection/exclusion of clusters"),
-                                                      style="background-color: #d6fffe")
+                                         actionButtonInput("rerun_after_filtering_tab2",
+                                                           HTML("Reanalyze after selection/exclusion of clusters"))
                                      )
                              ),
                              
@@ -1170,15 +967,9 @@ function(request) {
                      fluidRow(
                          titlePanel("Identification of markers / Differential expression analysis"),
                          column(3,
-                                div(class = "option-group",
-                                    radioButtons("find_markers_tab2",
-                                                 "Do you want to identify markers and/or D.E. genes?",
-                                                 choices = list("Yes" = 1,
-                                                                "No" = 0),
-                                                 selected = c(0)),
-                                    
-                                )
-                         )),
+                                radioButtons_find_markers("find_markers_tab2")
+                         )
+                     ),
                      
                      conditionalPanel(
                          condition = "input.find_markers_tab2 == 1",
@@ -1233,23 +1024,17 @@ function(request) {
                                             my_withSpinner( uiOutput("find_markers_or_DE_tab2_cluster_ui") ),
                                             my_withSpinner( uiOutput("find_markers_or_DE_tab2_treat1_ui") ),
                                             my_withSpinner( uiOutput("find_markers_or_DE_tab2_treat2_ui") ),
-                                            pickerInput(
-                                                inputId = "find_markers_tab2_test.use",
-                                                label = "Select the statistical test",
-                                                choices = c("wilcox", "bimod", "roc", "t"), #"negbinom", "poisson", "LR", "MAST" were excluded since they need to set latent.vars and we do not provide options to the user to set it.
-                                                selected = "wilcox",
-                                                multiple = FALSE,
-                                                options = list(`actions-box` = TRUE)),
+                                            pickerInput_find_markers_test("find_markers_tab2_test.use"),
+                                            
                                             numericInput("find_markers_or_DE_tab2_pvalue",
-                                                         label = "Select the (adjusted) p-value threshold. Leave it blank if no filtering is required",
+                                                         label = "Select the (adjusted) p-value threshold.",
                                                          value = 0.05),
                                             
                                         ))),
                              
                              column(3,
-                                    actionButton("run_ident_markers_tab2",
-                                                 HTML("Search for markers/D.E. genes"),
-                                                 style="background-color: #d6fffe")),
+                                    actionButtonInput("run_ident_markers_tab2",
+                                                      HTML("Search for markers/D.E. genes"))),
                              
                          ), # ends conditional
                      ), # ends fluidrow
@@ -1273,50 +1058,71 @@ function(request) {
                          br(),
                          p("In this section, users can visualize the gene expression of selected genes (e.g., tissue markers). Start by loading a", strong("csv"), "file with at least two columns. The first column must be the gene ID, and the second is a grouping variable (e.g., the tissue name). A third column can be used to store the common name of the gene but is optional."),
                          br(),
-                         column(width = 4,
-                                div(class = "option-group",
-                                    fileInput("markers_list_tab2",
-                                              label = "Input the list of markers in the format: 'GeneID,Group,Name' (no header)",
-                                              accept = c("text/csv",
-                                                         "text/comma-separated-values,text/plain",
-                                                         ".csv"))
-                                    
-                                    
-                                ),
-                                div(class = "option-group",
-                                    actionButton("load_markers_tab2",
-                                                 HTML("Load markers"),
-                                                 style="background-color: #d6fffe"))),
+                         
                          column(width = 3,
+                                fileInput_markers_list("markers_list_tab2"),
+                                div(class = "option-group",
+                                    actionButtonInput("load_markers_tab2",
+                                                      HTML("Load markers")))),
+                         column(width = 2,
                                 conditionalPanel(
                                     condition = "input.load_markers_tab2 > 0",
                                     my_withSpinner( uiOutput('marker_group_selec_tab2') ),
-                                    my_withSpinner( uiOutput("marker_filter_genes_q_tab2") ),
-                                    my_withSpinner( uiOutput("marker_genes_ids_tab2") )
-                                )),
-                         column(width = 4,
-                                conditionalPanel(
-                                    condition = "input.filter_genes_q_tab2 == 0",
+                                    define_if_use_all_genes_or_select("filter_genes_q_tab2"),
+                                    
+                                    conditionalPanel(
+                                        condition = "input.filter_genes_q_tab2 == 0",
+                                        define_what_id_to_use("genes_ids_tab2")
+                                    ))),
+                         conditionalPanel(
+                             condition = "input.filter_genes_q_tab2 == 0",
+                             
+                             column(width = 3,
                                     my_withSpinner( uiOutput('marker_genes_selec_tab2') )
-                                )),
+                             )),
                          column(width = 2,
                                 conditionalPanel(
                                     condition = "input.load_markers_tab2 > 0",
-                                    div(class = "option-group",
-                                        radioButtons("slot_selection_heatmap_tab2",
-                                                     "Select the expression values to show",
-                                                     choices = list("counts" = "counts",
-                                                                    "normalized" = "data",
-                                                                    "normalized and scaled" = "scale.data"),
-                                                     selected = c("scale.data"))))),
+                                    radioButtons_slot_selection_heatmap("slot_selection_heatmap_tab2"))),
                          column(width = 2,
                                 conditionalPanel(
                                     condition = "input.load_markers_tab2 > 0",
-                                    actionButton("run_heatmap_tab2",
-                                                 HTML("Show heatmap with the average \
-                                                             of expression per cluster"),
-                                                 style="background-color: #d6fffe")))
+                                    actionButtonInput("run_heatmap_tab2",
+                                                      HTML("Show heatmap"))))
                          
+                         # column(width = 4,
+                         #        fileInput_markers_list("markers_list_tab2"),
+                         #        div(class = "option-group",
+                         #            actionButtonInput("load_markers_tab2",
+                         #                              HTML("Load markers")))),
+                         # column(width = 3,
+                         #        conditionalPanel(
+                         #            condition = "input.load_markers_tab2 > 0",
+                         #            my_withSpinner( uiOutput('marker_group_selec_tab2') ),
+                         #            #my_withSpinner( uiOutput("marker_filter_genes_q_tab2") ),
+                         #            #define_what_id_to_use("marker_genes_ids_tab2"),
+                         #            define_if_use_all_genes_or_select("marker_filter_genes_q_tab2"),
+                         #            conditionalPanel(
+                         #                condition = "input.marker_filter_genes_q_tab2 == 0",
+                         #                define_what_id_to_use("genes_ids_tab2")
+                         #            )
+                         #        )),
+                         # column(width = 4,
+                         #        conditionalPanel(
+                         #            condition = "input.marker_filter_genes_q_tab2 == 0",
+                         #            my_withSpinner( uiOutput('selected_genes_tab2') )
+                         #        )),
+                         # column(width = 2,
+                         #        conditionalPanel(
+                         #            condition = "input.load_markers_tab2 > 0",
+                         #            
+                         #            radioButtons_slot_selection_heatmap("slot_selection_heatmap_tab2"))),
+                         # column(width = 2,
+                         #        conditionalPanel(
+                         #            condition = "input.load_markers_tab2 > 0",
+                         #            actionButtonInput("run_heatmap_tab2",
+                         #                              HTML("Show heatmap with the average \
+                         #                                     of expression per cluster"))))
                      ), # Fluid row
                      
                      #heat map
@@ -1325,62 +1131,38 @@ function(request) {
                          condition = "input.run_heatmap_tab2 > 0",
                          fluidRow(
                              br(),
-                             #          p(strong("Obs."), "The heatmap will crash if only one (or zero) gene of your list is found in the dataset. I am going to fix that soon. For now, use the feature plots if you want to check a single gene."),
-                             #          br(),
+                             
                              titlePanel("Heatmap"),
                              br(),
                              strong("Note that the scale of colors of the heatmap is adjusted based on the expression of the selected genes."),
                              br(),
                              p("For now, the heat map shows the average expression of all samples together. It is only helpful to identify if the markers or cell types make sense with the number of clusters."),
                              p("To visualize the expression in the clusters by sample, use the feature plots."),
-                             #        p(strong("obs."), "The heatmap will crash if only one (or zero) gene of your list is found in the dataset. I am going to fix that soon. For now, use the feature plots if you want to check a single gene."),
+                             
                              column(width = 10,
                                     my_withSpinner(  uiOutput("heat_map_ui_tab2") )),
                              # download plot
                              column(2,
-                                    div(class = "down-group",
-                                        numericInput("p8_height","Height (cm)",step=0.5,value=15),
-                                        numericInput("p8_width","Width (cm)",step=0.5,value=20),
-                                        selectInput("p8_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p8_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE),
-                                        downloadButton("p8_down", HTML("Download Plot")))),
-                             
+                                    numericInput_plot_height("p8_height", value=15),
+                                    numericInput_plot_width("p8_width", value=20),
+                                    selectInput_plot_res("p8_res"),
+                                    selectInput_plot_format("p8_format"),
+                                    downloadButton("p8_down", HTML("Download Plot")))
                          ),
-                         
-                         
-                         
                          
                          fluidRow(
                              titlePanel("Visualization of gene expression of each cell and additional plots"),
                              br(),
-                             # p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. It is recommended to select no more than 20 genes, so the page scrolls smoothly."),
-                             # br(),
+                             
                              p("Only genes selected for the heatmap can be selected for the additional plots."),
                              br(),
                              column(width = 3,
                                     my_withSpinner( uiOutput("marker_to_feature_plot_tab2") )),
                              column(width = 2,
-                                    div(class = "option-group",
-                                        radioButtons("slot_selection_feature_plot_tab2",
-                                                     "Select the expression values to show",
-                                                     choices = list("counts" = "counts",
-                                                                    "normalized (recommended)" = "data"),
-                                                     selected = c("data")))),
+                                    radioButtons_slot_selection_feature_plot("slot_selection_feature_plot_tab2")),
                              column(width = 3,
-                                    actionButton("run_feature_plot_tab2",
-                                                 HTML("Show the expression of genes at the cell level"),
-                                                 style="background-color: #d6fffe"))
-                             
+                                    actionButtonInput("run_feature_plot_tab2",
+                                                      HTML("Show the expression of genes at the cell level")))
                          )
                      ),# Ends conditional
                      
@@ -1388,7 +1170,7 @@ function(request) {
                          condition = "input.run_feature_plot_tab2 > 0",
                          fluidRow(
                              titlePanel("Feature plots"),
-                             column(width = 8,
+                             column(width = 7,
                                     my_withSpinner( uiOutput("feature_plot_tab2") )),
                              column(width = 4,
                                     my_withSpinner( uiOutput("umap2_tab2", height = "300px") ))
@@ -1396,9 +1178,9 @@ function(request) {
                          
                          fluidRow(
                              titlePanel("Violin and Dot plots"),
-                             column(width = 8,
+                             column(width = 6,
                                     my_withSpinner( uiOutput("run_vln_plot_tab2") )),
-                             column(width = 4,
+                             column(width = 6,
                                     my_withSpinner( uiOutput("run_dot_plot_tab2") ))),
                          fluidRow(
                              titlePanel("Downloading additional plots"),
@@ -1407,81 +1189,44 @@ function(request) {
                              p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
                              br(),
                              column(width = 2,
-                                    div(class = "option-group",
-                                        radioButtons("down_add_plots_tab2",
-                                                     "Do you want to download the plots?",
-                                                     choices = list("Yes" = 1,
-                                                                    "No" = 0),
-                                                     selected = 0))),
+                                    radioButtons_down_add_plots("down_add_plots_tab2")),
                              conditionalPanel (
                                  condition = "input.down_add_plots_tab2 == 1",
                                  column(width = 2,
                                         my_withSpinner( uiOutput("select_genes_add_plot_to_down_tab2_ui") ),
-                                        #uiOutput("select_genes_add_plot_to_down_ui")
                                  ),
-                                 column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the feature plots")),
-                                            numericInput("add_p_tab2_feat_height","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab2_feat_width","Width (cm)",step=0.5,value=14),
-                                            selectInput("add_p_tab2_feat_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab2_feat_format",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
-                                 column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the violin plots")),
-                                            numericInput("add_p_tab2_violin_height","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab2_violin_width","Width (cm)",step=0.5,value=18),
-                                            selectInput("add_p_tab2_violin_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab2_violin_format",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
-                                 column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the dot plots")),
-                                            numericInput("add_p_tab2_dot_height","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab2_dot_width","Width (cm)",step=0.5,value=14),
-                                            selectInput("add_p_tab2_dot_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab2_dot_format",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
-                                 column(width = 3,
-                                        actionButton("start_down_add_plots_tab2",
-                                                     HTML("Download additional plots"),
-                                                     style="background-color: #d6fffe"))
                                  
+                                 column(2,
+                                        div(class = "option-group", 
+                                            p(strong("Select the options for the feature plots")) ),
+                                        numericInput_plot_height("add_p_tab2_feat_height", value=10),
+                                        numericInput_plot_width("add_p_tab2_feat_width", value=14),
+                                        selectInput_plot_res("add_p_tab2_feat_res"),
+                                        selectInput_plot_format("add_p_tab2_feat_format")),
+                                 column(2,
+                                        div(class = "option-group", 
+                                            p(strong("Select the options for the violin plots")) ),
+                                        numericInput_plot_height("add_p_tab2_violin_height", value=10),
+                                        numericInput_plot_width("add_p_tab2_violin_width", value=14),
+                                        selectInput_plot_res("add_p_tab2_violin_res"),
+                                        selectInput_plot_format("add_p_tab2_violin_format")),
+                                 column(2,
+                                        div(class = "option-group", 
+                                            p(strong("Select the options for the dot plots")) ),
+                                        numericInput_plot_height("add_p_tab2_dot_height", value=10),
+                                        numericInput_plot_width("add_p_tab2_dot_width", value=14),
+                                        selectInput_plot_res("add_p_tab2_dot_res"),
+                                        selectInput_plot_format("add_p_tab2_dot_format")),
+                                 column(width = 3,
+                                        actionButtonInput("start_down_add_plots_tab2",
+                                                          HTML("Download additional plots")))
                              )
                          ), # end fluid row
                      ), # Ends conditional
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 1.0"), "- Released on March 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
             ), # ends tab
             
             ##############################
@@ -1492,16 +1237,35 @@ function(request) {
                      
                      fluidRow(
                          titlePanel("Trajectory inference analysis"),
-                         # br(),
-                         # p("In this tab it is possible to execute the trajectory inference (pseudo-time) analysis using slingshot. For more information about the package, click here", a(tags$a(href="https://www.bioconductor.org/packages/release/bioc/html/sli", "here."))),
-                         # br(),
+                         
                          p("For the trajectory inference analyses, users need to use data containing the cluster information obtained in the other tabs of Asc-Seurat. The file must be an RDS file located in the", code("RDS_files/"),"that can be generated using the previous tabs of Asc-Seurat."),
                          br(),
                          p("For this analysis, it is possible to indicate what cluster is expected to be at the beginning and/or end of the trajectory. Depending on the selected model, some of this information might be required."),
                          br(),
                          p("To start the analysis, select the file containing the data and click on", code("Run trajectory inference model"), "button."),
                          column(width = 3,
-                                my_withSpinner( uiOutput("load_integrated_ui_tab3") ),
+                                
+                                # div(class = "option-group",
+                                #     radioButtons("rds_location_tab3",
+                                #                  "How to load the rds file?",
+                                #                  choices = list("From RDS_files/ folder" = 0,
+                                #                                 "Load from other place" = 1),
+                                #                  selected = 0)),
+                                # conditionalPanel(
+                                #     condition = "input.rds_location_tab3 == 0",
+                                    
+                                    my_withSpinner( uiOutput("load_integrated_ui_tab3") ), 
+                               # ),
+                                # conditionalPanel(
+                                #     condition = "input.rds_location_tab3 == 1",
+                                #     
+                                #     div(class = "option-group",
+                                #         fileInput("file_input_rds_tab3",
+                                #                   label = "Input the rds file",
+                                #                   accept = c(".rds")
+                                #         )
+                                #     )
+                                # ),
                                 div(class = "option-group",
                                     radioButtons("ti_select_models",
                                                  "Do you want to run slingshot or another dynverse model?",
@@ -1509,7 +1273,8 @@ function(request) {
                                                                 "Dynverse model (relies on docker)" = 1
                                                  ),
                                                  selected = c(0)
-                                    ))),
+                                    ))
+                         ),
                          column(width = 3,
                                 div(class = "option-group",
                                     radioButtons("ti_sample_number",
@@ -1518,24 +1283,6 @@ function(request) {
                                                                 "No" = 0),
                                                  selected = c(0)
                                     ),
-                                    # conditionalPanel (
-                                    #     condition = "input.ti_sample_number == 1",
-                                    #     radioButtons("ti_timepoint",
-                                    #                  "If using multiple sample, are they timepoints?",
-                                    #                  choices = list("Yes, they are timepoints" = 1,
-                                    #                                 "No, they are not timepoints" = 0),
-                                    #                  selected = c(1)
-                                    #     ),
-                                    #     conditionalPanel (
-                                    #         condition = "input.ti_timepoint == 1",
-                                    #         radioButtons("ti_timepoint_cont_disct",
-                                    #                      "Continuous or discrete?",
-                                    #                      choices = list("Continuous" = 1,
-                                    #                                     "Discrete" = 0),
-                                    #                      selected = c(1)
-                                    #         ),
-                                    #     ),
-                                    # ),
                                 )
                          ),
                          
@@ -1561,7 +1308,6 @@ function(request) {
                                         numericInput("traj_end_clusters",
                                                      label = "Set the ending cluster",
                                                      value = ""))),
-                             
                          ),
                          
                          conditionalPanel (
@@ -1573,9 +1319,8 @@ function(request) {
                              
                          ),
                          column(width = 3,
-                                actionButton("run_ti_model",
-                                             HTML("Run trajectory inference model"),
-                                             style="background-color: #d6fffe")),
+                                actionButtonInput("run_ti_model",
+                                                  HTML("Run trajectory inference model"))),
                          
                      ), # end fluidRow
                      
@@ -1584,9 +1329,6 @@ function(request) {
                          fluidRow(
                              
                              titlePanel("Visualization of the inferred trajectory"),
-                             
-                             #p("Below, it is possible to visualize the trajectory in three different representation of the data."),
-                             
                              
                              column(width = 4,
                                     my_withSpinner( plotOutput("ti_order")) ),
@@ -1623,26 +1365,13 @@ function(request) {
                                                                     "Graph"= 2),
                                                      selected = 0))),
                              column(2,
-                                    div(class = "down-group",
-                                        numericInput("p9_height","Height (cm)",step=0.5,value=10),
-                                        numericInput("p9_width","Width (cm)",step=0.5,value=12))),
+                                    numericInput_plot_height("p9_height", value=10),
+                                    numericInput_plot_width("p9_width", value=12)),
                              column(2,
-                                    div(class = "down-group",
-                                        selectInput("p9_res","Resolution (DPI)", choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p9_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE))),
+                                    selectInput_plot_res("p9_res"),
+                                    selectInput_plot_format("p9_format")),
                              column(2,
-                                    div(class = "down-group",
-                                        downloadButton("p9_down", HTML("Download Plot")))),
+                                    downloadButton("p9_down", HTML("Download Plot"))),
                          ), # Fluid row
                      ), #ends conditional
                      
@@ -1651,12 +1380,15 @@ function(request) {
                      conditionalPanel (
                          condition = "input.run_ti_model != 0",
                          
-                         p("More than one lineage of cells can be present in the inferred trajectory. IIf that is the case, the order of the clusters representing the development pathway of each lineage will be shown below. Clusters that appear in multiple rows represent segments of the trajectory that are shared among lineages."),
-                         
-                         fluidRow(
-                             column(12,
-                                    my_withSpinner( verbatimTextOutput("lineages") )
-                             )
+                         conditionalPanel (
+                             condition = "input.ti_select_models == 0",
+                             
+                             p("More than one lineage of cells can be present in the inferred trajectory. IIf that is the case, the order of the clusters representing the development pathway of each lineage will be shown below. Clusters that appear in multiple rows represent segments of the trajectory that are shared among lineages."),
+                             
+                             fluidRow(
+                                 column(12,
+                                        my_withSpinner( verbatimTextOutput("lineages") ))
+                             ),
                          ),
                      ),
                      br(),
@@ -1668,19 +1400,14 @@ function(request) {
                          br(),
                          p("These genes can be identified in three different ways. 1) Global overview: genes that are important to define the whole trajectory; 2) Lineage/branch: genes that are important to define a branch interest; 3) Genes that are important to define the bifurcation points (points where the trajectory splits into different branches)"),
                          br(),
-                         # p("D.E. genes == differentialy expressed genes"),
                          p(strong("Note."), "Dynfeature does not calculate a p-value for the tested genes. Instead, it defines an \"importance value\" that can be used to rank the genes by their relevance."),
                          br(),
-                         
-                         #p("tradSEq does provide a p-value estimative"),
-                         
                          column(width = 3,
                                 div(class = "option-group",
                                     radioButtons("ti_expre_opt",
                                                  "Select the type of analysis:",
                                                  choices = list("Visualization of a list of genes" = 0,
                                                                 "Identification of important genes using Dynfeature" = 1
-                                                                #,"D.E. genes based on tradSEQ" = 2
                                                  ),
                                                  selected = c(0)
                                     ))),
@@ -1696,40 +1423,60 @@ function(request) {
                          fluidRow(
                              titlePanel("Expression of markers"),
                              br(),
-                             column(width = 4,
-                                    div(class = "option-group",
-                                        fileInput("markers_list_tab3",
-                                                  label = "Input the list of markers in the format: 'GeneID,Group,Name' (no header)",
-                                                  accept = c("text/csv",
-                                                             "text/comma-separated-values,text/plain",
-                                                             ".csv"))
-                                        
-                                        
-                                    ),
-                                    div(class = "option-group",
-                                        actionButton("load_markers_tab3",
-                                                     HTML("Load markers"),
-                                                     style="background-color: #d6fffe"))),
+                             # column(width = 4,
+                             #        fileInput_markers_list("markers_list_tab3"),
+                             #        div(class = "option-group",
+                             #            actionButtonInput("load_markers_tab3",
+                             #                              HTML("Load markers")))),
+                             # column(width = 3,
+                             #        conditionalPanel(
+                             #            condition = "input.load_markers_tab3 > 0",
+                             #            my_withSpinner( uiOutput('marker_group_selec_tab3') ),
+                             #            my_withSpinner( uiOutput("marker_filter_genes_q_tab3") ),
+                             #            define_what_id_to_use("marker_genes_ids_tab3")
+                             #            #my_withSpinner( uiOutput("marker_genes_ids_tab3") )
+                             #        )),
+                             # column(width = 4,
+                             #        conditionalPanel(
+                             #            condition = "input.filter_genes_q_tab3 == 0",
+                             #            my_withSpinner( uiOutput('marker_genes_selec_tab3') )
+                             #        )),
+                             # column(width = 2,
+                             #        conditionalPanel(
+                             #            condition = "input.load_markers_tab3 > 0",
+                             #            actionButtonInput("run_heatmap_tab3",
+                             #                              HTML("Show heatmap demonstrating the expression \
+                             #                                 within the trajectory"))))
                              column(width = 3,
-                                    conditionalPanel(
-                                        condition = "input.load_markers_tab3 > 0",
-                                        my_withSpinner( uiOutput('marker_group_selec_tab3') ),
-                                        my_withSpinner( uiOutput("marker_filter_genes_q_tab3") ),
-                                        my_withSpinner( uiOutput("marker_genes_ids_tab3") )
-                                    )),
-                             column(width = 4,
-                                    conditionalPanel(
-                                        condition = "input.filter_genes_q_tab3 == 0",
-                                        my_withSpinner( uiOutput('marker_genes_selec_tab3') )
-                                    )),
+                                    fileInput_markers_list("markers_list_tab3"),
+                                    div(class = "option-group",
+                                        actionButtonInput("load_markers_tab3",
+                                                          HTML("Load markers")))),
                              column(width = 2,
                                     conditionalPanel(
                                         condition = "input.load_markers_tab3 > 0",
-                                        actionButton("run_heatmap_tab3",
-                                                     HTML("Show heatmap demonstrating the expression \
-                                                             within the trajectory"),
-                                                     style="background-color: #d6fffe")))
-                             
+                                        my_withSpinner( uiOutput('marker_group_selec_tab3') ),
+                                        define_if_use_all_genes_or_select("filter_genes_q_tab3"),
+                                        
+                                        conditionalPanel(
+                                            condition = "input.filter_genes_q_tab3 == 0",
+                                            define_what_id_to_use("genes_ids_tab3")
+                                        ))),
+                             conditionalPanel(
+                                 condition = "input.filter_genes_q_tab3 == 0",
+                                 
+                                 column(width = 3,
+                                        my_withSpinner( uiOutput('marker_genes_selec_tab3') )
+                                 )),
+                             column(width = 2,
+                                    conditionalPanel(
+                                        condition = "input.load_markers_tab3 > 0",
+                                        radioButtons_slot_selection_heatmap("slot_selection_heatmap_tab3"))),
+                             column(width = 2,
+                                    conditionalPanel(
+                                        condition = "input.load_markers_tab3 > 0",
+                                        actionButtonInput("run_heatmap_tab3",
+                                                          HTML("Show heatmap"))))
                          ), # Fluid row
                          
                      ), #ends conditional
@@ -1739,41 +1486,26 @@ function(request) {
                          condition = "input.run_heatmap_tab3 > 0 & input.ti_expre_opt == 0",
                          fluidRow(
                              br(),
-                             #    p(strong("obs."), "The heatmap will crash if only one (or zero) gene from your list is found in the dataset. A fix is in progress for the next update. For now, use the feature plots if you want to check a single gene."),
-                             #    br(),
+                             
                              titlePanel("Heatmap of the trajectory"),
                              br(),
                              column(width = 10,
                                     my_withSpinner( uiOutput("heat_map_ui_tab3") )),
                              column(2,
-                                    div(class = "down-group",
-                                        numericInput("p10_height","Height (cm)",step=0.5,value=15),
-                                        numericInput("p10_width","Width (cm)",step=0.5,value=25),
-                                        selectInput("p10_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p10_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE),
-                                        downloadButton("p10_down", HTML("Download Plot")))),
+                                    numericInput_plot_height("p10_height", value=15),
+                                    numericInput_plot_width("p10_width", value=25),
+                                    selectInput_plot_res("p10_res"),
+                                    selectInput_plot_format("p10_format"),
+                                    downloadButton("p10_down", HTML("Download Plot"))),
                          ),
                          fluidRow(
                              titlePanel("Visualization of gene expression of each cell in the trajectory"),
                              br(),
-                             # p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. We recommend selecting no more than 20 genes, so the page scrolls smoothly."),
-                             # br(),
                              column(width = 3,
                                     my_withSpinner( uiOutput("marker_to_feature_plot_tab3") )),
                              column(width = 3,
-                                    actionButton("run_feature_plot_tab3",
-                                                 HTML("Show the expression of genes at the cell level"),
-                                                 style="background-color: #d6fffe"))
+                                    actionButtonInput("run_feature_plot_tab3",
+                                                      HTML("Show the expression of genes at the cell level")))
                              
                          )
                      ),# Ends conditional
@@ -1840,9 +1572,8 @@ function(request) {
                                                                        value = NULL))),
                              ), # ends conditional
                              column(width = 4,
-                                    actionButton("dynverse_def_imp_genes",
-                                                 HTML("Defines the most important genes"),
-                                                 style="background-color: #d6fffe"),
+                                    actionButtonInput("dynverse_def_imp_genes",
+                                                      HTML("Defines the most important genes")),
                                     
                                     conditionalPanel("input.dynverse_def_imp_genes > 0",
                                                      #column(width = 4,
@@ -1860,68 +1591,39 @@ function(request) {
                          condition = "input.dynverse_def_imp_genes > 0 & input.ti_expre_opt == 1",
                          fluidRow(
                              br(),
-                             #       p(strong("obs."), "The heatmap will crash if only one (or zero) gene from your list is found in the dataset. A fix is in progress for the next update. For now, use the feature plots if you want to check a single gene."),
-                             #       br(),
-                             #p("Be careful with the name of the genes."),
+                             
                              titlePanel("Heatmap of the trajectory"),
                              
                              br(),
                              column(width = 10,
                                     my_withSpinner( uiOutput("heat_map_ui_tab3_dynv") )),
                              column(2,
-                                    actionButton("run_heatmap_tab3_dynverse",
-                                                 HTML("Update heatmap"),
-                                                 style="background-color: #d6fffe"),
-                                    
-                                    div(class = "down-group",
-                                        numericInput("p11_height","Height (cm)",step=0.5,value=15),
-                                        numericInput("p11_width","Width (cm)",step=0.5,value=25),
-                                        selectInput("p11_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                    selected="100"),
-                                        selectInput("p11_format",
-                                                    "File type",
-                                                    choices=list("png" = "png",
-                                                                 "tiff" = "tiff",
-                                                                 "jpeg" = "jpeg",
-                                                                 "pdf" = "pdf",
-                                                                 "svg" = "svg"),
-                                                    selected="png",
-                                                    multiple=FALSE,
-                                                    selectize=TRUE),
-                                        downloadButton("p11_down", HTML("Download Plot"))),
+                                    actionButtonInput("run_heatmap_tab3_dynverse",
+                                                      HTML("Update heatmap")),
+                                    numericInput_plot_height("p11_height", value=15),
+                                    numericInput_plot_width("p11_width", value=25),
+                                    selectInput_plot_res("p11_res"),
+                                    selectInput_plot_format("p11_format"),
+                                    downloadButton("p11_down", HTML("Download Plot")),
                                     downloadButton("download_dynverse_genes_filt",
                                                    HTML("Download the fittered list <br> of genes and their <br> \"importance\" score."))
-                             ),
+                             ), 
                          ), # end row
                          fluidRow(
                              titlePanel("Additional plots"),
                              br(),
-                             # p("Note that, depending of the capacity of your computer, the webpage can crash if you select many genes at once. We recommend selecting no more than 20 genes, so the page scrolls smoothly."),
-                             # br(),
                              
                              column(width = 3,
                                     my_withSpinner( uiOutput("marker_to_feature_plot_tab3_dynv") )),
                              column(width = 3,
-                                    actionButton("run_feature_plot_tab3_dynv",
-                                                 HTML("Show the expression of genes at the cell level"),
-                                                 style="background-color: #d6fffe"))
-                             
+                                    actionButtonInput("run_feature_plot_tab3_dynv",
+                                                      HTML("Show the expression of genes at the cell level")))
                          )
                      ),# Ends conditional
-                     
-                     
-                     
-                     
-                     
-                     
-                     
-                     
-                     
                      
                      conditionalPanel (
                          condition = "input.run_feature_plot_tab3_dynv > 0 & input.ti_expre_opt == 1",
                          fluidRow(
-                             #<<<<<<< HEAD
                              titlePanel("Gene expression within the trajectory"),
                              
                              column(width = 4,
@@ -1946,73 +1648,35 @@ function(request) {
                              p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
                              br(),
                              column(width = 2,
-                                    div(class = "option-group",
-                                        radioButtons("down_add_plots_tab3",
-                                                     "Do you want to download the plots?",
-                                                     choices = list("Yes" = 1,
-                                                                    "No" = 0),
-                                                     selected = 0))),
+                                    radioButtons_down_add_plots("down_add_plots_tab3")),
                              conditionalPanel (
                                  condition = "input.down_add_plots_tab3 == 1",
                                  column(width = 2,
                                         my_withSpinner( uiOutput("select_genes_add_plot_to_down_tab3_ui") ),
-                                        #uiOutput("select_genes_add_plot_to_down_ui")
                                  ),
+                                 
                                  column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the dimension reduction plots")),
-                                            numericInput("add_p_tab3_feat_height","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab3_feat_width","Width (cm)",step=0.5,value=14),
-                                            selectInput("add_p_tab3_feat_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab3_feat_format",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
+                                        p(strong("Select the options for the dimension reduction plots")),
+                                        numericInput_plot_height("add_p_tab3_feat_height", value=10),
+                                        numericInput_plot_width("add_p_tab3_feat_width", value=14),
+                                        selectInput_plot_res("add_p_tab3_feat_res"),
+                                        selectInput_plot_format("add_p_tab3_feat_format")),
                                  column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the dendrogram plots")),
-                                            numericInput("add_p_tab3_violin_height","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab3_violin_width","Width (cm)",step=0.5,value=18),
-                                            selectInput("add_p_tab3_violin_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab3_violin_format",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
+                                        p(strong("Select the options for the dendrogram plots")),
+                                        numericInput_plot_height("add_p_tab3_violin_height", value=10),
+                                        numericInput_plot_width("add_p_tab3_violin_width", value=18),
+                                        selectInput_plot_res("add_p_tab3_violin_res"),
+                                        selectInput_plot_format("add_p_tab3_violin_format")),
+                                 
                                  column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the graph plots")),
-                                            numericInput("add_p_tab3_dot_height","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab3_dot_width","Width (cm)",step=0.5,value=14),
-                                            selectInput("add_p_tab3_dot_res","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab3_dot_format",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
+                                        p(strong("Select the options for the graph plots")),
+                                        numericInput_plot_height("add_p_tab3_dot_height", value=10),
+                                        numericInput_plot_width("add_p_tab3_dot_width", value=14),
+                                        selectInput_plot_res("add_p_tab3_dot_res"),
+                                        selectInput_plot_format("add_p_tab3_dot_format")),
                                  column(width = 3,
-                                        actionButton("start_down_add_plots_tab3",
-                                                     HTML("Download additional plots"),
-                                                     style="background-color: #d6fffe"))
+                                        actionButtonInput("start_down_add_plots_tab3",
+                                                          HTML("Download additional plots")))
                                  
                              ) # ends conditional
                          ), # ends fluid row
@@ -2028,73 +1692,34 @@ function(request) {
                              p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
                              br(),
                              column(width = 2,
-                                    div(class = "option-group",
-                                        radioButtons("down_add_plots_tab3_dynv",
-                                                     "Do you want to download the plots?",
-                                                     choices = list("Yes" = 1,
-                                                                    "No" = 0),
-                                                     selected = 0))),
+                                    radioButtons_down_add_plots("down_add_plots_tab3_dynv")),
                              conditionalPanel (
                                  condition = "input.down_add_plots_tab3_dynv == 1",
                                  column(width = 2,
                                         my_withSpinner( uiOutput("select_genes_add_plot_to_down_tab3_ui_dynv") ),
-                                        #uiOutput("select_genes_add_plot_to_down_ui")
                                  ),
+                                 
                                  column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the dimension reduction plots")),
-                                            numericInput("add_p_tab3_feat_height_dynv","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab3_feat_width_dynv","Width (cm)",step=0.5,value=14),
-                                            selectInput("add_p_tab3_feat_res_dynv","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab3_feat_format_dynv",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
+                                        p(strong("Select the options for the dimension reduction plots")),
+                                        numericInput_plot_height("add_p_tab3_feat_height_dynv", value=10),
+                                        numericInput_plot_width("add_p_tab3_feat_width_dynv", value=14),
+                                        selectInput_plot_res("add_p_tab3_feat_res_dynv"),
+                                        selectInput_plot_format("add_p_tab3_feat_format_dynv")),
                                  column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the dendrogram plots")),
-                                            numericInput("add_p_tab3_violin_height_dynv","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab3_violin_width_dynv","Width (cm)",step=0.5,value=18),
-                                            selectInput("add_p_tab3_violin_res_dynv","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab3_violin_format_dynv",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
+                                        p(strong("Select the options for the dendrogram plots")),
+                                        numericInput_plot_height("add_p_tab3_violin_height_dynv", value=10),
+                                        numericInput_plot_width("add_p_tab3_violin_width_dynv", value=14),
+                                        selectInput_plot_res("add_p_tab3_violin_res_dynv"),
+                                        selectInput_plot_format("add_p_tab3_violin_format_dynv")),
                                  column(2,
-                                        div(class = "down-group",
-                                            p(strong("Select the options for the graph plots")),
-                                            numericInput("add_p_tab3_dot_height_dynv","Height (cm)",step=0.5,value=10),
-                                            numericInput("add_p_tab3_dot_width_dynv","Width (cm)",step=0.5,value=14),
-                                            selectInput("add_p_tab3_dot_res_dynv","Resolution (DPI)",choices=c("100","200","300","400","500","600"),
-                                                        selected="100"),
-                                            selectInput("add_p_tab3_dot_format_dynv",
-                                                        "File type",
-                                                        choices=list("png" = "png",
-                                                                     "tiff" = "tiff",
-                                                                     "jpeg" = "jpeg",
-                                                                     "pdf" = "pdf",
-                                                                     "svg" = "svg"),
-                                                        selected="png",
-                                                        multiple=FALSE,
-                                                        selectize=TRUE))),
+                                        p(strong("Select the options for the graph plots")),
+                                        numericInput_plot_height("add_p_tab3_dot_height_dynv", value=10),
+                                        numericInput_plot_width("add_p_tab3_dot_width_dynv", value=14),
+                                        selectInput_plot_res("add_p_tab3_dot_res_dynv"),
+                                        selectInput_plot_format("add_p_tab3_dot_format_dynv")),
                                  column(width = 3,
-                                        actionButton("start_down_add_plots_tab3_dynv",
-                                                     HTML("Download additional plots"),
-                                                     style="background-color: #d6fffe"))
+                                        actionButtonInput("start_down_add_plots_tab3_dynv",
+                                                          HTML("Download additional plots")))
                                  
                              ) # ends conditional
                          ), # ends fluid row
@@ -2103,7 +1728,22 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 1.0"), "- Released on March 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
+            ),
+            
+            ##########################
+            ##### Advanced plots #####
+            ##########################
+            tabPanel("Advanced plots",
+                     
+                     #   h2("Advanced Plots"),
+                     
+                     fluidPage(
+                         fluidRow(
+                             stacked_violin_UI("stacked1"),
+                         )
+                     )
+                     
             ),
             
             ################################
@@ -2174,26 +1814,11 @@ function(request) {
                                                     numericInput("gontop", "Plot (N) top GOs per category", 5, min = 1, step = 1)
                                                 )),
                                          column(3,
-                                                div(class = "down-group",
-                                                    numericInput("goplotwidth", "Width (cm)", 10, min = 1, step = 1),
-                                                    numericInput("goplotheight", "Height (cm)", 10, min = 1, step = 1)
-                                                )),
+                                                numericInput_plot_height("goplotheight", value=10),
+                                                numericInput_plot_width("goplotwidth", value=10)),
                                          column(3,
-                                                div(class = "down-group",
-                                                    selectInput("goplotdpi","Resolution (DPI)",
-                                                                choices=c("100","200","300","400","500","600", "700", "800", "900", "1000"),
-                                                                selected="300"),
-                                                    selectInput("goplotdevice",
-                                                                "File type",
-                                                                choices=list("png"  = "png",
-                                                                             "tiff" = "tiff",
-                                                                             "jpeg" = "jpeg",
-                                                                             "pdf"  = "pdf",
-                                                                             "svg"  = "svg"),
-                                                                selected="svg",
-                                                                multiple=FALSE,
-                                                                selectize=TRUE)
-                                                )),
+                                                selectInput_plot_res("goplotdpi"),
+                                                selectInput_plot_format("goplotdevice")),
                                          downloadButton("goplot_down", HTML("Download Plot"))
                                      )
                                  ),
@@ -2204,10 +1829,9 @@ function(request) {
                              bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                              
                              tags$hr(),
-                             p(strong("Asc-Seurat, version 1.0"), "- Released on March 19th, 2021.", align = "center")
+                             p(strong("Asc-Seurat, version XX"), "- Released on YYYY YY, 2021.", align = "center")
                          )
                      )
-                     
             )
             
         ), ## Closing the ui
