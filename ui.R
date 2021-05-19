@@ -10,9 +10,15 @@ suppressMessages( require("rclipboard") )
 suppressMessages( require("shinycssloaders") )
 suppressMessages( require("shinyFeedback") )
 
-source("/app/R/ui_functions.R")
-source("/app/R/improved_dot_and_violin_plots.R")
-
+using_docker <- F
+if (using_docker == T) {
+    source("/app/R/ui_functions.R")
+    source("/app/R/improved_dot_and_violin_plots.R")
+} else {
+    source("R/ui_functions.R")
+    source("R/improved_dot_and_violin_plots.R")  
+    
+}
 function(request) {
     
     ## This set the app to properly work with docker
@@ -119,7 +125,7 @@ function(request) {
                              style='border-right: 40px solid transparent'),
                      ),
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
             ),
             
             ######################################
@@ -473,6 +479,13 @@ function(request) {
                          column(width = 3,
                                 fileInput_markers_list("markers_list"),
                                 div(class = "option-group",
+                                    selectInput("markers_list_header_opt",
+                                                "Does your file have a header?",
+                                                choices = c("", "Yes", "No"),
+                                                multiple = FALSE,
+                                                selectize = TRUE,
+                                                selected = NULL)),
+                                div(class = "option-group",
                                     actionButtonInput("load_markers",
                                                       HTML("Load markers")))),
                          column(width = 2,
@@ -505,8 +518,8 @@ function(request) {
                      
                      #heat map
                      conditionalPanel(
-                         
                          condition = "input.run_heatmap > 0",
+                         
                          fluidRow(
                              br(),
                              titlePanel("Heatmap"),
@@ -609,7 +622,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
                      # Ends page
             ),
             
@@ -1061,6 +1074,12 @@ function(request) {
                          column(width = 3,
                                 fileInput_markers_list("markers_list_tab2"),
                                 div(class = "option-group",
+                                    selectInput("markers_list_header_opt_tab2",
+                                                "Does your file have a header?",
+                                                choices = c("", "Yes", "No"),
+                                                multiple = FALSE,
+                                                selected = NULL)),
+                                div(class = "option-group",
                                     actionButtonInput("load_markers_tab2",
                                                       HTML("Load markers")))),
                          column(width = 2,
@@ -1225,7 +1244,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
             ), # ends tab
             
             ##############################
@@ -1252,9 +1271,9 @@ function(request) {
                                 #                  selected = 0)),
                                 # conditionalPanel(
                                 #     condition = "input.rds_location_tab3 == 0",
-                                    
-                                    my_withSpinner( uiOutput("load_integrated_ui_tab3") ), 
-                               # ),
+                                
+                                my_withSpinner( uiOutput("load_integrated_ui_tab3") ), 
+                                # ),
                                 # conditionalPanel(
                                 #     condition = "input.rds_location_tab3 == 1",
                                 #     
@@ -1448,6 +1467,13 @@ function(request) {
                              #                                 within the trajectory"))))
                              column(width = 3,
                                     fileInput_markers_list("markers_list_tab3"),
+                                    div(class = "option-group",
+                                        selectInput("markers_list_header_opt_tab3",
+                                                    "Does your file have a header?",
+                                                    choices = c("", "Yes", "No"),
+                                                    multiple = FALSE,
+                                                    selectize = TRUE,
+                                                    selected = NULL)),
                                     div(class = "option-group",
                                         actionButtonInput("load_markers_tab3",
                                                           HTML("Load markers")))),
@@ -1727,7 +1753,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
             ),
             
             ##########################
@@ -1828,7 +1854,7 @@ function(request) {
                              bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                              
                              tags$hr(),
-                             p(strong("Asc-Seurat, version 2.0"), "- Released on May 18th, 2021.", align = "center")
+                             p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
                          )
                      )
             )

@@ -1,8 +1,11 @@
 read_file_markers <- function(id,
                               markers_list_file = markers_list_file,
                               feed_ID = feed_ID,
-                              ext = ext) {
+                              ext = ext,
+                              header_opt = header_opt) {
 
+    validate(need(header_opt != "", "Please, inform if the file has a header."))
+    
     test <- ext %in% c(
         'text/csv',
         'text/comma-separated-values',
@@ -12,11 +15,24 @@ read_file_markers <- function(id,
 
     shinyFeedback::feedbackDanger(feed_ID, test == F, "Format is not supported! Upload a CSV or TSV file.")
 
+    if ( header_opt == "Yes" ) {
+    
     features <- switch(ext,
            csv = vroom::vroom(markers_list_file, delim = ","),
            tsv = vroom::vroom(markers_list_file, delim = "\t"),
            validate("Invalid file; Please upload a .csv or .tsv file")
            )
+    
+    } else if ( header_opt == "No" ) {
+        
+        features <- switch(ext,
+                           csv = vroom::vroom(markers_list_file, delim = ",", col_names = F),
+                           tsv = vroom::vroom(markers_list_file, delim = "\t", col_names = F),
+                           validate("Invalid file; Please upload a .csv or .tsv file")
+        )  
+        
+    }
+    
 
     if ( ncol(features) >= 2 ) {
         shinyFeedback::feedbackSuccess(feed_ID, ncol(features) >= 2, "")

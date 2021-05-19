@@ -193,7 +193,7 @@ fileInput_markers_list <- function(id) {
 
   div(class = "option-group",
       fileInput(id,
-                label = "Input the list of markers in the format: 'GeneID,Group,Name' (no header)",
+                label = "Input the list of markers",
                 accept = c("text/csv",
                            "text/comma-separated-values,",
                            ".csv",

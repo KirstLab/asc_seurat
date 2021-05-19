@@ -19,6 +19,13 @@ stacked_violin_UI <- function(id) {
                 column(width = 3,
                        
                        fileInput_markers_list( ns("markers_list") ),
+                       div(class = "option-group",
+                           selectInput(ns("markers_list_header_opt"),
+                                       "Does your file have a header?",
+                                       choices = c("", "Yes", "No"),
+                                       multiple = FALSE,
+                                       selectize = TRUE,
+                                       selected = NULL)),
                        
                        div(class = "option-group",
                            actionButtonInput( ns("load_markers"),
@@ -206,10 +213,18 @@ stacked_violin_Server <- function(id) {
             ext <- tools::file_ext(input$markers_list$name)
             markers_list_file <- input$markers_list$datapath
             
+            if(input$markers_list_header_opt == "") {
+                shinyFeedback::feedbackWarning("markers_list_header_opt",
+                                               TRUE,
+                                               "Please, inform if the file has a header.")
+            }
+            req(input$markers_list_header_opt)
+            
             read_file_markers("tab1_readfile",
                               markers_list_file = markers_list_file,
                               feed_ID ="markers_list",
-                              ext = ext)
+                              ext = ext,
+                              header_opt = input$markers_list_header_opt)
         })
         
         observeEvent(input$load_markers, {
