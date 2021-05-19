@@ -8,13 +8,8 @@ After filtering the data to remove low-quality cells, Asc-Seurat allows the clus
 
 A series of steps are executed during the clustering steps, including normalization, scaling, and dimensional reduction via PCA. Moreover, users need to decide how many dimensions are to be used during the clustering. Asc-Seurat provides an elbow plot to inform this decision. A description of these steps and of the required parameters is shown below.
 
-Normalization and detection of the most variable genes
-======================================================
-
-.. note::
-
-    So far, Asc-Seurat only allows the `LogNormalize <https://satijalab.org/seurat/reference/LogNormalize.html>`_ normalization. `SCTransform <https://satijalab.org/seurat/reference/SCTransform.html>`_ will be added soon.
-
+LogNormalization and detection of the most variable genes
+=========================================================
 
 Asc-Seurat allows the normalization using Seurat's `LogNormalize <https://satijalab.org/seurat/reference/LogNormalize.html>`_ function. Users have the option to change the scaling factor if necessary, but it is typically not needed. In the same window (see the image below), users can select what method should be used to identify the most variable genes and how many of the most variable genes should be used during the dimension reduction (PCA).
 
@@ -25,6 +20,8 @@ The most variable genes exhibit high cell-to-cell variation in the dataset and t
    :width: 100%
    :align: center
 
+SCTransform normalizations (in progress)
+========================================
 
 Dimensional reduction (PCA)
 ===========================
@@ -53,7 +50,7 @@ Before the execution, however, users need to set a value for the resolution para
    :width: 100%
    :align: center
 
-   Plot showing the clustering of the PBMC dataset using 10 PCs and a resolution value of 0.5.
+   Plot showing the clustering of the PBMC dataset after LogNormalization, using 10 PCs and a resolution value of 0.5.
 
 After the execution of the clustering step, two plots are generated for cluster visualization. The first plot is generated using the Uniform Manifold Approximation and Projection (UMAP) technique (left). The second deploys the t-distributed Stochastic Neighbor Embedding (t-SNE) method (right).
 
@@ -73,7 +70,7 @@ Asc-Seurat makes this step simple. Users only need to select the cluster(s) to k
 
    Asc-Seurat makes it easy to select or exclude a cluster (or clusters) of cells. In this example, we exclude all cells belonging to cluster 0.
 
-Asc-Seurat will then execute the steps with the new set of cells up to the PCA. Then, users need to evaluate the elbow plot and decide the number of PCs to use to clustering the new set of cells. Users can either keep the same value for the resolution parameter or modify it before clicking on :guilabel:`Rn the clustering analysis` to start the clustering once more.
+Asc-Seurat will then execute the steps with the new set of cells up to the PCA. Then, users need to evaluate the elbow plot and decide the number of PCs to use to clustering the new set of cells. Users can either keep the same value for the resolution parameter or modify it before clicking on :guilabel:`Run the clustering analysis` to start the clustering once more.
 
 .. figure:: images/excluding_cells_p2.png
   :alt: Quality control.

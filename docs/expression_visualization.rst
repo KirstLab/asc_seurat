@@ -9,7 +9,7 @@ Asc-Seurat provides a variety of plots for gene expression visualization. From a
 Format of the input file containing genes for expression visualization
 ======================================================================
 
-Asc-Seurat expects as input a csv (comma-separated value) file containing at least two columns. The first column must contain the gene ID as present in the dataset, and the second column is a grouping variable. An optional third column can contain the common names of each gene. Any additional column will be ignored. **No header is allowed for this file**.
+Asc-Seurat expects as input a csv (comma-separated value) or a tsv (tab-separated value) file containing at least two columns. The first column must contain the gene ID as present in the dataset, and the second column is a grouping variable. An optional third column can contain the common names of each gene. Any additional column will be ignored.
 
 Below is shown an example of an input file used for expression visualization. It contains ten markers identified for clusters 2 and 3. In this case, the dataset uses the gene name as an identifier, and this is the information on the first column. The second column is used to group de marker according to their clusters.
 
