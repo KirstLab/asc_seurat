@@ -48,7 +48,7 @@ suppressMessages( require(glmGamPoi) ) # Bioconductor
 ## Allows parallelization of some of Seurat's functions
 plan("multicore")
 
-using_docker <- F
+using_docker <- T
 if (using_docker == T) {
     
     source("/app/R/feature_plot.R")
