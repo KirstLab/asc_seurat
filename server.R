@@ -254,15 +254,75 @@ function(input, output, session) {
             withProgress(message = "Please wait, preparing the data for download.",
                          value = 0.5, {
                              
-                             shinyFeedback::feedbackWarning("p1_height", is.na(input$p1_height), "Required value")
-                             shinyFeedback::feedbackWarning("p1_width", is.na(input$p1_width), "Required value")
+                             data_sc <- req( single_cell_data_reac() )
+                             
+                             # Filtering features and cells based on the counts and % of mito contamination.
+                             # single_cell_data_filt <- base::subset(data_sc,
+                             #                                       subset = nFeature_RNA > input$min_count &
+                             #                                           nFeature_RNA < input$max_count &
+                             #                                           percent.mt < input$max_mito_perc)
+                             
+                             test_cond <- if( !is.na(input$max_count) && !is.na(input$min_count) ) {
+                                 
+                                 shinyFeedback::feedbackWarning("max_count",
+                                                                input$min_count > input$max_count,
+                                                                "No cells will be selected by appling this parameters!")
+                                 
+                                 shinyFeedback::feedbackWarning("min_count",
+                                                                input$min_count > input$max_count,
+                                                                "No cells will be selected by appling this parameters!")
+                                 
+                                 validate(need(input$min_count < input$max_count, "Error: No cells will be selected by appling this parameters!"))
+                                 
+                             }
+                             
+                             
+                             if ( !is.na(input$min_count) ) {
+                                 
+                                 # Filtering features and cells based on the counts and % of mito contamination.
+                                 data_sc <- base::subset(data_sc,
+                                                         subset = nFeature_RNA > input$min_count)
+                                 
+                             }
+                             
+                             if ( !is.na(input$max_count) ) {
+                                 
+                                 shinyFeedback::feedbackWarning("max_count",
+                                                                input$max_count <= 0,
+                                                                "No cells will be selected by appling this parameters!")
+                                 
+                                 validate(need(input$max_count > 0, "Error: No cells will be selected by appling this parameters!"))
+                                 
+                                 # Filtering features and cells based on the counts and % of mito contamination.
+                                 data_sc <- base::subset(data_sc,
+                                                         subset =  nFeature_RNA < input$max_count)
+                                 
+                                 
+                                 
+                             }
+                             
+                             if ( !is.na(input$max_mito_perc) ) {
+                                 
+                                 shinyFeedback::feedbackWarning("max_mito_perc",
+                                                                input$max_mito_perc <= 0,
+                                                                "No cells will be selected by appling this parameters!")
+                                 
+                                 validate(need(input$max_mito_perc > 0, "Error: No cells will be selected by appling this parameters!"))
+                                 
+                                 # Filtering features and cells based on the counts and % of mito contamination.
+                                 data_sc <- base::subset(data_sc,
+                                                         subset =  percent.mt < input$max_mito_perc)
+                                 
+                             }
+                             
+                             
                              
                              height <- as.numeric( req( input$p1_height) )
                              width <- as.numeric( req( input$p1_width) )
                              res <- as.numeric( req( input$p1_res) )
                              
                              
-                             p <- Seurat::VlnPlot(req( single_cell_data_filt() ),
+                             p <- Seurat::VlnPlot(data_sc,
                                                   features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
                                                   ncol = 3,
                                                   split.plot = F)
