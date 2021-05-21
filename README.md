@@ -44,7 +44,7 @@ To install Asc-Seurat, you need to have Docker installed on your machine. Docker
 
 ## Realese notes
 
-* v2.0 - **Released on May 18th, 2021**.
+* v2.0 - **Released on May 19th, 2021**.
 
     - Inclusion of SCTransform normalization
     - Addition of stacked violin plots
