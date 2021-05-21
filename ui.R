@@ -221,7 +221,7 @@ function(request) {
                      ), # Ends conditional
                      
                      fluidRow(
-                         titlePanel("Normalizing, centering, and dimension reduction analysis (PCA)"),
+                         titlePanel("Normalization and dimension reduction analysis (PCA)"),
                          br(),
                          p("Note that only the most variable genes are used in the dimension reduction step (PCA)."),
                          br(),

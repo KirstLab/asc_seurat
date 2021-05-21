@@ -708,12 +708,12 @@ function(input, output, session) {
         if (input$find_markers_tab1_opt == 1) {
             
             markers_tab1$cluster <- input$find_markers_clust_id_tab1
-            markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1) : ( ncol(markers_tab1) - 1))  ]
+            markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
             
         } else if (input$find_markers_tab1_opt == 2) {
             
             markers_tab1$cluster <- paste0(input$find_markers_clust_ID1_tab1, "_vs_" , input$find_markers_clust_ID2_tab1)
-            markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1) : ( ncol(markers_tab1) - 1) ) ]
+            markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
             
         }
         
@@ -752,12 +752,12 @@ function(input, output, session) {
                              if (input$find_markers_tab1_opt == 1) {
                                  
                                  markers_tab1$cluster <- input$find_markers_clust_id_tab1
-                                 markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1) : ( ncol(markers_tab1) - 1))  ]
+                                 markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
                                  
                              } else if (input$find_markers_tab1_opt == 2) {
                                  
                                  markers_tab1$cluster <- paste0(input$find_markers_clust_ID1_tab1, "_vs_" , input$find_markers_clust_ID2_tab1)
-                                 markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1) : ( ncol(markers_tab1) - 1) ) ]
+                                 markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
                                  
                              }
                              
