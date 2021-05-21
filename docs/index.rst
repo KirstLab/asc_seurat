@@ -71,7 +71,7 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
 Release notes
 =============
 
-    * v2.0 - **Released on May 18th, 2021**.
+    * v2.0 - **Released on May 19th, 2021**.
 
         - Inclusion of SCTransform normalization
         - Addition of stacked violin plots

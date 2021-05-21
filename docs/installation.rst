@@ -41,7 +41,7 @@ For macOS and Linux
 
 .. tip::
 
-    The code below will automatically update Asc-Seurat to the latest version. You can download and execute a specific version of Asc-Seurat by adding the version tag to the image's name, i.e., replace :code:`kirstlab/asc_seurat` by :code:`kirstlab/asc_seurat:v.1.0` to use v1.0.
+    The code below will automatically update Asc-Seurat to the latest version. You can download and execute a specific version of Asc-Seurat by adding the version's tag to the image's name, i.e., replace :code:`kirstlab/asc_seurat` by :code:`kirstlab/asc_seurat:v.1.0` to use v1.0.
 
 .. code-block:: bash
 
@@ -51,9 +51,6 @@ For macOS and Linux
 
    # Starts Asc-Seurat
    docker pull kirstlab/asc_seurat && docker run -v $(pwd):/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --name Asc_Seurat --rm -p 3838:3838 kirstlab/asc_seurat
-
-   # Or with our custom script (https://github.com/KirstLab/asc_seurat/scripts/bscripts/run_server.sh)
-   ./run_server.sh -s
 
 .. note::
 
@@ -75,7 +72,7 @@ To run Asc-Seurat on Windows via Docker, it is necessary to use Windows 10. More
 
 The tutorials above contain all the necessary information to install Docker on Windows. However, it is also possible to find video tutorials on YouTube. Check the following link for an example: https://youtu.be/5nX8U8Fz5S0 .
 
-After certifying that everything is working, Asc-Seurat can be started with:
+After certifying that everything is working, Asc-Seurat can be started using the commands below:
 
 .. tip::
 
