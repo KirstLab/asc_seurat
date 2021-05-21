@@ -41,7 +41,7 @@ For macOS and Linux
 
 .. tip::
 
-    The code below will automatically update Asc-Seurat to the latest version. You can download and execute a specific version of Asc-Seurat by adding the version tag at the end of the command, i.e., replace kirstlab/asc_seurat by :code:`kirstlab/asc_seurat:v.1.0` to use v1.0.
+    The code below will automatically update Asc-Seurat to the latest version. You can download and execute a specific version of Asc-Seurat by adding the version tag to the image's name, i.e., replace :code:`kirstlab/asc_seurat` by :code:`kirstlab/asc_seurat:v.1.0` to use v1.0.
 
 .. code-block:: bash
 
@@ -79,7 +79,7 @@ After certifying that everything is working, Asc-Seurat can be started with:
 
 .. tip::
 
-    The code below will automatically update Asc-Seurat to the latest version. You can download and execute a specific version of Asc-Seurat by adding the version tag at the end of the command, i.e., replace kirstlab/asc_seurat by :code:`kirstlab/asc_seurat:v.1.0` to use v1.0.
+    The code below will automatically update Asc-Seurat to the latest version. You can download and execute a specific version of Asc-Seurat by adding the version tag to the image's name, i.e., replace :code:`kirstlab/asc_seurat` by :code:`kirstlab/asc_seurat:v.1.0` to use v1.0.
 
 .. code-block:: bash
 
