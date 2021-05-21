@@ -10,8 +10,7 @@ suppressMessages( require("rclipboard") )
 suppressMessages( require("shinycssloaders") )
 suppressMessages( require("shinyFeedback") )
 
-using_docker <- T
-if (using_docker == T) {
+if (dir.exists('/app/user_work')) {
     source("/app/R/ui_functions.R")
     source("/app/R/improved_dot_and_violin_plots.R")
 } else {

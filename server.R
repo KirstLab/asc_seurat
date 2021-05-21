@@ -2,7 +2,7 @@
 # Version 2.0
 set.seed(1407)
 options(shiny.maxRequestSize=100000*1024^2) # changes the maximum size of a inputFile
-options(shiny.sanitize.errors = FALSE)
+options(shiny.sanitize.errors = TRUE)
 
 # CRAN
 suppressMessages( require(tidyverse) )
@@ -48,8 +48,7 @@ suppressMessages( require(glmGamPoi) ) # Bioconductor
 ## Allows parallelization of some of Seurat's functions
 plan("multicore")
 
-using_docker <- T
-if (using_docker == T) {
+if (dir.exists('/app/user_work')) {
     
     source("/app/R/feature_plot.R")
     source("/app/R/adapted_slingshot.R")
