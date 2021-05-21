@@ -55,12 +55,6 @@ body {
     color: #ffffff;
 }
 
-/*
- * Estes dois pontos, configuram o container principal.
- * Até quanto eles se extendem.
- * Os outros divs como body, por exemplo, serão relativos
- * a estes main containers.
- */
 .main-container {
   max-width: 90% !important;
   max-height: 100% !important;
