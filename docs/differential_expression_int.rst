@@ -38,7 +38,7 @@ Asc-Seurat allows users to filter gene markers and DEGs by the fold change and m
 
 An iterative table will be available after executing the search for marker or DEGs, showing the significant genes. Moreover, users can download the list of significant markers or DEGs as a csv file.
 
-.. figure:: images/DEG_table.png
+.. figure:: images/DEG_table_int.png
    :width: 100%
    :align: center
 

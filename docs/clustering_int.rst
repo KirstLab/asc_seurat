@@ -4,34 +4,10 @@
 Clustering
 **********
 
-After filtering the data to remove low-quality cells, Asc-Seurat allows clustering the remaining cells according to their expression profiles. However, before clustering, a series of steps are executed, including normalization, scaling (if using LogNormalization), and dimensional reduction via PCA.
-
-Moreover, users need to decide how many dimensions are to be used during the clustering after executing the PCA. Asc-Seurat provides an elbow plot to inform this decision. Below are instructions on how to perform the clustering depending on the normalization method of choice.
-
 Normalization
 =============
 
-LogNormalization
-----------------
-
-Asc-Seurat allows the normalization using Seurat's `LogNormalize <https://satijalab.org/seurat/reference/LogNormalize.html>`_ function. Users have the option to change the scaling factor if necessary, but it is typically not needed. In the same window (see the image below), users can select what method should be used to identify the most variable genes and how many of the most variable genes should be used during the dimension reduction (PCA).
-
-The most variable genes exhibit high cell-to-cell variation in the dataset and therefore are more informative. We use Seurat's function `FindVariableFeatures <https://satijalab.org/seurat/reference/FindVariableFeatures.html>`_. The default setting should work well for the majority of cases.
-
-.. figure:: images/normalization_settings.png
-   :alt: Quality control.
-   :width: 100%
-   :align: center
-
-SCTransform
------------
-
-The second option of normalization provided by Asc-Seurat is Seurat's Seurat's `SCTransform <https://satijalab.org/seurat/reference/SCTransform.html>`_. When using this normalization, it is unnecessary to set the scale factor or identify the most variable genes (See image below).
-
-.. figure:: images/normalization_settings_SCT.png
-   :alt: Quality control.
-   :width: 80%
-   :align: center
+When integrating multiple samples, the normalization is executing during the integration.
 
 Dimensional reduction (PCA)
 ===========================
@@ -85,7 +61,7 @@ Asc-Seurat makes this step simple. Users only need to select the cluster(s) to k
 
    Asc-Seurat makes it easy to select or exclude a cluster (or clusters) of cells. In this example, we exclude all cells belonging to cluster 0.
 
-Asc-Seurat will then execute the steps with the new set of cells up to the PCA. Then, **users need to evaluate the elbow plot and decide the number of PCs to cluster the new set of cells**. Users can either keep the same value for the resolution parameter or modify it before clicking on :guilabel:`Rn the clustering analysis` to start the clustering once more.
+Asc-Seurat will then execute the steps with the new set of cells up to the PCA. Then, **users need to evaluate the elbow plot and decide the number of PCs to cluster the new set of cells**. Users can either keep the same value for the resolution parameter or modify it before clicking on :guilabel:`Run the clustering analysis` to start the clustering once more.
 
 .. figure:: images/clustering_int_2.png
   :alt: Quality control.

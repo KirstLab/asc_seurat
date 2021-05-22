@@ -9,19 +9,19 @@ After clustering the cells, users may be interested in identifying genes specifi
 Asc-Seurat allows users to filter gene markers and DEGs by the fold change and minimal percentage of cells expressing a gene in the cluster(s). Moreover, users can define a significance level to exclude genes based on the adjusted p-value (see below).
 
 .. figure:: images/DE_one_sample_1.png
-   :width: 80%
+   :width: 65%
    :align: center
 
    Example of Asc-Seurat's interface showing the settings to the search for gene markers for each of the clusters using the Wilcox test.
 
 .. figure:: images/DE_one_sample_2.png
-   :width: 80%
+   :width: 65%
    :align: center
 
    Example of Asc-Seurat's interface showing the settings to the search for markers for a specific cluster (cluster 0).
 
 .. figure:: images/DE_one_sample_3.png
-   :width: 80%
+   :width: 65%
    :align: center
 
    Example of Asc-Seurat's interface showing the settings to search for DEGs genes among clusters 0, 2, and 3.

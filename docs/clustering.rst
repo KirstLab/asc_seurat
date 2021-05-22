@@ -29,7 +29,7 @@ SCTransform
 The second option of normalization provided by Asc-Seurat is Seurat's Seurat's `SCTransform <https://satijalab.org/seurat/reference/SCTransform.html>`_. When using this normalization, it is unnecessary to set the scale factor or identify the most variable genes (See image below).
 
 .. figure:: images/normalization_settings_SCT.png
-   :alt: Quality control.
+   :alt: SCTransform.
    :width: 80%
    :align: center
 
