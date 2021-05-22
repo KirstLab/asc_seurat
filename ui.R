@@ -993,7 +993,7 @@ function(request) {
                                         radioButtons("find_markers_or_DE_tab2",
                                                      "Detect conserved markers or D.E. genes",
                                                      choices = c("Conserved markers" = 0,
-                                                                 "D.E. genes between treat vs. control" = 1),
+                                                                 "D.E. genes between samples" = 1),
                                                      selected = 0
                                         ))),
                              conditionalPanel(
@@ -1053,7 +1053,7 @@ function(request) {
                      conditionalPanel(
                          condition = "input.find_markers_tab2 == 1",
                          fluidRow(
-                             titlePanel("List of markers of differentially expressed genes"),
+                             titlePanel("List of markers or differentially expressed genes"),
                              column(12,
                                     my_withSpinner( reactableOutput("markers_tab2_react")) ),
                              br(),
