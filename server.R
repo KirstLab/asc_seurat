@@ -384,14 +384,14 @@ function(input, output, session) {
                                              filter_clusters_opt = input$filter_clusters_opt)
             
             ret_data <- NormalizeData(ret_data,
-                                     assay = "RNA",
-                                     normalization.method = "LogNormalize", 
-                                     scale.factor = 10000)
+                                      assay = "RNA",
+                                      normalization.method = "LogNormalize", 
+                                      scale.factor = 10000)
             
             all_genes <- rownames(ret_data)
-            ret_data <- ScaleData(ret_data,
-                                  assay = "RNA", 
-                                  features = all_genes)
+            ret_data <- Seurat::ScaleData(ret_data,
+                                          assay = "RNA", 
+                                          features = all_genes)
             
         }
         
@@ -525,7 +525,7 @@ function(input, output, session) {
         sc_data <- Seurat::RunUMAP(data_sc, dims = 1:input$n_of_PCs)
         sc_data <- Seurat::RunTSNE(sc_data, dims = 1:input$n_of_PCs)
         
-        Seurat::DefaultAssay(sc_data) <- "RNA"
+        #Seurat::DefaultAssay(sc_data) <- "RNA"
         
         sc_data
     })
@@ -615,6 +615,15 @@ function(input, output, session) {
         }
         
     )
+    
+    # We can only change the assay here, because user might need to filter and recluster the data and it should be done with the SCT if SCTransform is used.
+    single_cell_data_reso_umap_to_DE_vis <- reactive({
+        
+        sc_data <- single_cell_data_reso_umap()
+        
+        DefaultAssay(sc_data) <- "RNA"
+        sc_data
+    })
     
     output$find_markers_clust_id_tab1_ui <- renderUI ({
         
@@ -1633,7 +1642,7 @@ function(input, output, session) {
                                  p <- Seurat::VlnPlot(req( single_cell_data_filt_tab2() ),
                                                       features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
                                                       ncol = 3,
-                                                     # assay = req( assay_id_tab2() ),
+                                                      # assay = req( assay_id_tab2() ),
                                                       split.plot = F)
                                  
                                  ggplot2::ggsave(file,
@@ -1658,41 +1667,24 @@ function(input, output, session) {
                                                         
                                                         # If loading the data and normalization is SCTransform, skip the scaling. Same if running new analysis and normalization is SCtransform
                                                         if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-                                                           
-                                                             single_cell_data_filt_tab2 <- NormalizeData(single_cell_data_filt_tab2,
-                                                                                                        assay = "RNA",
-                                                                                                        normalization.method = "LogNormalize",
-                                                                                                        scale.factor = 10000)
                                                             
                                                         } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
                                                             
-                                                            single_cell_data_filt_tab2 <- NormalizeData(single_cell_data_filt_tab2,
-                                                                                                        assay = "RNA",
-                                                                                                        normalization.method = "LogNormalize",
-                                                                                                        scale.factor = 10000)
-                                                            
                                                         } else { # lognormalization
                                                             
-                                                            # showNotification("Scalling the data",
-                                                            #                  duration = NULL,
-                                                            #                  id = "tab2_m4")
-                                                            # 
-                                                            # data_sc <- ScaleData(single_cell_data_filt_tab2, verbose = T)
-                                                            # 
-                                                            # on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+                                                            showNotification("Scalling the data",
+                                                                             duration = NULL,
+                                                                             id = "tab2_m4")
+                                                            
+                                                            data_sc <- Seurat::ScaleData(single_cell_data_filt_tab2, verbose = T)
+                                                            
+                                                            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
                                                             
                                                         }
                                                         
-                                                        showNotification("Scalling the data",
-                                                                         duration = NULL,
-                                                                         id = "tab2_m4")
                                                         
-                                                        all_genes <- rownames(single_cell_data_filt_tab2)
-                                                        single_cell_data_filt_tab2 <- ScaleData(single_cell_data_filt_tab2,
-                                                                              assay = "RNA", 
-                                                                              features = all_genes)
                                                         
-                                                        on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+                                                        #Seurat::DefaultAssay(single_cell_data_filt_tab2) <- "SCT"
                                                         
                                                         single_cell_data_filt_tab2
                                                     })
@@ -1800,8 +1792,6 @@ function(input, output, session) {
         sc_data <- Seurat::FindClusters(sc_data,
                                         resolution = input$resolution_clust_tab2)
         
-        Seurat::DefaultAssay(sc_data) <- "RNA"
-        
         sc_data
         
     })
@@ -1811,6 +1801,8 @@ function(input, output, session) {
         output$umap_tab2 <- renderPlot({
             
             Seurat::DimPlot(req( single_cell_data_clustered() ), reduction = "umap", label = T, pt.size = .1)
+            
+            
             
         })
         
@@ -1978,10 +1970,10 @@ function(input, output, session) {
             sc_data <- base::subset(sc_data,
                                     cells = cells_to_filter)
             
-            allgenes <- base::rownames(sc_data)
-            sc_data <- ScaleData(sc_data, features = allgenes)
+            # allgenes <- base::rownames(sc_data)
+            #    sc_data <- Seurat::ScaleData(sc_data, features = allgenes)
             
-            sc_data
+            #    sc_data
         }
         
         sc_data
@@ -2095,6 +2087,52 @@ function(input, output, session) {
         
     })
     
+    # We can only change the assay here, because user might need to filter and recluster the data and it should be done with the SCT if SCTransform is used.
+    single_cell_data_clustered_to_DE_vis <- reactive({
+        
+        sc_data <- single_cell_data_clustered()
+        
+        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
+            
+            sc_data <- NormalizeData(sc_data,
+                                     assay = "RNA",
+                                     normalization.method = "LogNormalize",
+                                     scale.factor = 10000)
+            
+            showNotification("Scalling the data of RNA assay",
+                             duration = NULL,
+                             id = "tab2_m4")
+            
+            all_genes <- rownames(sc_data)
+            sc_data <- Seurat::ScaleData(sc_data,
+                                         assay = "RNA", 
+                                         features = all_genes)
+            
+            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+            
+        } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+            
+            sc_data <- NormalizeData(sc_data,
+                                     assay = "RNA",
+                                     normalization.method = "LogNormalize",
+                                     scale.factor = 10000)
+            
+            showNotification("Scalling the data of RNA assay",
+                             duration = NULL,
+                             id = "tab2_m4")
+            
+            all_genes <- rownames(sc_data)
+            sc_data <- Seurat::ScaleData(sc_data,
+                                         assay = "RNA", 
+                                         features = all_genes)
+            
+            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+            
+        } 
+        
+        DefaultAssay(sc_data) <- "RNA"
+        sc_data
+    })
     
     # Identification of markers (tab 2)
     markers_tab2 <- eventReactive( input$run_ident_markers_tab2, {
@@ -2103,7 +2141,7 @@ function(input, output, session) {
                          duration = NULL,
                          id = "tab2_n1")
         
-        sc_data <- req( single_cell_data_clustered() )
+        sc_data <- req( single_cell_data_clustered_to_DE_vis() )
         
         if (input$find_markers_or_DE_tab2 == 0 ) {
             
@@ -2264,7 +2302,7 @@ function(input, output, session) {
             
         } else if (input$normaliz_method_tab2 == "LogNormalize") {
             
-            sc_data <- req( single_cell_data_clustered() )
+            sc_data <- req( single_cell_data_clustered_to_DE_vis() )
             
             sc_data
             
@@ -2350,7 +2388,7 @@ function(input, output, session) {
     sc_data_av_react_tab2 <- eventReactive(input$run_heatmap_tab2, {
         
         # get the expression values
-        sc_data_av_tab2  <- Seurat::AverageExpression(req( single_cell_data_clustered() ),
+        sc_data_av_tab2  <- Seurat::AverageExpression(req( single_cell_data_clustered_to_DE_vis() ),
                                                       assays = req( assay_id_tab2() ),
                                                       slot = input$slot_selection_heatmap_tab2)
         
@@ -2579,7 +2617,7 @@ function(input, output, session) {
         })
         
         
-        sc_data_tab2 <- req( single_cell_data_clustered() )
+        sc_data_tab2 <- req( single_cell_data_clustered_to_DE_vis() )
         assay_id <- req( assay_id_tab2() )
         
         
@@ -2632,7 +2670,7 @@ function(input, output, session) {
                 plotname <- paste("plot3_tab2", my_i, sep="")
                 output[[plotname]] <- renderPlot({
                     
-                    Seurat::DimPlot(req( single_cell_data_clustered() ), reduction = "umap", label = T, pt.size = .1)
+                    Seurat::DimPlot(req( single_cell_data_clustered_to_DE_vis() ), reduction = "umap", label = T, pt.size = .1)
                     
                 })
                 
@@ -2730,7 +2768,7 @@ function(input, output, session) {
                          dir.create( paste0(path_new,"/violin_plots") )
                          dir.create( paste0(path_new, "/dot_plots") )
                          
-                         sc_data <- req( single_cell_data_clustered() )
+                         sc_data <- req( single_cell_data_clustered_to_DE_vis() )
                          assay_id <- req( assay_id_tab2() )
                          
                          for( i in 1:length(genes) ){
