@@ -5,6 +5,7 @@ finding_markers <- function(name,
                             find_markers_tab1_logfc.threshold = find_markers_tab1_logfc.threshold,
                             find_markers_tab1_min.pct = find_markers_tab1_min.pct,
                             find_markers_tab1_test.use = find_markers_tab1_test.use,
+                            assay_choice = assay_choice,
                             ident.1 = ident.1,
                             ident.2 = ident.2,
                             find_markers_tab1_filt_pos = find_markers_tab1_filt_pos
@@ -15,6 +16,7 @@ finding_markers <- function(name,
         if ( is.na(find_markers_tab1_return.thresh) ) {
             
             markers_tab1 <- FindAllMarkers(sc_data,
+                                           assay = assay_choice,
                                            logfc.threshold = find_markers_tab1_logfc.threshold,
                                            min.pct = find_markers_tab1_min.pct,
                                            test.use = find_markers_tab1_test.use
@@ -23,6 +25,7 @@ finding_markers <- function(name,
         } else {
             
             markers_tab1 <- FindAllMarkers(sc_data,
+                                           assay = assay_choice,
                                            logfc.threshold = find_markers_tab1_logfc.threshold,
                                            min.pct = find_markers_tab1_min.pct,
                                            test.use = find_markers_tab1_test.use,
@@ -41,7 +44,8 @@ finding_markers <- function(name,
                                         logfc.threshold = find_markers_tab1_logfc.threshold,
                                         min.pct = find_markers_tab1_min.pct,
                                         test.use = find_markers_tab1_test.use,
-                                        only.pos = find_markers_tab1_filt_pos)
+                                        only.pos = find_markers_tab1_filt_pos,
+                                        assay = assay_choice)
             
         } else {
             
@@ -52,7 +56,8 @@ finding_markers <- function(name,
                                         min.pct = find_markers_tab1_min.pct,
                                         test.use = find_markers_tab1_test.use,
                                         only.pos = find_markers_tab1_filt_pos,
-                                        return.thresh = find_markers_tab1_return.thresh)
+                                        return.thresh = find_markers_tab1_return.thresh,
+                                        assay = assay_choice)
             
         }
         
@@ -67,7 +72,8 @@ finding_markers <- function(name,
                                         min.pct = find_markers_tab1_min.pct,
                                         test.use = find_markers_tab1_test.use,
                                         only.pos = find_markers_tab1_filt_pos,
-                                        return.thresh = find_markers_tab1_return.thresh)
+                                        return.thresh = find_markers_tab1_return.thresh,
+                                        assay = assay_choice)
             
         } else {
             
@@ -78,7 +84,8 @@ finding_markers <- function(name,
                                         min.pct = find_markers_tab1_min.pct,
                                         test.use = find_markers_tab1_test.use,
                                         only.pos = find_markers_tab1_filt_pos,
-                                        return.thresh = find_markers_tab1_return.thresh)
+                                        return.thresh = find_markers_tab1_return.thresh,
+                                        assay = assay_choice)
         }
         
     }

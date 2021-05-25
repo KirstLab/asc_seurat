@@ -2,7 +2,7 @@
 # Version 2.0
 set.seed(1407)
 options(shiny.maxRequestSize=100000*1024^2) # changes the maximum size of a inputFile
-options(shiny.sanitize.errors = TRUE)
+options(shiny.sanitize.errors = FALSE)
 
 # CRAN
 suppressMessages( require(tidyverse) )
@@ -190,7 +190,6 @@ function(input, output, session) {
             validate(need(input$min_count < input$max_count, "Error: No cells will be selected by appling this parameters!"))
             
         }
-        
         
         if ( !is.na(input$min_count) ) {
             
@@ -383,6 +382,17 @@ function(input, output, session) {
                                              max_mito_perc = input$max_mito_perc,
                                              filter_clusters = input$filter_clusters,
                                              filter_clusters_opt = input$filter_clusters_opt)
+            
+            ret_data <- NormalizeData(ret_data,
+                                     assay = "RNA",
+                                     normalization.method = "LogNormalize", 
+                                     scale.factor = 10000)
+            
+            all_genes <- rownames(ret_data)
+            ret_data <- ScaleData(ret_data,
+                                  assay = "RNA", 
+                                  features = all_genes)
+            
         }
         
         ret_data
@@ -512,12 +522,12 @@ function(input, output, session) {
         
         data_sc <- Seurat::FindClusters(data_sc, resolution = input$resolution_clust)
         
-        
         sc_data <- Seurat::RunUMAP(data_sc, dims = 1:input$n_of_PCs)
         sc_data <- Seurat::RunTSNE(sc_data, dims = 1:input$n_of_PCs)
         
-        sc_data
+        Seurat::DefaultAssay(sc_data) <- "RNA"
         
+        sc_data
     })
     
     observeEvent(input$run_clustering, {
@@ -689,6 +699,7 @@ function(input, output, session) {
         
         finding_markers("finding_markers_tab1",
                         sc_data,
+                        assay_choice = "RNA",
                         find_markers_tab1_opt = input$find_markers_tab1_opt,
                         find_markers_tab1_return.thresh = input$find_markers_tab1_return_thresh,
                         find_markers_tab1_logfc.threshold = input$find_markers_tab1_logfc_threshold,
@@ -846,7 +857,8 @@ function(input, output, session) {
     
     assay_id_tab1 <- reactive({
         
-        if (input$normaliz_method == 0) {assay_id <- "RNA"} else {assay_id <- "SCT"}
+        # if (input$normaliz_method == 0) {assay_id <- "RNA"} else {assay_id <- "SCT"}
+        assay_id <- "RNA"
         
     })
     
@@ -856,8 +868,8 @@ function(input, output, session) {
         
         # get the expression values
         sc_data_av <- Seurat::AverageExpression( req( single_cell_data_reso_umap() ),
-                                                assays = req( assay_id_tab1() ),
-                                                slot = input$slot_selection_heatmap)
+                                                 assays = req( assay_id_tab1() ),
+                                                 slot = input$slot_selection_heatmap)
         
         
         sc_data_av <- as.matrix(sc_data_av[[1]])
@@ -1501,23 +1513,23 @@ function(input, output, session) {
     
     assay_id_tab2 <- reactive({
         
-        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) { #"load rds" and Sctransform
-            
-            assay_id <- "SCT"
-            
-        } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) { #"Run a new analysis" and Sctransform
-            
-            assay_id <- "SCT"
-            
-        } else { # lognormalization
-            
-            assay_id <- "integrated" # RNA
-            
-        }
+        # if (input$integration_options == 1 && input$load_rds_int_normalization == 1) { #"load rds" and Sctransform
+        #     
+        #     assay_id <- "SCT"
+        #     
+        # } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) { #"Run a new analysis" and Sctransform
+        #     
+        #     assay_id <- "SCT"
+        #     
+        # } else { # lognormalization
+        #     
+        #     assay_id <- "integrated" # RNA
+        #     
+        # }
+        # 
+        # assay_id <- "integrated" # test to see how the data behave in the different normalizations
         
-        assay_id <- "integrated" # test to see how the data behave in the different normalizations
-        
-        assay_id
+        assay_id <- "RNA"
     })
     
     # Visualize QC metrics as a violin plot
@@ -1528,7 +1540,7 @@ function(input, output, session) {
         Seurat::VlnPlot(data_set,
                         features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
                         ncol = 3,
-                        assay = req( assay_id_tab2() ),
+                        #assay = req( assay_id_tab2() ),
                         split.plot = F)
         
     })
@@ -1595,7 +1607,7 @@ function(input, output, session) {
             Seurat::VlnPlot(req( single_cell_data_filt_tab2() ),
                             features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
                             ncol = 3,
-                            assay = req( assay_id_tab2() ),
+                            #assay = req( assay_id_tab2() ),
                             split.plot = F)
             
         })
@@ -1621,7 +1633,7 @@ function(input, output, session) {
                                  p <- Seurat::VlnPlot(req( single_cell_data_filt_tab2() ),
                                                       features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
                                                       ncol = 3,
-                                                      assay = req( assay_id_tab2() ),
+                                                     # assay = req( assay_id_tab2() ),
                                                       split.plot = F)
                                  
                                  ggplot2::ggsave(file,
@@ -1646,26 +1658,43 @@ function(input, output, session) {
                                                         
                                                         # If loading the data and normalization is SCTransform, skip the scaling. Same if running new analysis and normalization is SCtransform
                                                         if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-                                                            
-                                                            data_sc <- single_cell_data_filt_tab2
+                                                           
+                                                             single_cell_data_filt_tab2 <- NormalizeData(single_cell_data_filt_tab2,
+                                                                                                        assay = "RNA",
+                                                                                                        normalization.method = "LogNormalize",
+                                                                                                        scale.factor = 10000)
                                                             
                                                         } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
                                                             
-                                                            data_sc <- single_cell_data_filt_tab2
+                                                            single_cell_data_filt_tab2 <- NormalizeData(single_cell_data_filt_tab2,
+                                                                                                        assay = "RNA",
+                                                                                                        normalization.method = "LogNormalize",
+                                                                                                        scale.factor = 10000)
                                                             
                                                         } else { # lognormalization
                                                             
-                                                            showNotification("Scalling the data",
-                                                                             duration = NULL,
-                                                                             id = "tab2_m4")
-                                                            
-                                                            data_sc <- ScaleData(single_cell_data_filt_tab2, verbose = T)
-                                                            
-                                                            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+                                                            # showNotification("Scalling the data",
+                                                            #                  duration = NULL,
+                                                            #                  id = "tab2_m4")
+                                                            # 
+                                                            # data_sc <- ScaleData(single_cell_data_filt_tab2, verbose = T)
+                                                            # 
+                                                            # on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
                                                             
                                                         }
                                                         
-                                                        data_sc
+                                                        showNotification("Scalling the data",
+                                                                         duration = NULL,
+                                                                         id = "tab2_m4")
+                                                        
+                                                        all_genes <- rownames(single_cell_data_filt_tab2)
+                                                        single_cell_data_filt_tab2 <- ScaleData(single_cell_data_filt_tab2,
+                                                                              assay = "RNA", 
+                                                                              features = all_genes)
+                                                        
+                                                        on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+                                                        
+                                                        single_cell_data_filt_tab2
                                                     })
     
     single_cell_data_pca_tab2 <- eventReactive(c(input$run_pca_tab2_1,
@@ -1770,6 +1799,10 @@ function(input, output, session) {
         
         sc_data <- Seurat::FindClusters(sc_data,
                                         resolution = input$resolution_clust_tab2)
+        
+        Seurat::DefaultAssay(sc_data) <- "RNA"
+        
+        sc_data
         
     })
     
@@ -3898,7 +3931,7 @@ function(input, output, session) {
                          dir.create( paste0(path_new, "/Graph") )
                          
                          model <- req( model() )
-
+                         
                          for( i in 1:length(genes) ){
                              
                              # Saves the feature plots
