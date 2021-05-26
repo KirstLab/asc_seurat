@@ -85,7 +85,7 @@ docker run -v %cd%:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -
 docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --name Asc_Seurat --rm -p 3838:3838 kirstlab/asc_seurat
 ```
 
-:heavy_check_mark: Then, open your preferred web browser and paste the address https://localhost:3838/
+:heavy_check_mark: Then, open your preferred web browser and paste the address http://localhost:3838/
 
 ## Usage
 
