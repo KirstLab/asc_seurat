@@ -42,7 +42,7 @@ Asc-Seurat (Analytical single-cell Seurat-based web application) is a web applic
 
 To install Asc-Seurat, you need to have Docker installed on your machine. Docker needs to be properly installed and configured in the user's machine. Check the installation instructions provided by Docker at https://docs.docker.com/engine/install.
 
-## Realese notes
+## Release notes
 
 * v2.1 - **Released on May 26th, 2021**.
 
