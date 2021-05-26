@@ -735,6 +735,10 @@ function(input, output, session) {
             markers_tab1$cluster <- paste0(input$find_markers_clust_ID1_tab1, "_vs_" , input$find_markers_clust_ID2_tab1)
             markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
             
+        } else if (input$find_markers_tab1_opt == 0) {
+            
+            markers_tab1 <- markers_tab1[, c(1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
+            
         }
         
         on.exit(removeNotification(id = "tab1_n1"), add = TRUE)
@@ -778,6 +782,10 @@ function(input, output, session) {
                                  
                                  markers_tab1$cluster <- paste0(input$find_markers_clust_ID1_tab1, "_vs_" , input$find_markers_clust_ID2_tab1)
                                  markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
+                                 
+                             } else if (input$find_markers_tab1_opt == 0) {
+                                 
+                                 markers_tab1 <- markers_tab1[, c(1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
                                  
                              }
                              
@@ -1970,10 +1978,22 @@ function(input, output, session) {
             sc_data <- base::subset(sc_data,
                                     cells = cells_to_filter)
             
-            # allgenes <- base::rownames(sc_data)
-            #    sc_data <- Seurat::ScaleData(sc_data, features = allgenes)
+        }
+        
+        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
             
-            #    sc_data
+        } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+            
+        } else { # lognormalization
+            
+            showNotification("Scalling the data",
+                             duration = NULL,
+                             id = "tab2_m4")
+            
+            sc_data <- Seurat::ScaleData(sc_data, verbose = T)
+            
+            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+            
         }
         
         sc_data
@@ -2283,7 +2303,7 @@ function(input, output, session) {
                          value = 0.5, {
                              
                              markers_tab2 <- req( markers_tab2() )
-                             markers_tab2 <- markers_tab2[ , c( (ncol(markers_tab2)-1), ncol(markers_tab2), 1: (ncol(markers_tab2) -2) ) ]
+                             markers_tab2 <- markers_tab2[ , c( ncol(markers_tab2), (ncol(markers_tab2)-1), 1: (ncol(markers_tab2) -2) ) ]
                              
                              write.csv(markers_tab2, file, row.names = FALSE)
                              
