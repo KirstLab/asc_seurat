@@ -1,5 +1,5 @@
 # Asc-Seurat
-# Version 2.0
+# Version 2.1
 set.seed(1407)
 options(shiny.maxRequestSize=100000*1024^2) # changes the maximum size of a inputFile
 options(shiny.sanitize.errors = FALSE)
@@ -41,7 +41,7 @@ suppressMessages( require(dynplot) )
 suppressMessages( require(dynwrap) )
 suppressMessages( require(dynfeature) )
 
-## New packages in version 1.1
+## New packages in version 2.1
 suppressMessages( require(glmGamPoi) ) # Bioconductor
 ##
 

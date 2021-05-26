@@ -1,5 +1,5 @@
 # Asc-Seurat
-# Version 2.0
+# Version 2.1
 set.seed(1407)
 
 suppressMessages( require("shiny") )
@@ -1243,7 +1243,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.1"), "- Released on May 26th, 2021.", align = "center")
             ), # ends tab
             
             ##############################
@@ -1752,7 +1752,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.1"), "- Released on May 26th, 2021.", align = "center")
             ),
             
             ##########################
@@ -1853,7 +1853,7 @@ function(request) {
                              bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                              
                              tags$hr(),
-                             p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
+                             p(strong("Asc-Seurat, version 2.1"), "- Released on May 26th, 2021.", align = "center")
                          )
                      )
             )
