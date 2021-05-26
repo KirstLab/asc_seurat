@@ -727,12 +727,14 @@ function(input, output, session) {
         
         if (input$find_markers_tab1_opt == 1) {
             
-            markers_tab1$cluster <- input$find_markers_clust_id_tab1
+            markers_tab1$cluster <- isolate(input$find_markers_clust_id_tab1)
             markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
             
         } else if (input$find_markers_tab1_opt == 2) {
             
-            markers_tab1$cluster <- paste0(input$find_markers_clust_ID1_tab1, "_vs_" , input$find_markers_clust_ID2_tab1)
+            markers_tab1$cluster <- paste0( isolate(input$find_markers_clust_ID1_tab1),
+                                            "_vs_" ,
+                                            isolate(input$find_markers_clust_ID2_tab1))
             markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
             
         } else if (input$find_markers_tab1_opt == 0) {
@@ -1194,7 +1196,8 @@ function(input, output, session) {
                         xlab("")+
                         ylab("") +
                         ggtitle("") +
-                        theme(legend.position = "",
+                        theme(
+                            #legend.position = "",
                               axis.title.x=element_blank(),
                               axis.title.y=element_blank(),
                               axis.text.y = element_text( size = rel(1) ),
@@ -1310,7 +1313,7 @@ function(input, output, session) {
                                  xlab("")+
                                  ylab("") +
                                  ggtitle("") +
-                                 theme(legend.position = "",
+                                 theme(#legend.position = "",
                                        axis.title.x=element_blank(),
                                        axis.title.y=element_blank(),
                                        axis.text.y = element_text( size = rel(1) ),
@@ -1684,7 +1687,9 @@ function(input, output, session) {
                                                                              duration = NULL,
                                                                              id = "tab2_m4")
                                                             
-                                                            single_cell_data_filt_tab2 <- Seurat::ScaleData(single_cell_data_filt_tab2, verbose = T)
+                                                            single_cell_data_filt_tab2 <- Seurat::ScaleData(single_cell_data_filt_tab2,
+                                                                                                            #assay = "RNA",
+                                                                                                            verbose = T)
                                                             
                                                             on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
                                                             
@@ -1981,19 +1986,20 @@ function(input, output, session) {
         }
         
         if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-            
+
         } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
-            
+
         } else { # lognormalization
-            
+
             showNotification("Scalling the data",
                              duration = NULL,
                              id = "tab2_m4")
-            
+
             sc_data <- Seurat::ScaleData(sc_data, verbose = T)
-            
+
             on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
-            
+
+            sc_data
         }
         
         sc_data
@@ -2112,43 +2118,63 @@ function(input, output, session) {
         
         sc_data <- single_cell_data_clustered()
         
-        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-            
-            sc_data <- NormalizeData(sc_data,
-                                     assay = "RNA",
-                                     normalization.method = "LogNormalize",
-                                     scale.factor = 10000)
-            
-            showNotification("Scalling the data of RNA assay",
-                             duration = NULL,
-                             id = "tab2_m4")
-            
-            all_genes <- rownames(sc_data)
-            sc_data <- Seurat::ScaleData(sc_data,
-                                         assay = "RNA", 
-                                         features = all_genes)
-            
-            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
-            
-        } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
-            
-            sc_data <- NormalizeData(sc_data,
-                                     assay = "RNA",
-                                     normalization.method = "LogNormalize",
-                                     scale.factor = 10000)
-            
-            showNotification("Scalling the data of RNA assay",
-                             duration = NULL,
-                             id = "tab2_m4")
-            
-            all_genes <- rownames(sc_data)
-            sc_data <- Seurat::ScaleData(sc_data,
-                                         assay = "RNA", 
-                                         features = all_genes)
-            
-            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
-            
-        } 
+        # if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
+        #     
+        #     sc_data <- NormalizeData(sc_data,
+        #                              assay = "RNA",
+        #                              normalization.method = "LogNormalize",
+        #                              scale.factor = 10000)
+        #     
+        #     showNotification("Scalling the data of RNA assay",
+        #                      duration = NULL,
+        #                      id = "tab2_m4")
+        #     
+        #     all_genes <- rownames(sc_data)
+        #     sc_data <- Seurat::ScaleData(sc_data,
+        #                                  assay = "RNA", 
+        #                                  features = all_genes)
+        #     
+        #     on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+        #     
+        # } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) 
+        #     {
+        #     
+        #     sc_data <- NormalizeData(sc_data,
+        #                              assay = "RNA",
+        #                              normalization.method = "LogNormalize",
+        #                              scale.factor = 10000)
+        #     
+        #     showNotification("Scalling the data of RNA assay",
+        #                      duration = NULL,
+        #                      id = "tab2_m4")
+        #     
+        #     all_genes <- rownames(sc_data)
+        #     sc_data <- Seurat::ScaleData(sc_data,
+        #                                  assay = "RNA", 
+        #                                  features = all_genes)
+        #     
+        #     on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+        #     
+        # } else {
+        #     
+        #     
+        # }
+        
+        sc_data <- NormalizeData(sc_data,
+                                 assay = "RNA",
+                                 normalization.method = "LogNormalize",
+                                 scale.factor = 10000)
+        
+        showNotification("Scalling the data of RNA assay",
+                         duration = NULL,
+                         id = "tab2_m4")
+        
+        all_genes <- rownames(sc_data)
+        sc_data <- Seurat::ScaleData(sc_data,
+                                     assay = "RNA", 
+                                     features = all_genes)
+        
+        on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
         
         DefaultAssay(sc_data) <- "RNA"
         sc_data
@@ -2264,6 +2290,7 @@ function(input, output, session) {
         my_reactable(markers_tab2)
         
     })
+    
     
     output$download_markers_tab2 <- downloadHandler(
         
