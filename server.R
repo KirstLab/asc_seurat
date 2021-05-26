@@ -721,7 +721,7 @@ function(input, output, session) {
         
     })
     
-    output$markers_tab1_react <- renderReactable({
+    output$markers_tab1_react <- eventReactive( input$run_ident_markers_tab1, {
         
         markers_tab1 <- req( markers_tab1() )
         
@@ -1194,7 +1194,8 @@ function(input, output, session) {
                         xlab("")+
                         ylab("") +
                         ggtitle("") +
-                        theme(legend.position = "",
+                        theme(
+                            #legend.position = "",
                               axis.title.x=element_blank(),
                               axis.title.y=element_blank(),
                               axis.text.y = element_text( size = rel(1) ),
@@ -1310,7 +1311,7 @@ function(input, output, session) {
                                  xlab("")+
                                  ylab("") +
                                  ggtitle("") +
-                                 theme(legend.position = "",
+                                 theme(#legend.position = "",
                                        axis.title.x=element_blank(),
                                        axis.title.y=element_blank(),
                                        axis.text.y = element_text( size = rel(1) ),
@@ -2254,7 +2255,7 @@ function(input, output, session) {
         
     })
     
-    output$markers_tab2_react <- renderReactable({
+    output$markers_tab2_react <- eventReactive( input$run_ident_markers_tab2, {
         
         markers_tab2 <- req( markers_tab2() )
         markers_tab2 <- markers_tab2[ , c( ncol(markers_tab2), (ncol(markers_tab2)-1), 1: (ncol(markers_tab2) -2) ) ]
@@ -2727,7 +2728,7 @@ function(input, output, session) {
                         #                        low = "gray80",
                         #                        mid = "gold",
                         #                        high = "red") +
-                        theme(legend.position = "",
+                        theme(#legend.position = "",
                               axis.title.x=element_blank(),
                               axis.title.y=element_blank(),
                               axis.text.y = element_text( size = rel(1) ),
@@ -2842,7 +2843,7 @@ function(input, output, session) {
                                  xlab("")+
                                  ylab("") +
                                  ggtitle("") +
-                                 theme(legend.position = "",
+                                 theme(#legend.position = "",
                                        axis.title.x=element_blank(),
                                        axis.title.y=element_blank(),
                                        axis.text.y = element_text( size = rel(1) ),
@@ -2930,7 +2931,7 @@ function(input, output, session) {
                                  xlab("")+
                                  ylab("") +
                                  ggtitle("") +
-                                 theme(legend.position = "",
+                                 theme(#legend.position = "",
                                        axis.title.x=element_blank(),
                                        axis.title.y=element_blank(),
                                        axis.text.y = element_text( size = rel(1) ),
