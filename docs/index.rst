@@ -71,6 +71,11 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
 Release notes
 =============
 
+    * v2.1 - **Released on May 26th, 2021**.
+
+        - Changes the assay used for differential expression analysis and visualization to "RNA" when using SCTransform normalization. Therefore, "SCT" assay is used for the steps until clustering the data.
+        - Changes the output of the differential expression analysis to the format required for the visualization tools. 
+
     * v2.0 - **Released on May 19th, 2021**.
 
         - Inclusion of SCTransform normalization
