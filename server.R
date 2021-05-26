@@ -1676,7 +1676,7 @@ function(input, output, session) {
                                                                              duration = NULL,
                                                                              id = "tab2_m4")
                                                             
-                                                            data_sc <- Seurat::ScaleData(single_cell_data_filt_tab2, verbose = T)
+                                                            single_cell_data_filt_tab2 <- Seurat::ScaleData(single_cell_data_filt_tab2, verbose = T)
                                                             
                                                             on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
                                                             
