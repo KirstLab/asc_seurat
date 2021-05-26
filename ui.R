@@ -124,7 +124,7 @@ function(request) {
                              style='border-right: 40px solid transparent'),
                      ),
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.1"), "- Released on May 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.1"), "- Released on May 26th, 2021.", align = "center")
             ),
             
             ######################################
@@ -461,8 +461,11 @@ function(request) {
                          condition = "input.find_markers_tab1 == 1",
                          fluidRow(
                              titlePanel("List of markers or differentially expressed genes"),
-                             column(12,
-                                    my_withSpinner( reactableOutput("markers_tab1_react")) ),
+                             conditionalPanel(
+                                 condition = "input.run_ident_markers_tab1 != 0",
+                                 column(12,
+                                        my_withSpinner( reactableOutput("markers_tab1_react")) ),
+                             ),
                              br(),
                              column(4,
                                     downloadButton("download_markers_tab1",
@@ -621,7 +624,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.1"), "- Released on May 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.1"), "- Released on May 26th, 2021.", align = "center")
                      # Ends page
             ),
             
@@ -797,8 +800,8 @@ function(request) {
                                     my_withSpinner(  plotOutput("VlnPlot_filt_tab2") )
                              ),
                              column(2,
-                                    numericInput_plot_height("p5_height", value=8),
-                                    numericInput_plot_width("p5_width", value=15),
+                                    numericInput_plot_height("p5_height", value=12),
+                                    numericInput_plot_width("p5_width", value=20),
                                     selectInput_plot_res("p5_res"),
                                     selectInput_plot_format("p5_format"),
                                     downloadButton("p5_down", HTML("Download Plot")),
@@ -845,8 +848,8 @@ function(request) {
                                     
                              ),
                              column(2,
-                                    numericInput_plot_height("p6_height", value=6),
-                                    numericInput_plot_width("p6_width", value=10),
+                                    numericInput_plot_height("p6_height", value=10),
+                                    numericInput_plot_width("p6_width", value=18),
                                     selectInput_plot_res("p6_res"),
                                     selectInput_plot_format("p6_format"),
                                     downloadButton("p6_down", HTML("Download Plot"))),
@@ -1054,8 +1057,11 @@ function(request) {
                          condition = "input.find_markers_tab2 == 1",
                          fluidRow(
                              titlePanel("List of markers or differentially expressed genes"),
-                             column(12,
-                                    my_withSpinner( reactableOutput("markers_tab2_react")) ),
+                             conditionalPanel(
+                                 condition = "input.run_ident_markers_tab2 != 0",
+                                 column(12,
+                                        my_withSpinner( reactableOutput("markers_tab2_react")) ),
+                             ),
                              br(),
                              column(4,
                                     downloadButton("download_markers_tab2",
