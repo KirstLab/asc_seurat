@@ -65,7 +65,7 @@ After that, it is necessary to create a configuration file in the csv format. Du
    | example_PBMC_treatment                   | Treatment                         |                    3                   |                           250                           |                              2500                             |                                 5                                |
    +------------------------------------------+-----------------------------------+----------------------------------------+---------------------------------------------------------+---------------------------------------------------------------+------------------------------------------------------------------+
 
-Once the configuration file is ready, users only need to load it in the app and select the samples they want to integrate (see image below). Also, it is necessary to choose the normalization method, the regex string to detect mitochondrial transcripts, the number of  Principal Components to be used during the integration (see below). Note that while default values are provided, users need to set these parameters based on their evaluation of the individual samples that are being integrated.
+Once the configuration file is ready, users only need to load it in the app and select the samples they want to integrate (see image below). Also, it is necessary to choose the normalization method, the regex string to detect mitochondrial transcripts, the number of Principal Components to be used during the integration (see below). Note that while default values are provided, users need to set these parameters based on their evaluation of the individual samples that are being integrated.
 
 .. figure:: images/int_loading_data.png
    :width: 100%

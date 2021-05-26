@@ -33,6 +33,13 @@ The second option of normalization provided by Asc-Seurat is Seurat's Seurat's `
    :width: 80%
    :align: center
 
+.. note::
+
+    Currently, the recommendation of Seurat's team is to use the standard "RNA" assay when performing differential expression (D.E) analysis and for data visualization, even when using SCTransform (See `here <https://github.com/satijalab/seurat/discussions/4032>`_). Therefore, Asc-Seurat will use the SCTransformed data ("SCT" assay) until the clustering step only.
+
+    To use the "RNA" assay after SCTransform, Asc-Seurat will automatically perform the LogNormalization and scaling of the data in the RNA assay by applying the default parameters.
+
+
 Dimensional reduction (PCA)
 ===========================
 
