@@ -15,7 +15,7 @@ if (dir.exists('/app/user_work')) {
     source("/app/R/improved_dot_and_violin_plots.R")
 } else {
     source("R/ui_functions.R")
-    source("R/improved_dot_and_violin_plots.R")  
+    source("R/improved_dot_and_violin_plots.R")
     
 }
 function(request) {
@@ -42,7 +42,7 @@ function(request) {
             p {
                 font-size:16px;
             }
-            
+
             .down-group {
                         border: 1px solid #ccc;
                         border-radius: 6px;
@@ -76,7 +76,7 @@ function(request) {
                      
                      h2("Introduction to Asc-Seurat"),
                      br(),
-                     p("Asc-Seurat, pronounced \"ask Seurat\", is based on the popular R package \"Seurat\", from the Satija Lab. It includes many, but not all, features of the Seurat package."), 
+                     p("Asc-Seurat, pronounced \"ask Seurat\", is based on the popular R package \"Seurat\", from the Satija Lab. It includes many, but not all, features of the Seurat package."),
                      p("It also takes advantage of \"Dynverse\", a collection of R packages that allows the execution of multiple trajectory inference models."),
                      p("Finally, Asc_Seurat uses BioMart, through the biomaRt R package, to promote the functional annotation of genes from many species."),
                      br(),
@@ -124,7 +124,7 @@ function(request) {
                              style='border-right: 40px solid transparent'),
                      ),
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.1"), "- Released on May 19th, 2021.", align = "center")
             ),
             
             ######################################
@@ -592,21 +592,21 @@ function(request) {
                                         my_withSpinner( uiOutput("select_genes_add_plot_to_down_ui") ),
                                  ),
                                  column(2,
-                                        div(class = "option-group", 
+                                        div(class = "option-group",
                                             p(strong("Select the options for the feature plots")) ),
                                         numericInput_plot_height("add_p_tab1_feat_height", value=10),
                                         numericInput_plot_width("add_p_tab1_feat_width", value=14),
                                         selectInput_plot_res("add_p_tab1_feat_res"),
                                         selectInput_plot_format("add_p_tab1_feat_format")),
                                  column(2,
-                                        div(class = "option-group", 
+                                        div(class = "option-group",
                                             p(strong("Select the options for the violin plots")) ),
                                         numericInput_plot_height("add_p_tab1_violin_height", value=10),
                                         numericInput_plot_width("add_p_tab1_violin_width", value=14),
                                         selectInput_plot_res("add_p_tab1_violin_res"),
                                         selectInput_plot_format("add_p_tab1_violin_format")),
                                  column(2,
-                                        div(class = "option-group", 
+                                        div(class = "option-group",
                                             p(strong("Select the options for the dot plots")) ),
                                         numericInput_plot_height("add_p_tab1_dot_height", value=10),
                                         numericInput_plot_width("add_p_tab1_dot_width", value=14),
@@ -621,7 +621,7 @@ function(request) {
                      bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                      
                      tags$hr(),
-                     p(strong("Asc-Seurat, version 2.0"), "- Released on May 19th, 2021.", align = "center")
+                     p(strong("Asc-Seurat, version 2.1"), "- Released on May 19th, 2021.", align = "center")
                      # Ends page
             ),
             
@@ -645,7 +645,7 @@ function(request) {
                          tags$li(strong("Maximum percentage of genes belonging to the mitochondrial genome"))
                      ),
                      br(),
-                     p("Alternatively, it is possible to load previously integrated data, saving some time by not running the integration step. For that, save an RDS file containing the integrated data."), 
+                     p("Alternatively, it is possible to load previously integrated data, saving some time by not running the integration step. For that, save an RDS file containing the integrated data."),
                      p("After selecting the parameters, click on the blue button to load the data."),
                      br(),
                      fluidRow(
@@ -691,7 +691,7 @@ function(request) {
                          
                          # conditionalPanel (
                          #     condition = "input.integration_options == 0",
-                         #     
+                         #
                          #     column(width = 3,
                          #            my_withSpinner( uiOutput('select_sample_tab2') )
                          #     ),
@@ -810,14 +810,14 @@ function(request) {
                      
                      
                      #            select_norm_methods("normaliz_method_tab2")
-                     #            
+                     #
                      #            # div(class = "option-group",
                      #            #     radioButtons("normaliz_method_tab2",
                      #            #                  "Select the normalization method",
                      #            #                  choices = list(#"SCTransform (recommended)" = "SCTransform",
                      #            #                      "LogNormalize" = "LogNormalize"),
                      #            #                  selected = c("LogNormalize")))
-                     #            
+                     #
                      #     ),
                      #     conditionalPanel(
                      #         condition = "input.normaliz_method_tab2 == 0",
@@ -1132,7 +1132,7 @@ function(request) {
                          # column(width = 2,
                          #        conditionalPanel(
                          #            condition = "input.load_markers_tab2 > 0",
-                         #            
+                         #
                          #            radioButtons_slot_selection_heatmap("slot_selection_heatmap_tab2"))),
                          # column(width = 2,
                          #        conditionalPanel(
@@ -1214,21 +1214,21 @@ function(request) {
                                  ),
                                  
                                  column(2,
-                                        div(class = "option-group", 
+                                        div(class = "option-group",
                                             p(strong("Select the options for the feature plots")) ),
                                         numericInput_plot_height("add_p_tab2_feat_height", value=10),
                                         numericInput_plot_width("add_p_tab2_feat_width", value=14),
                                         selectInput_plot_res("add_p_tab2_feat_res"),
                                         selectInput_plot_format("add_p_tab2_feat_format")),
                                  column(2,
-                                        div(class = "option-group", 
+                                        div(class = "option-group",
                                             p(strong("Select the options for the violin plots")) ),
                                         numericInput_plot_height("add_p_tab2_violin_height", value=10),
                                         numericInput_plot_width("add_p_tab2_violin_width", value=14),
                                         selectInput_plot_res("add_p_tab2_violin_res"),
                                         selectInput_plot_format("add_p_tab2_violin_format")),
                                  column(2,
-                                        div(class = "option-group", 
+                                        div(class = "option-group",
                                             p(strong("Select the options for the dot plots")) ),
                                         numericInput_plot_height("add_p_tab2_dot_height", value=10),
                                         numericInput_plot_width("add_p_tab2_dot_width", value=14),
@@ -1271,11 +1271,11 @@ function(request) {
                                 # conditionalPanel(
                                 #     condition = "input.rds_location_tab3 == 0",
                                 
-                                my_withSpinner( uiOutput("load_integrated_ui_tab3") ), 
+                                my_withSpinner( uiOutput("load_integrated_ui_tab3") ),
                                 # ),
                                 # conditionalPanel(
                                 #     condition = "input.rds_location_tab3 == 1",
-                                #     
+                                #
                                 #     div(class = "option-group",
                                 #         fileInput("file_input_rds_tab3",
                                 #                   label = "Input the rds file",
@@ -1631,7 +1631,7 @@ function(request) {
                                     downloadButton("p11_down", HTML("Download Plot")),
                                     downloadButton("download_dynverse_genes_filt",
                                                    HTML("Download the fittered list <br> of genes and their <br> \"importance\" score."))
-                             ), 
+                             ),
                          ), # end row
                          fluidRow(
                              titlePanel("Additional plots"),
