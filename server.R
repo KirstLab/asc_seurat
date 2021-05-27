@@ -1,7 +1,6 @@
 # Asc-Seurat
 # Version 2.1
 set.seed(1407)
-options(shiny.maxRequestSize=100000*1024^2) # changes the maximum size of a inputFile
 options(shiny.sanitize.errors = FALSE)
 
 # CRAN
@@ -86,9 +85,6 @@ phytozome_mart <- new("Mart",
 
 function(input, output, session) {
     
-    ##############################################
-    #### Properly load user data using docker ####
-    ##############################################
     if (dir.exists('/app/user_work')) {
         setwd('/app/user_work')
     }
@@ -154,7 +150,6 @@ function(input, output, session) {
         
     })
     
-    # Visualize QC metrics as a violin plot
     output$VlnPlot <- renderPlot({
         
         data_set <- req( single_cell_data_reac() )
@@ -170,12 +165,6 @@ function(input, output, session) {
     observeEvent(input$run_vinplot, {
         
         data_sc <- req( single_cell_data_reac() )
-        
-        # Filtering features and cells based on the counts and % of mito contamination.
-        # single_cell_data_filt <- base::subset(data_sc,
-        #                                       subset = nFeature_RNA > input$min_count &
-        #                                           nFeature_RNA < input$max_count &
-        #                                           percent.mt < input$max_mito_perc)
         
         test_cond <- if( !is.na(input$max_count) && !is.na(input$min_count) ) {
             
@@ -193,7 +182,6 @@ function(input, output, session) {
         
         if ( !is.na(input$min_count) ) {
             
-            # Filtering features and cells based on the counts and % of mito contamination.
             data_sc <- base::subset(data_sc,
                                     subset = nFeature_RNA > input$min_count)
             
@@ -207,11 +195,8 @@ function(input, output, session) {
             
             validate(need(input$max_count > 0, "Error: No cells will be selected by appling this parameters!"))
             
-            # Filtering features and cells based on the counts and % of mito contamination.
             data_sc <- base::subset(data_sc,
                                     subset =  nFeature_RNA < input$max_count)
-            
-            
             
         }
         
@@ -223,7 +208,6 @@ function(input, output, session) {
             
             validate(need(input$max_mito_perc > 0, "Error: No cells will be selected by appling this parameters!"))
             
-            # Filtering features and cells based on the counts and % of mito contamination.
             data_sc <- base::subset(data_sc,
                                     subset =  percent.mt < input$max_mito_perc)
             
@@ -254,12 +238,6 @@ function(input, output, session) {
                              
                              data_sc <- req( single_cell_data_reac() )
                              
-                             # Filtering features and cells based on the counts and % of mito contamination.
-                             # single_cell_data_filt <- base::subset(data_sc,
-                             #                                       subset = nFeature_RNA > input$min_count &
-                             #                                           nFeature_RNA < input$max_count &
-                             #                                           percent.mt < input$max_mito_perc)
-                             
                              test_cond <- if( !is.na(input$max_count) && !is.na(input$min_count) ) {
                                  
                                  shinyFeedback::feedbackWarning("max_count",
@@ -274,10 +252,8 @@ function(input, output, session) {
                                  
                              }
                              
-                             
                              if ( !is.na(input$min_count) ) {
                                  
-                                 # Filtering features and cells based on the counts and % of mito contamination.
                                  data_sc <- base::subset(data_sc,
                                                          subset = nFeature_RNA > input$min_count)
                                  
@@ -291,7 +267,6 @@ function(input, output, session) {
                                  
                                  validate(need(input$max_count > 0, "Error: No cells will be selected by appling this parameters!"))
                                  
-                                 # Filtering features and cells based on the counts and % of mito contamination.
                                  data_sc <- base::subset(data_sc,
                                                          subset =  nFeature_RNA < input$max_count)
                                  
@@ -307,18 +282,14 @@ function(input, output, session) {
                                  
                                  validate(need(input$max_mito_perc > 0, "Error: No cells will be selected by appling this parameters!"))
                                  
-                                 # Filtering features and cells based on the counts and % of mito contamination.
                                  data_sc <- base::subset(data_sc,
                                                          subset =  percent.mt < input$max_mito_perc)
                                  
                              }
                              
-                             
-                             
                              height <- as.numeric( req( input$p1_height) )
                              width <- as.numeric( req( input$p1_width) )
                              res <- as.numeric( req( input$p1_res) )
-                             
                              
                              p <- Seurat::VlnPlot(data_sc,
                                                   features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
@@ -335,10 +306,8 @@ function(input, output, session) {
                          })
             
         }
-        
     )
     
-    # If promotes the lognormalization, scaling and PCA.
     single_cell_data_pca <- eventReactive( c(input$run_pca, input$rerun_after_filtering), {
         
         sc_data <- req( single_cell_data_reac() )
@@ -383,14 +352,16 @@ function(input, output, session) {
                                              filter_clusters = input$filter_clusters,
                                              filter_clusters_opt = input$filter_clusters_opt)
             
+            # This won't be used until the DE analysis and visualization. Here is a good place to perform the normalization since it works even after the user filter the clusters of interest.
+            
             ret_data <- NormalizeData(ret_data,
                                       assay = "RNA",
-                                      normalization.method = "LogNormalize", 
+                                      normalization.method = "LogNormalize",
                                       scale.factor = 10000)
             
             all_genes <- rownames(ret_data)
             ret_data <- Seurat::ScaleData(ret_data,
-                                          assay = "RNA", 
+                                          assay = "RNA",
                                           features = all_genes)
             
         }
@@ -399,21 +370,18 @@ function(input, output, session) {
         
     })
     
-    # Elbow plot (also triggers the PCA)
     observeEvent(c(input$run_pca, input$rerun_after_filtering), {
         
-        # Generates the elbow plot showing the PCs #
         output$n_of_PCAs <- renderPlot({
             
             data_sc <- req( single_cell_data_pca() )
             
-            Seurat::ElbowPlot(data_sc, ndims = 100, reduction = "pca")
+            Seurat::ElbowPlot(data_sc, ndims = 50, reduction = "pca")
             
         })
         
     })
     
-    #download_ElbowPlot_server("down_elbow1", pca_data = single_cell_data_pca )
     output$p2_down <- downloadHandler(
         
         filename = function() {
@@ -431,7 +399,7 @@ function(input, output, session) {
                              width <- as.numeric( req( input$p2_width) )
                              res <- as.numeric(input$p2_res)
                              
-                             p <- Seurat::ElbowPlot(req( single_cell_data_pca()), ndims = 100, reduction = "pca")
+                             p <- Seurat::ElbowPlot(req( single_cell_data_pca()), ndims = 50, reduction = "pca")
                              
                              ggplot2::ggsave(file,
                                              p,
@@ -448,7 +416,6 @@ function(input, output, session) {
     ############################################################
     ## This section allows the filtering of clusters of cells ##
     ############################################################
-    # This is used to list the obtained clusters in the reactive inputs
     clusters_single_cell_data_reso_umap <- reactive({
         
         sc_data <- req( single_cell_data_reso_umap() )
@@ -480,8 +447,7 @@ function(input, output, session) {
         if ( input$filter_clusters_opt == 0 ) { # "select"
             
             to_filter <- base::subset(req( single_cell_data_reso_umap() ),
-                                      idents = as.numeric(input$cluster_list)
-            )
+                                      idents = as.numeric(input$cluster_list))
             
             to_filter_ch <- to_filter@meta.data
             to_filter_ch <- base::rownames(to_filter_ch)
@@ -524,8 +490,6 @@ function(input, output, session) {
         
         sc_data <- Seurat::RunUMAP(data_sc, dims = 1:input$n_of_PCs)
         sc_data <- Seurat::RunTSNE(sc_data, dims = 1:input$n_of_PCs)
-        
-        #Seurat::DefaultAssay(sc_data) <- "RNA"
         
         sc_data
     })
@@ -611,18 +575,18 @@ function(input, output, session) {
                              saveRDS( req( single_cell_data_reso_umap() ), file)
                              
                          })
-            
         }
         
     )
     
-    # We can only change the assay here, because user might need to filter and recluster the data and it should be done with the SCT if SCTransform is used.
+    # We only change the assay here because it will allow the users to filter the clusters and still use the SCT assay for the PCA and clustering (when using SCTransform normalization. It has no affect if using lognormalization).
     single_cell_data_reso_umap_to_DE_vis <- reactive({
         
         sc_data <- single_cell_data_reso_umap()
         
         DefaultAssay(sc_data) <- "RNA"
         sc_data
+        
     })
     
     output$find_markers_clust_id_tab1_ui <- renderUI ({
@@ -634,8 +598,7 @@ function(input, output, session) {
             label = "Select the cluster of interest",
             choices = sort(clusters),
             multiple = FALSE,
-            options = list(`actions-box` = TRUE)
-        )
+            options = list(`actions-box` = TRUE))
         
     })
     
@@ -648,8 +611,7 @@ function(input, output, session) {
             label = "Select the cluster of interest",
             choices = sort(clusters),
             multiple = F,
-            options = list(`actions-box` = TRUE)
-        )
+            options = list(`actions-box` = TRUE))
         
     })
     
@@ -667,12 +629,10 @@ function(input, output, session) {
             multiple = T,
             options = list(`actions-box` = TRUE,
                            "max-options-group" = 1),
-            selected = sort(clusters)[1]
-        )
+            selected = sort(clusters)[1])
         
     })
     
-    # Identification of markers (tab 1)
     markers_tab1 <- eventReactive( input$run_ident_markers_tab1, {
         
         shinyFeedback::feedbackWarning("find_markers_tab1_return_thresh",
@@ -798,18 +758,20 @@ function(input, output, session) {
         
     )
     
-    ## Gene expression
     features <- reactive({
         
         req(input$markers_list)
         ext <- tools::file_ext(input$markers_list$name)
         markers_list_file <- input$markers_list$datapath
         
-        if(input$markers_list_header_opt == "") {
+        if ( input$markers_list_header_opt == "" ) {
+            
             shinyFeedback::feedbackWarning("markers_list_header_opt",
                                            TRUE,
                                            "Please, inform if the file has a header.")
+            
         }
+        
         req(input$markers_list_header_opt)
         
         read_file_markers("tab1_readfile",
@@ -819,10 +781,8 @@ function(input, output, session) {
                           header_opt = input$markers_list_header_opt)
     })
     
-    # Load the file and offers the parameters for heatmap
     observeEvent(input$load_markers, {
         
-        # Painel that will apper after loading the list of markers containing the filter options
         output$marker_group_selec = renderUI({
             
             pickerInput_markers_group("features_group", genes = req( features() ) )
@@ -842,7 +802,6 @@ function(input, output, session) {
         
     })
     
-    # Filter accordly with the parameters selected by the user
     filt_features <- eventReactive(input$run_heatmap, {
         
         features_f <- req( features() )
@@ -874,22 +833,11 @@ function(input, output, session) {
         
     })
     
-    assay_id_tab1 <- reactive({
-        
-        # if (input$normaliz_method == 0) {assay_id <- "RNA"} else {assay_id <- "SCT"}
-        assay_id <- "RNA"
-        
-    })
-    
     sc_data_av_react <- eventReactive(input$run_heatmap, {
         
-        #if (input$normaliz_method == 0) {assay_id <- "RNA"} else {assay_id <- "SCT"}
-        
-        # get the expression values
         sc_data_av <- Seurat::AverageExpression( req( single_cell_data_reso_umap() ),
-                                                 assays = req( assay_id_tab1() ),
+                                                 assays = "RNA",
                                                  slot = input$slot_selection_heatmap)
-        
         
         sc_data_av <- as.matrix(sc_data_av[[1]])
         
@@ -900,7 +848,7 @@ function(input, output, session) {
     
     observeEvent(input$run_heatmap, {
         
-        # This calculate the height of the plot based on the n of genes so the plot can be ajusted o fit all genes
+        # This calculate the height of the plot based on the n of genes so the plot can be adjusted to fit all genes
         heatmap_n_genes <- reactive({
             
             req(filt_features())
@@ -910,13 +858,10 @@ function(input, output, session) {
         })
         heatmap_Height <- reactive( 150 + ( 20 * req( heatmap_n_genes() ) ) )
         
-        
         heat_map_prep <- reactive({
             req(filt_features())
             
             features <- filt_features()
-            
-            # get the expression values
             sc_data_av <- req( sc_data_av_react() )
             
             features_selec <- as.data.frame(unique(features$GeneID))
@@ -935,10 +880,8 @@ function(input, output, session) {
             sc_data_av_feat
         })
         
-        # Generates the heatmap plot
         output$heat_map <- renderPlot({
             
-            ### Drawing heat map ###
             req(heat_map_prep())
             heat_map_prep <- heat_map_prep()
             
@@ -984,8 +927,6 @@ function(input, output, session) {
                                  width <- as.numeric( req( input$p4_width) )
                                  res <- as.numeric(input$p4_res)
                                  
-                                 ### Drawing heat map ###
-                                 
                                  p <- ComplexHeatmap::Heatmap(req( heat_map_prep() ), border = TRUE,
                                                               rect_gp = gpar(col = "white", lwd = 2),
                                                               column_title = "Clusters",
@@ -993,7 +934,7 @@ function(input, output, session) {
                                                               name = "Expression",
                                                               show_row_dend = T)
                                  
-                                 # Complex heatmap does not work well with ggplot2::ggsave. So, using grid.grap to make it compatible
+                                 # Complex heatmap does not work well with ggplot2::ggsave. So, we use grid.grap to make it compatible.
                                  gb = grid.grabExpr(draw(p))
                                  
                                  ggplot2::ggsave(file,
@@ -1009,7 +950,6 @@ function(input, output, session) {
         )
         
     })
-    
     
     features_selec <- eventReactive(input$run_feature_plot, {
         
@@ -1039,8 +979,6 @@ function(input, output, session) {
     
     observeEvent(input$run_feature_plot, {
         
-        ### FEATURE PLOTS ####
-        
         output$feature_plot <- renderUI({
             
             feat_length <- length(req( features_selec() ) )
@@ -1055,7 +993,6 @@ function(input, output, session) {
             do.call(tagList, plot_output_list)
         })
         
-        #### FEATURE PLOTS DARK THEME####
         output$feature_plot_dark <- renderUI({
             
             feat_length <- length(req( features_selec()))
@@ -1065,8 +1002,6 @@ function(input, output, session) {
                 plotOutput(plotname, height = 300)
             })
             
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
             do.call(tagList, plot_output_list)
         })
         
@@ -1079,8 +1014,6 @@ function(input, output, session) {
                 plotOutput(plotname, height = 300)
             })
             
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
             do.call(tagList, plot_output_list)
         })
         
@@ -1093,8 +1026,6 @@ function(input, output, session) {
                 plotOutput(plotname, height = 300)
             })
             
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
             do.call(tagList, plot_output_list)
         })
         
@@ -1107,8 +1038,6 @@ function(input, output, session) {
                 plotOutput(plotname, height = 300)
             })
             
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
             do.call(tagList, plot_output_list)
         })
         
@@ -1123,14 +1052,13 @@ function(input, output, session) {
                 plotname <- paste("plot1", my_i, sep="")
                 output[[plotname]] <- renderPlot({
                     
-                    assay_id <- req( assay_id_tab1() )
+                    assay_id <- "RNA"
                     
                     minimal <- min(sc_data[[assay_id]]@data[features[my_i], ])
                     maximal <- max(sc_data[[assay_id]]@data[features[my_i], ])
                     
                     suppressMessages( Seurat::FeaturePlot(sc_data,
                                                           cols = c("lightgrey", "red"),
-                                                          #assay = assay_id,
                                                           features = features[my_i],
                                                           slot = input$slot_selection_feature_plot,
                                                           reduction = "umap") +
@@ -1145,14 +1073,13 @@ function(input, output, session) {
                 plotname <- paste("plot2", my_i, sep="")
                 output[[plotname]] <- renderPlot({
                     
-                    assay_id <- req( assay_id_tab1() )
+                    assay_id <- "RNA"
                     
                     minimal <- min(sc_data[[assay_id]]@data[features[my_i], ])
                     maximal <- max(sc_data[[assay_id]]@data[features[my_i], ])
                     
                     suppressMessages( Seurat::FeaturePlot(sc_data,
                                                           cols = c("lightgrey", "red"),
-                                                          #assay = assay_id,
                                                           features = features[my_i],
                                                           slot = input$slot_selection_feature_plot,
                                                           reduction = "umap") +
@@ -1184,11 +1111,6 @@ function(input, output, session) {
                 plotname <- paste("plot5", my_i, sep="")
                 output[[plotname]] <- renderPlot({
                     
-                    #assay_id <- assay_id_tab1()
-                    
-                    #minimal <- min( sc_data[[ assay_id ]]@data[ genes[i], ] )
-                    #maximal <- max( sc_data[[ assay_id ]]@data[ genes[i], ] )
-                    
                     Seurat::DotPlot(sc_data,
                                     features = features[my_i],
                                     cols = c("lightgrey", "red")) +
@@ -1197,11 +1119,10 @@ function(input, output, session) {
                         ylab("") +
                         ggtitle("") +
                         theme(
-                            #legend.position = "",
-                              axis.title.x=element_blank(),
-                              axis.title.y=element_blank(),
-                              axis.text.y = element_text( size = rel(1) ),
-                              axis.text.x = element_text( angle = 90) ) +
+                            axis.title.x=element_blank(),
+                            axis.title.y=element_blank(),
+                            axis.text.y = element_text( size = rel(1) ),
+                            axis.text.x = element_text( angle = 90) ) +
                         coord_flip()
                     
                 })
@@ -1244,7 +1165,6 @@ function(input, output, session) {
         withProgress(message = "Please wait, preparing the data for download.",
                      value = 0.5, {
                          
-                         
                          if (file.exists("./images") == F ) {
                              dir.create('./images')
                          }
@@ -1258,11 +1178,9 @@ function(input, output, session) {
                          dir.create( paste0(path_new, "/dot_plots") )
                          
                          sc_data <- req( single_cell_data_reso_umap() )
-                         assay_id <- req( assay_id_tab1() )
+                         assay_id <- "RNA"
                          
                          for( i in 1:length(genes) ){
-                             
-                             # Saves the feature plots
                              
                              minimal <- min(sc_data[[assay_id]]@data[genes[i], ])
                              maximal <- max(sc_data[[assay_id]]@data[genes[i], ])
@@ -1287,8 +1205,6 @@ function(input, output, session) {
                                              units="cm",
                                              dpi=as.numeric(input$add_p_tab1_feat_res))
                              
-                             # Saves the violin plots
-                             
                              file <- paste0(path_new, "/violin_plots/", genes[i], ".", input$add_p_tab1_violin_format)
                              
                              p <- Seurat::VlnPlot(sc_data,
@@ -1302,8 +1218,6 @@ function(input, output, session) {
                                              units="cm",
                                              dpi=as.numeric(input$add_p_tab1_violin_res))
                              
-                             # Saves the dot plots
-                             
                              file <- paste0(path_new, "/dot_plots/", genes[i], ".", input$add_p_tab1_dot_format)
                              
                              p <- Seurat::DotPlot(sc_data,
@@ -1313,13 +1227,11 @@ function(input, output, session) {
                                  xlab("")+
                                  ylab("") +
                                  ggtitle("") +
-                                 theme(#legend.position = "",
-                                       axis.title.x=element_blank(),
+                                 theme(axis.title.x=element_blank(),
                                        axis.title.y=element_blank(),
                                        axis.text.y = element_text( size = rel(1) ),
                                        axis.text.x = element_text( angle = 90) ) +
                                  coord_flip()
-                             
                              
                              ggplot2::ggsave(file,
                                              p,
@@ -1327,8 +1239,6 @@ function(input, output, session) {
                                              width=input$add_p_tab1_dot_width,
                                              units="cm",
                                              dpi=as.numeric(input$add_p_tab1_dot_res))
-                             
-                             
                          }
                          
                      })
@@ -1342,8 +1252,6 @@ function(input, output, session) {
     #####################################
     ### Tab 2 - Integration pipeline ####
     #####################################
-    
-    ## Reads what folder we have to offer the option of samples to load
     
     output$load_integrated_ui <- renderUI({
         
@@ -1361,8 +1269,6 @@ function(input, output, session) {
     })
     
     samples_list_integration <- reactive({
-        
-        #inFile <- input$samples_list_integration
         
         req(input$samples_list_integration)
         
@@ -1400,9 +1306,6 @@ function(input, output, session) {
                             "samples_list_integration") )
         }
         
-        # samples_list <- read.csv(inFile$datapath, header = T)
-        #
-        # samples_list
         config_input
         
     })
@@ -1419,7 +1322,6 @@ function(input, output, session) {
                 choices = sort(as.character(dir_list)),
                 multiple = TRUE,
                 options = list(`actions-box` = TRUE),
-                #selected = as.character(dir_list)
             ))
         
     })
@@ -1428,7 +1330,7 @@ function(input, output, session) {
         
         if ( input$integration_options == 1) { # Load file
             
-            ##  the user to tell what normalization was used, since we should not scale the data when using SCTransform.
+            ##  the user needs to tell what normalization was used, since we should not scale the data when using SCTransform.
             shinyFeedback::feedbackWarning("load_rds_int_normalization",
                                            input$load_rds_int_normalization == "",
                                            #T,
@@ -1436,7 +1338,6 @@ function(input, output, session) {
             validate(need(input$load_rds_int_normalization != "",
                           message = "",
                           label = "load_rds_int_normalization"))
-            
             
             showNotification("Loading the integrated data",
                              id = "m9",
@@ -1465,8 +1366,6 @@ function(input, output, session) {
             if ( input$normaliz_method_tab2 == 0 ) { # LogNormalize
                 
                 shinyFeedback::feedbackWarning("sample_folder_tab2", is.null(input$sample_folder_tab2), "Required value")
-                #shinyFeedback::feedbackWarning("int_regex_mito", !shiny::isTruthy(input$int_regex_mito), "Required value")
-                
                 shinyFeedback::feedbackWarning("scale_factor_tab2", is.na(input$scale_factor_tab2), "Required value")
                 shinyFeedback::feedbackWarning("n_of_var_genes_integration", is.na(input$n_of_var_genes_integration), "Required value")
                 shinyFeedback::feedbackWarning("n_of_PCs_integration", is.na(input$n_of_PCs_integration), "Required value")
@@ -1506,7 +1405,6 @@ function(input, output, session) {
                 sc_data
                 
             }
-            
         }
         
         sc_data
@@ -1531,28 +1429,6 @@ function(input, output, session) {
         
     )
     
-    assay_id_tab2 <- reactive({
-        
-        # if (input$integration_options == 1 && input$load_rds_int_normalization == 1) { #"load rds" and Sctransform
-        #     
-        #     assay_id <- "SCT"
-        #     
-        # } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) { #"Run a new analysis" and Sctransform
-        #     
-        #     assay_id <- "SCT"
-        #     
-        # } else { # lognormalization
-        #     
-        #     assay_id <- "integrated" # RNA
-        #     
-        # }
-        # 
-        # assay_id <- "integrated" # test to see how the data behave in the different normalizations
-        
-        assay_id <- "RNA"
-    })
-    
-    # Visualize QC metrics as a violin plot
     output$VlnPlot_tab2 <- renderPlot({
         
         data_set <- req( single_cell_data_reac_tab2() )
@@ -1560,12 +1436,10 @@ function(input, output, session) {
         Seurat::VlnPlot(data_set,
                         features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
                         ncol = 3,
-                        #assay = req( assay_id_tab2() ),
                         split.plot = F)
         
     })
     
-    # Filtering and removing cells based on counts and % of mitochondrial
     single_cell_data_filt_tab2 <- reactive({
         
         data_sc <- req( single_cell_data_reac_tab2() )
@@ -1585,7 +1459,6 @@ function(input, output, session) {
         
         if ( !is.na(input$min_count_tab2) ) {
             
-            # Filtering features and cells based on the counts and % of mito contamination.
             data_sc <- base::subset(data_sc,
                                     subset = nFeature_RNA > input$min_count_tab2)
             
@@ -1599,7 +1472,6 @@ function(input, output, session) {
             
             validate(need(input$max_count_tab2 > 0, "Error: No cells will be selected by appling this parameters!"))
             
-            # Filtering features and cells based on the counts and % of mito contamination.
             data_sc <- base::subset(data_sc,
                                     subset =  nFeature_RNA < input$max_count_tab2)
             
@@ -1610,7 +1482,6 @@ function(input, output, session) {
             shinyFeedback::feedbackWarning("max_mito_perc_tab2", input$max_mito_perc_tab2 <= 0, "No cells will be selected by appling this parameters!")
             validate(need(input$max_mito_perc_tab2 > 0, "Error: No cells will be selected by appling this parameters!"))
             
-            # Filtering features and cells based on the counts and % of mito contamination.
             data_sc <- base::subset(data_sc,
                                     subset =  percent.mt < input$max_mito_perc_tab2)
             
@@ -1627,7 +1498,6 @@ function(input, output, session) {
             Seurat::VlnPlot(req( single_cell_data_filt_tab2() ),
                             features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
                             ncol = 3,
-                            #assay = req( assay_id_tab2() ),
                             split.plot = F)
             
         })
@@ -1649,11 +1519,9 @@ function(input, output, session) {
                                  width <- as.numeric( req( input$p5_width) )
                                  res <- as.numeric(input$p5_res)
                                  
-                                 
                                  p <- Seurat::VlnPlot(req( single_cell_data_filt_tab2() ),
                                                       features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
                                                       ncol = 3,
-                                                      # assay = req( assay_id_tab2() ),
                                                       split.plot = F)
                                  
                                  ggplot2::ggsave(file,
@@ -1670,37 +1538,34 @@ function(input, output, session) {
         
     })
     
-    # Integrate assay
-    single_cell_data_scaled_tab2 <- eventReactive(c(input$run_pca_tab2_1,
-                                                    input$run_pca_tab2_2), {
-                                                        
-                                                        single_cell_data_filt_tab2 <- req( single_cell_data_filt_tab2() )
-                                                        
-                                                        # If loading the data and normalization is SCTransform, skip the scaling. Same if running new analysis and normalization is SCtransform
-                                                        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-                                                            
-                                                        } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
-                                                            
-                                                        } else { # lognormalization
-                                                            
-                                                            showNotification("Scalling the data",
-                                                                             duration = NULL,
-                                                                             id = "tab2_m4")
-                                                            
-                                                            single_cell_data_filt_tab2 <- Seurat::ScaleData(single_cell_data_filt_tab2,
-                                                                                                            #assay = "RNA",
-                                                                                                            verbose = T)
-                                                            
-                                                            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
-                                                            
-                                                        }
-                                                        
-                                                        
-                                                        
-                                                        #Seurat::DefaultAssay(single_cell_data_filt_tab2) <- "SCT"
-                                                        
-                                                        single_cell_data_filt_tab2
-                                                    })
+    single_cell_data_scaled_tab2 <- eventReactive(
+        c(input$run_pca_tab2_1,
+          input$run_pca_tab2_2), {
+              
+              single_cell_data_filt_tab2 <- req( single_cell_data_filt_tab2() )
+              
+              # If loading the data and normalization is SCTransform, skip the scaling.
+              if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
+                  
+                  ## Same if running new analysis and normalization is SCtransform
+              } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+                  
+              } else { # lognormalization
+                  
+                  showNotification("Scalling the data",
+                                   duration = NULL,
+                                   id = "tab2_m4")
+                  
+                  single_cell_data_filt_tab2 <- Seurat::ScaleData(single_cell_data_filt_tab2,
+                                                                  assay = "integrated", #@@
+                                                                  verbose = T)
+                  
+                  on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+                  
+              }
+
+              single_cell_data_filt_tab2
+          })
     
     single_cell_data_pca_tab2 <- eventReactive(c(input$run_pca_tab2_1,
                                                  input$run_pca_tab2_2,
@@ -1729,17 +1594,98 @@ function(input, output, session) {
                                                      
                                                  })
     
-    # Elbow plot (also triggers the PCA)
+    ########################################################
+    ## Section that allows filtering clusters of interest ##
+    ########################################################
+    output$cluster_list_tab2_ui <- renderUI ({
+        
+        clusters <- req( clusters_single_cell_data_reso_umap_tab2() )
+        
+        shinyWidgets::pickerInput(
+            inputId = "cluster_list_tab2",
+            label = "Choose clusters to select or exclude",
+            choices = sort(clusters),
+            multiple = TRUE,
+            options = list(`actions-box` = TRUE)
+        )
+        
+    })
+    
+    to_filter_tab2 <- reactive({
+        
+        shinyFeedback::feedbackWarning("cluster_list_tab2", is.null(input$cluster_list_tab2), "Required value")
+        req(input$cluster_list_tab2)
+        
+        sc_data <- req( single_cell_data_clustered() )
+        
+        if ( input$filter_clusters_opt_tab2 == 0 ) { #"select"
+            
+            to_filter <- base::subset(sc_data,
+                                      idents = as.numeric(input$cluster_list_tab2)
+            )
+            
+            to_filter_ch <- to_filter@meta.data
+            to_filter_ch <- base::rownames(to_filter_ch)
+            
+            to_filter_ch
+            
+        } else if ( input$filter_clusters_opt_tab2 == 1 ) { #"exclude"
+            
+            to_filter <- base::subset(sc_data,
+                                      idents = as.numeric(input$cluster_list_tab2),
+                                      invert = TRUE)
+            
+            to_filter_ch <- to_filter@meta.data
+            to_filter_ch <- base::rownames(to_filter_ch)
+            
+            to_filter_ch
+        }
+        
+    })
+    
+    single_cell_data_scaled_tab2_filtered <- eventReactive(input$rerun_after_filtering_tab2, {
+        
+        sc_data <- req( single_cell_data_filt_tab2() )
+        cells_to_filter <- req( to_filter_tab2() )
+        
+        if ( input$filter_clusters_tab2 == 1 ) {
+            
+            sc_data <- base::subset(sc_data,
+                                    cells = cells_to_filter)
+            
+        }
+        
+        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
+            
+        } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+            
+        } else { # lognormalization
+            
+            showNotification("Scalling the data",
+                             duration = NULL,
+                             id = "tab2_m4")
+            
+            sc_data <- Seurat::ScaleData(sc_data, verbose = T)
+            
+            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
+            
+            sc_data
+        }
+        
+        sc_data
+    })
+    
+    ########################################################
+    
     observeEvent(c(input$run_pca_tab2_1,
                    input$run_pca_tab2_2,
                    input$rerun_after_filtering_tab2), {
                        
-                       # Generates the elbow plot showing the PCs #
                        output$n_of_PCAs_tab2 <- renderPlot({
                            
                            data_sc <- req( single_cell_data_pca_tab2() )
                            
-                           Seurat::ElbowPlot(data_sc, ndims = 100, reduction = "pca")
+                           Seurat::ElbowPlot(data_sc, ndims = 50, reduction = "pca")
                            
                        })
                        
@@ -1762,7 +1708,7 @@ function(input, output, session) {
                                                 
                                                 data_sc <- req( single_cell_data_pca_tab2() )
                                                 
-                                                p <- Seurat::ElbowPlot(data_sc, ndims = 100, reduction = "pca")
+                                                p <- Seurat::ElbowPlot(data_sc, ndims = 50, reduction = "pca")
                                                 
                                                 ggplot2::ggsave(file,
                                                                 p,
@@ -1777,8 +1723,6 @@ function(input, output, session) {
                        )
                        
                    })
-    
-    ## clustering tab2
     
     single_cell_data_clustered <- eventReactive(input$run_clustering_tab2, {
         
@@ -1814,9 +1758,7 @@ function(input, output, session) {
         output$umap_tab2 <- renderPlot({
             
             Seurat::DimPlot(req( single_cell_data_clustered() ), reduction = "umap", label = T, pt.size = .1)
-            
-            
-            
+
         })
         
         output$umap_three_samples_comb <- renderPlot({
@@ -1827,6 +1769,7 @@ function(input, output, session) {
                             group.by = "treat",
                             pt.size = .1
             )
+            
         })
         
         output$umap_three_samples <- renderPlot({
@@ -1926,85 +1869,7 @@ function(input, output, session) {
         unique( as.character(sc_data@meta.data$treat ) )
         
     })
-    
-    output$cluster_list_tab2_ui <- renderUI ({
-        
-        clusters <- req( clusters_single_cell_data_reso_umap_tab2() )
-        
-        shinyWidgets::pickerInput(
-            inputId = "cluster_list_tab2",
-            label = "Choose clusters to select or exclude",
-            choices = sort(clusters),
-            multiple = TRUE,
-            options = list(`actions-box` = TRUE)
-        )
-        
-    })
-    
-    to_filter_tab2 <- reactive({
-        
-        shinyFeedback::feedbackWarning("cluster_list_tab2", is.null(input$cluster_list_tab2), "Required value")
-        req(input$cluster_list_tab2)
-        
-        sc_data <- req( single_cell_data_clustered() )
-        
-        if ( input$filter_clusters_opt_tab2 == 0 ) { #"select"
-            
-            to_filter <- base::subset(sc_data,
-                                      idents = as.numeric(input$cluster_list_tab2)
-            )
-            
-            to_filter_ch <- to_filter@meta.data
-            to_filter_ch <- base::rownames(to_filter_ch)
-            
-            to_filter_ch
-            
-        } else if ( input$filter_clusters_opt_tab2 == 1 ) { #"exclude"
-            
-            to_filter <- base::subset(sc_data,
-                                      idents = as.numeric(input$cluster_list_tab2),
-                                      invert = TRUE)
-            
-            to_filter_ch <- to_filter@meta.data
-            to_filter_ch <- base::rownames(to_filter_ch)
-            
-            to_filter_ch
-        }
-        
-    })
-    
-    single_cell_data_scaled_tab2_filtered <- eventReactive(input$rerun_after_filtering_tab2, {
-        
-        sc_data <- req( single_cell_data_filt_tab2() )
-        cells_to_filter <- req( to_filter_tab2() )
-        
-        if ( input$filter_clusters_tab2 == 1 ) {
-            
-            sc_data <- base::subset(sc_data,
-                                    cells = cells_to_filter)
-            
-        }
-        
-        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-
-        } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
-
-        } else { # lognormalization
-
-            showNotification("Scalling the data",
-                             duration = NULL,
-                             id = "tab2_m4")
-
-            sc_data <- Seurat::ScaleData(sc_data, verbose = T)
-
-            on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
-
-            sc_data
-        }
-        
-        sc_data
-    })
-    
+ 
     output$downloadRDS_tab2 <- downloadHandler(
         
         filename = function() {
@@ -2113,52 +1978,10 @@ function(input, output, session) {
         
     })
     
-    # We can only change the assay here, because user might need to filter and recluster the data and it should be done with the SCT if SCTransform is used.
+    # We change the assay here, so DE analysis and the visualization are performed in the "RNA" assay.
     single_cell_data_clustered_to_DE_vis <- reactive({
         
         sc_data <- single_cell_data_clustered()
-        
-        # if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-        #     
-        #     sc_data <- NormalizeData(sc_data,
-        #                              assay = "RNA",
-        #                              normalization.method = "LogNormalize",
-        #                              scale.factor = 10000)
-        #     
-        #     showNotification("Scalling the data of RNA assay",
-        #                      duration = NULL,
-        #                      id = "tab2_m4")
-        #     
-        #     all_genes <- rownames(sc_data)
-        #     sc_data <- Seurat::ScaleData(sc_data,
-        #                                  assay = "RNA", 
-        #                                  features = all_genes)
-        #     
-        #     on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
-        #     
-        # } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) 
-        #     {
-        #     
-        #     sc_data <- NormalizeData(sc_data,
-        #                              assay = "RNA",
-        #                              normalization.method = "LogNormalize",
-        #                              scale.factor = 10000)
-        #     
-        #     showNotification("Scalling the data of RNA assay",
-        #                      duration = NULL,
-        #                      id = "tab2_m4")
-        #     
-        #     all_genes <- rownames(sc_data)
-        #     sc_data <- Seurat::ScaleData(sc_data,
-        #                                  assay = "RNA", 
-        #                                  features = all_genes)
-        #     
-        #     on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
-        #     
-        # } else {
-        #     
-        #     
-        # }
         
         sc_data <- NormalizeData(sc_data,
                                  assay = "RNA",
@@ -2206,7 +2029,7 @@ function(input, output, session) {
                                                     ident.1 = i,
                                                     grouping.var = "treat",
                                                     verbose = T,
-                                                    assay = req( assay_id_tab2() ) )
+                                                    assay = "RNA" )
                     
                     markers$cluster <- i
                     
@@ -2221,7 +2044,7 @@ function(input, output, session) {
                 markers_tab2 <- FindConservedMarkers(sc_data,
                                                      ident.1 = req(input$find_markers_clust_id_tab2),
                                                      grouping.var = "treat",
-                                                     assay = req( assay_id_tab2() ) )
+                                                     assay = "RNA" )
                 
                 markers_tab2$cluster <- input$find_markers_clust_id_tab2
                 
@@ -2231,7 +2054,7 @@ function(input, output, session) {
                                                      ident.1 = req(input$find_markers_clust_ID1_tab2),
                                                      ident.2 = req(input$find_markers_clust_ID2_tab2),
                                                      grouping.var = "treat",
-                                                     assay = req( assay_id_tab2()) )
+                                                     assay = "RNA" )
                 
                 markers_tab2$cluster <- paste0(input$find_markers_clust_ID1_tab2,
                                                "_vs_",
@@ -2261,7 +2084,7 @@ function(input, output, session) {
                                                         req(input$find_markers_or_DE_tab2_treat2),
                                                         sep = "_"),
                                         test.use = input$find_markers_tab2_test.use,
-                                        assay = req( assay_id_tab2() ),
+                                        assay = "RNA",
                                         verbose = T,
             )
             
@@ -2290,7 +2113,6 @@ function(input, output, session) {
         my_reactable(markers_tab2)
         
     })
-    
     
     output$download_markers_tab2 <- downloadHandler(
         
@@ -2338,30 +2160,12 @@ function(input, output, session) {
         }
         
     )
-    
-    single_cell_data_heatmap_tab2 <- eventReactive(input$run_heatmap_tab2, {
-        
-        showNotification("Generating Heatmap",
-                         duration = NULL,
-                         id = "m7")
-        
-        if (input$normaliz_method_tab2 == "SCTransform") {
-            
-        } else if (input$normaliz_method_tab2 == "LogNormalize") {
-            
-            sc_data <- req( single_cell_data_clustered_to_DE_vis() )
-            
-            sc_data
-            
-        }
-        
-    })
-    
-    ## Processing the list of markers for the heatmap and feature plots
-    ## Gene expression
+
     features_tab2 <- reactive({
         
         req(input$markers_list_tab2)
+        req(input$markers_list_header_opt_tab2)
+        
         ext <- tools::file_ext(input$markers_list_tab2$name)
         markers_list_file <- input$markers_list_tab2$datapath
         
@@ -2370,7 +2174,6 @@ function(input, output, session) {
                                            TRUE,
                                            "Please, inform if the file has a header.")
         }
-        req(input$markers_list_header_opt_tab2)
         
         read_file_markers("tab2_readfile",
                           markers_list_file = markers_list_file,
@@ -2379,10 +2182,8 @@ function(input, output, session) {
                           header_opt = input$markers_list_header_opt_tab2)
     })
     
-    # Load the file and offers the parameters for heatmap
     observeEvent(input$load_markers_tab2, {
         
-        # Painel that will apper after loading the list of markers containing the filter options
         output$marker_group_selec_tab2 = renderUI({
             
             pickerInput_markers_group("features_group_tab2", genes = req( features_tab2() ) )
@@ -2402,7 +2203,6 @@ function(input, output, session) {
         
     })
     
-    # Filter accordly with the parameters selected by the user
     filt_features_tab2 <- eventReactive(input$run_heatmap_tab2, {
         
         features_f <- req( features_tab2() )
@@ -2434,11 +2234,9 @@ function(input, output, session) {
     
     sc_data_av_react_tab2 <- eventReactive(input$run_heatmap_tab2, {
         
-        # get the expression values
         sc_data_av_tab2  <- Seurat::AverageExpression(req( single_cell_data_clustered_to_DE_vis() ),
-                                                      assays = req( assay_id_tab2() ),
+                                                      assays = "RNA",
                                                       slot = input$slot_selection_heatmap_tab2)
-        
         
         sc_data_av_tab2 <- as.matrix(sc_data_av_tab2[[1]])
         
@@ -2449,7 +2247,6 @@ function(input, output, session) {
     
     observeEvent(input$run_heatmap_tab2, {
         
-        # This calculate the height of the plot based on the n of genes
         heatmap_n_genes_tab2 <- reactive({
             
             req(filt_features_tab2())
@@ -2464,7 +2261,6 @@ function(input, output, session) {
         heat_map_prep_tab2 <- reactive({
             
             features <- req(filt_features_tab2())
-            # get the expression values
             sc_data_av <- req( sc_data_av_react_tab2() )
             features_selec <- as.data.frame(unique(features$GeneID))
             
@@ -2484,12 +2280,10 @@ function(input, output, session) {
             
         })
         
-        # Generates the heatmap plot
         output$heat_map_tab2 <- renderPlot({
             
             heat_map_prep_tab2 <- req( heat_map_prep_tab2() )
             
-            ### Drawing heat map ###
             ComplexHeatmap::Heatmap(heat_map_prep_tab2, border = TRUE,
                                     rect_gp = gpar(col = "white", lwd = 2),
                                     column_title = "Clusters",
@@ -2550,11 +2344,8 @@ function(input, output, session) {
                                  width <- as.numeric( req( input$p8_width) )
                                  res <- as.numeric(input$p8_res)
                                  
-                                 ### Drawing heat map ###
-                                 
                                  heat_map_prep_tab2 <- req( heat_map_prep_tab2() )
                                  
-                                 ### Drawing heat map ###
                                  p <- ComplexHeatmap::Heatmap(heat_map_prep_tab2, border = TRUE,
                                                               rect_gp = gpar(col = "white", lwd = 2),
                                                               column_title = "Clusters",
@@ -2562,7 +2353,6 @@ function(input, output, session) {
                                                               name = "Expression",
                                                               show_row_dend = T)
                                  
-                                 # Complex heatmap does not work well with ggplot2::ggsave. So, using grid.grap to make it compatible
                                  gb = grid.grabExpr(draw(p))
                                  
                                  ggplot2::ggsave(file,
@@ -2593,8 +2383,7 @@ function(input, output, session) {
             features_f <- dplyr::filter(features,
                                         GeneID %in% input$selected_genes_for_feature_plot_tab2)
             
-        }
-        else if (input$genes_ids_tab2 == "name") {
+        } else if (input$genes_ids_tab2 == "name") {
             
             features_f <- dplyr::filter(features,
                                         Name %in% input$selected_genes_for_feature_plot_tab2)
@@ -2630,8 +2419,6 @@ function(input, output, session) {
                 plotOutput(plotname, height = 300)
             })
             
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
             do.call(tagList, plot_output_list)
         })
         
@@ -2644,8 +2431,6 @@ function(input, output, session) {
                 plotOutput(plotname, height = 300)
             })
             
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
             do.call(tagList, plot_output_list)
         })
         
@@ -2658,15 +2443,11 @@ function(input, output, session) {
                 plotOutput(plotname, height = 300)
             })
             
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
             do.call(tagList, plot_output_list)
         })
         
-        
         sc_data_tab2 <- req( single_cell_data_clustered_to_DE_vis() )
-        assay_id <- req( assay_id_tab2() )
-        
+        assay_id <- "RNA"
         
         for (i in 1:length(req( features_selec_tab2())) ) {
             
@@ -2727,7 +2508,7 @@ function(input, output, session) {
                     Seurat::VlnPlot(sc_data_tab2,
                                     features = features[my_i],
                                     split.by = "treat",
-                                    assay = req( assay_id_tab2() )
+                                    assay = "RNA"
                     )
                     
                 })
@@ -2735,25 +2516,15 @@ function(input, output, session) {
                 plotname <- paste("plot5_tab2", my_i, sep="")
                 output[[plotname]] <- renderPlot({
                     
-                    # assay_id <- assay_id_tab2()
-                    
-                    # minimal <- min( sc_data_tab2[[ assay_id ]]@data[ genes[i], ] )
-                    # maximal <- max( sc_data_tab2[[ assay_id ]]@data[ genes[i], ] )
-                    
                     Seurat::DotPlot(sc_data_tab2,
                                     features = features[my_i],
                                     cols = c("lightgrey", "red"),
                                     split.by = "treat",
-                                    assay = req( assay_id_tab2()) ) +
+                                    assay = "RNA" ) +
                         scale_x_discrete(position = "top") +
                         xlab("")+
                         ylab("") +
                         ggtitle("") +
-                        # scale_colour_gradient2(limits=c(minimal, maximal),
-                        #                        midpoint = maximal / 2,
-                        #                        low = "gray80",
-                        #                        mid = "gold",
-                        #                        high = "red") +
                         theme(legend.position = "",
                               axis.title.x=element_blank(),
                               axis.title.y=element_blank(),
@@ -2786,7 +2557,6 @@ function(input, output, session) {
         })
     })
     
-    
     observeEvent(input$start_down_add_plots_tab2, {
         
         on.exit(removeNotification(id = "m8"), add = TRUE)
@@ -2816,7 +2586,7 @@ function(input, output, session) {
                          dir.create( paste0(path_new, "/dot_plots") )
                          
                          sc_data <- req( single_cell_data_clustered_to_DE_vis() )
-                         assay_id <- req( assay_id_tab2() )
+                         assay_id <- "RNA"
                          
                          for( i in 1:length(genes) ){
                              
@@ -2824,7 +2594,6 @@ function(input, output, session) {
                              maximal <- max( sc_data[[ assay_id ]]@data[ genes[i], ] )
                              
                              p <- suppressMessages(Seurat::FeaturePlot(sc_data,
-                                                                       # cols = c("lightgrey", "red"),
                                                                        features = genes[i],
                                                                        slot = input$slot_selection_feature_plot_tab2,
                                                                        reduction = "umap") +
@@ -2843,8 +2612,6 @@ function(input, output, session) {
                                              units="cm",
                                              dpi=as.numeric(req(input$add_p_tab2_feat_res)))
                              
-                             # Saves the violin plots
-                             
                              file <- paste0(path_new, "/violin_plots_combined_samples/", genes[i], ".", req(input$add_p_tab2_violin_format) )
                              
                              p <- Seurat::VlnPlot(sc_data,
@@ -2857,8 +2624,6 @@ function(input, output, session) {
                                              width=req(input$add_p_tab2_violin_width),
                                              units="cm",
                                              dpi=as.numeric( req(input$add_p_tab2_violin_res) ))
-                             
-                             # Saves the dot plots
                              
                              file <- paste0(path_new, "/dot_plots_combined_samples/", genes[i], ".", req(input$add_p_tab2_dot_format) )
                              
@@ -2883,7 +2648,6 @@ function(input, output, session) {
                                              units="cm",
                                              dpi=as.numeric( req(input$add_p_tab2_dot_res) ))
                              
-                             ### Splitted by sample
                              p_list <- FeaturePlotSingle(sc_data,
                                                          feature = genes[i],
                                                          metadata_column = "treat",
@@ -2927,14 +2691,12 @@ function(input, output, session) {
                                              units = "cm",
                                              dpi = as.numeric(req(input$add_p_tab2_feat_res)))
                              
-                             # Saves the violin plots
-                             
                              file <- paste0(path_new, "/violin_plots/", genes[i], ".", req(input$add_p_tab2_violin_format) )
                              
                              p2 <- Seurat::VlnPlot(sc_data,
                                                    features = genes[i],
                                                    split.by = "treat",
-                                                   assay = req( assay_id_tab2() ),
+                                                   assay = "RNA",
                                                    slot = req(input$slot_selection_feature_plot_tab2) )
                              
                              ggplot2::ggsave(file,
@@ -2943,16 +2705,14 @@ function(input, output, session) {
                                              width = ( req(input$add_p_tab2_violin_width) * length(groups) ),
                                              units = "cm",
                                              dpi = as.numeric( req(input$add_p_tab2_violin_res) ))
-                             
-                             # Saves the dot plots
-                             
+
                              file <- paste0(path_new, "/dot_plots/", genes[i], ".", req(input$add_p_tab2_dot_format) )
                              
                              p2 <- Seurat::DotPlot(sc_data,
                                                    features = genes[i],
                                                    cols = c("lightgrey", "red"),
                                                    split.by = "treat",
-                                                   assay = req( assay_id_tab2()) ) +
+                                                   assay = "RNA" ) +
                                  scale_x_discrete(position = "top") +
                                  xlab("")+
                                  ylab("") +
@@ -2973,12 +2733,12 @@ function(input, output, session) {
                          }
                          
                      })
+        
         showNotification("All plots were downloaded!",
                          duration = 15,
                          id = "")
         
     })
-    
     
     #####################################
     ### Tab 3 - trajectory inference ####
