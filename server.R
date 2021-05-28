@@ -45,7 +45,7 @@ suppressMessages( require(glmGamPoi) ) # Bioconductor
 ##
 
 ## Allows parallelization of some of Seurat's functions
-plan("multicore")
+#plan("multicore")
 
 if (dir.exists('/app/user_work')) {
     
