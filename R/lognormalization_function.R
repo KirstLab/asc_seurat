@@ -37,7 +37,6 @@ lognorm_function <- function(name,
         ret_data <- sc_data
     }
 
-    # Lognormalization
     ret_data <- NormalizeData(ret_data,
                               normalization.method = "LogNormalize",
                               scale.factor = scale_factor)
