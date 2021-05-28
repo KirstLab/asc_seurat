@@ -329,7 +329,7 @@ function(input, output, session) {
             req(input$scale_factor)
             req(input$n_of_var_genes)
             
-            ret_data <- lognorm_function("Test",
+            sc_data2 <- lognorm_function("Test",
                                          to_filter = to_filter,
                                          sc_data = sc_data,
                                          min_count = input$min_count,
@@ -343,7 +343,7 @@ function(input, output, session) {
             
         } else if (input$normaliz_method == 1) { #"SCTransform"
             
-            ret_data <- SCTransform_function("Test",
+            sc_data2 <- SCTransform_function("Test",
                                              to_filter = to_filter,
                                              sc_data = sc_data,
                                              min_count = input$min_count,
@@ -354,19 +354,19 @@ function(input, output, session) {
             
             # This won't be used until the DE analysis and visualization. Here is a good place to perform the normalization since it works even after the user filter the clusters of interest.
             
-            ret_data <- NormalizeData(ret_data,
+            sc_data2 <- NormalizeData(sc_data2,
                                       assay = "RNA",
                                       normalization.method = "LogNormalize",
                                       scale.factor = 10000)
             
-            all_genes <- rownames(ret_data)
-            ret_data <- Seurat::ScaleData(ret_data,
+            all_genes <- rownames(sc_data2@assays$RNA)
+            sc_data2 <- Seurat::ScaleData(sc_data2,
                                           assay = "RNA",
                                           features = all_genes)
             
         }
         
-        ret_data
+        sc_data2
         
     })
     
@@ -1557,7 +1557,6 @@ function(input, output, session) {
                                    id = "tab2_m4")
                   
                   single_cell_data_filt_tab2 <- Seurat::ScaleData(single_cell_data_filt_tab2,
-                                                                  assay = "integrated", #@@
                                                                   verbose = T)
                   
                   on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
@@ -1992,7 +1991,7 @@ function(input, output, session) {
                          duration = NULL,
                          id = "tab2_m4")
         
-        all_genes <- rownames(sc_data)
+        all_genes <- rownames(sc_data@assays$RNA)
         sc_data <- Seurat::ScaleData(sc_data,
                                      assay = "RNA", 
                                      features = all_genes)
