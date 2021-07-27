@@ -50,7 +50,7 @@ For macOS and Linux
    cd my_project
 
    # Starts Asc-Seurat
-   docker pull kirstlab/asc_seurat && docker run -v $(pwd):/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --name Asc_Seurat --rm -p 3838:3838 kirstlab/asc_seurat
+   docker pull kirstlab/asc_seurat && docker run -v $(pwd):/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp -d --name Asc_Seurat --rm -p 3838:3838 kirstlab/asc_seurat
 
 .. note::
 
