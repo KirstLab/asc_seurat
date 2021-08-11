@@ -85,10 +85,10 @@ After certifying that everything is working, Asc-Seurat can be started using the
     cd my_project
 
     # If using Windows CMD
-    docker pull kirstlab/asc_seurat && docker run -v %cd%:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 kirstlab/asc_seurat
+    docker pull kirstlab/asc_seurat && docker run -v %cd%:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp -d --rm -p 3838:3838 kirstlab/asc_seurat
 
     # If using Windows Powershell
-    docker pull kirstlab/asc_seurat && docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -d --rm -p 3838:3838 kirstlab/asc_seurat
+    docker pull kirstlab/asc_seurat && docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp -d --rm -p 3838:3838 kirstlab/asc_seurat
 
 .. note::
 
