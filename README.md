@@ -92,7 +92,9 @@ docker run -v ${PWD}:/app/user_work -v /var/run/docker.sock:/var/run/docker.sock
 Please, visit https://asc-seurat.readthedocs.io/en/latest/ for a complete documentation.
 
 ## Reference
-[1] Pereira WJ, Almeida FM, Balmant KM, Rodriguez DC, Triozzi PM, Schmidt HW, Dervinis C, Pappas Jr. GJ, Kirst M. [Asc-Seurat – Analytical single-cell Seurat-based web application](https://www.biorxiv.org/content/10.1101/2021.03.19.436196v1). biorxiv, 2021.
+Pereira WJ, Almeida FM, Balmant KM, Rodriguez DC, Triozzi PM, Schmidt HW, Dervinis C, Pappas Jr. GJ, Kirst M. [Asc‑Seurat: analytical single‑cell Seurat‑based web application](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-04472-2). BMC Bioinformatics 22, 556 (2021).
+
+Pereira WJ, Almeida FM, Balmant KM, Rodriguez DC, Triozzi PM, Schmidt HW, Dervinis C, Pappas Jr. GJ, Kirst M. [Asc-Seurat – Analytical single-cell Seurat-based web application](https://www.biorxiv.org/content/10.1101/2021.03.19.436196v1). biorxiv, 2021.
 
 <!-- LICENSE -->
 ## License
