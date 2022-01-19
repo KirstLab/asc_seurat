@@ -1,5 +1,5 @@
 # Asc-Seurat
-# Version 2.1
+# Version 2.2
 set.seed(1407)
 
 suppressMessages( require("shiny") )
@@ -141,163 +141,233 @@ function(request) {
                          p(strong("After selecting the parameters, click on the blue button to load the data.")),
                          br(),
                          
+                         # column(width = 3,
+                         #        my_withSpinner(
+                         #            uiOutput('select_sample_tab1'))
+                         # ),
+                         
                          column(width = 3,
-                                my_withSpinner(
-                                    uiOutput('select_sample_tab1'))
-                         ),
-                         column(width = 2,
-                                input_project_name("proj_name")
-                                # div(class = "option-group",
-                                #     textInput("proj_name",
-                                #               label = "Project name",
-                                #               value = ""))
-                         ),
-                         column(width = 2,
                                 div(class = "option-group",
-                                    numericInput("min_cells",
-                                                 label = "Min. number of cells expressing a gene for the gene to be included",
-                                                 value = 3))
-                         ),
-                         column(width = 2,
-                                div(class = "option-group",
-                                    numericInput("min_features",
-                                                 label = "Min. number of genes a cell must express to be included",
-                                                 value = 200))
-                         ),
-                         column( width = 3, textInput_regex("mito_regex") ,
-                                 actionButtonInput("load_10X",
-                                                   HTML("Load data of the selected sample"))
-                         )
-                     ), # fluid row
-                     
-                     fluidRow(
-                         titlePanel("Screening plot to define filtering parameters"),
-                         br(),
-                         p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of reads that map to the mitochondrial genome."),
-                         p("The parameters can be set on the right side of the plot and must be set using a higher value than the ones above. Otherwise, they will have no effect since the cells were already excluded."),
-                         br(),
-                         p("After setting the parameters, click on \"Show plot of filtered data\" to visualize the data after filtering."),
-                         br(),
-                         br(),
-                         column(width = 10,
-                                my_withSpinner( plotOutput("VlnPlot") )
-                         ),
-                         column(width = 2,
-                                div(class = "option-group",
-                                    numericInput("min_count",
-                                                 label = "Keep only cells that expressed at least this number of genes",
-                                                 value = 200),
-                                    numericInput("max_count",
-                                                 label = "Exclude any cell that expressed more than this number of genes (i.e. possible doublets)",
-                                                 value = 2200)),
+                                    radioButtons("sample_tab1_options",
+                                                 "Run a new analysis or read a previously saved file?",
+                                                 choices = list("Run a new analysis" = 0,
+                                                                "Load file" = 1),
+                                                 selected = c(0) )),
                                 
-                                #  my_withSpinner( uiOutput("min_count_ui")),
-                                #  my_withSpinner( uiOutput("max_count_ui"))),
-                                
-                                #lognorm_UI("lognorm_sing_sample"),
-                                numericInput_max_mito_perc("max_mito_perc"),
-                                actionButtonInput("run_vinplot",
-                                                  HTML("Show plot of filtered data"))
-                         )
-                     ), # fluid row
-                     conditionalPanel(
-                         condition = "input.run_vinplot!= 0",
-                         
-                         fluidRow (
-                             titlePanel("Screening plot showing the remaining cells after filtering"),
-                             column(width = 10,
-                                    my_withSpinner( plotOutput("VlnPlot_filt") )
-                             ),
-                             # download plot
-                             column(2,
-                                    numericInput_plot_height("p1_height"),
-                                    numericInput_plot_width("p1_width", value=25),
-                                    selectInput_plot_res("p1_res"),
-                                    selectInput_plot_format("p1_format"),
-                                    downloadButton("p1_down", HTML("Download Plot") )
-                             )
-                         ), # fluid row
-                         
-                     ), # Ends conditional
-                     
-                     fluidRow(
-                         titlePanel("Normalization and dimension reduction analysis (PCA)"),
-                         br(),
-                         p("Note that only the most variable genes are used in the dimension reduction step (PCA)."),
-                         br(),
-                         column(width = 3,
-                                select_norm_methods("normaliz_method")
-                                
-                                # div(class = "option-group",
-                                #     radioButtons("normaliz_method",
-                                #                  "Select the normalization method",
-                                #                  choices = list("LogNormalize" = 0,
-                                #                                 "SCTransform"  = 1),
-                                #                  selected = 0))
-                         ),
-                         conditionalPanel(
-                             condition = "input.normaliz_method == 0",
-                             column(width = 4,
-                                    numericInput_scale_factor("scale_factor"),
-                                    radioInput_most_var_method("most_var_method"),
-                                    numericInput_var_genes("n_of_var_genes")
-                             ),
-                         ),
-                         column(width = 3,
-                                actionButtonInput("run_pca",
-                                                  HTML("Run the PCA analysis"))
-                         )
-                         
-                     ), # Fluid row,
-                     
-                     conditionalPanel(
-                         condition = "input.run_pca!= 0",
-                         
-                         fluidRow(
-                             titlePanel("Elbow plot showing the variation explained by each Principal Component"),
-                             br(),
-                             p("Choose the number of components that explain the most variation."),
-                             br(),
-                             column(width = 6,
-                                    my_withSpinner( plotOutput("n_of_PCAs") )
-                             ),
-                             # Plot download
-                             column(2,
+                                conditionalPanel (
+                                    condition = "input.sample_tab1_options == 0",
                                     
-                                    #   download_ElbowPlot_UI("down_elbow1")
-                                    numericInput_plot_height("p2_height", value=12),
-                                    numericInput_plot_width("p2_width", value=18),
-                                    selectInput_plot_res("p2_res"),
-                                    selectInput_plot_format("p2_format"),
-                                    downloadButton("p2_down", HTML("Download Plot"))
+                                    #column(width = 3,
+                                    my_withSpinner(
+                                        uiOutput('select_sample_tab1'))
                                     
-                             ),
+                                    #),
+                                ),
+                         ),
+                         
+                         conditionalPanel (
+                             condition = "input.sample_tab1_options == 1",
                              
                              column(width = 3,
-                                    numericInput_n_of_PCs("n_of_PCs")
+                                    my_withSpinner( uiOutput("select_sample_tab1_rds_ui") ),
+                                    # div(class = "option-group",
+                                    #     selectInput(
+                                    #         inputId = "select_sample_tab1_rds_normalization",
+                                    #         label = "Inform the normalization method used to generate the dataset",
+                                    #         choices = list("",
+                                    #                        "LogNormalization" = 0,
+                                    #                        "SCtransform" = 1),
+                                    #         selected = "",
+                                    #         multiple = F))
+                                    
+                             ),
+                             
+                             column( width = 3,
+                                     actionButtonInput("load_10X_rds",
+                                                       HTML("Load clustered data"))
+                             ),
+                         ),
+                         
+                         conditionalPanel (
+                             condition = "input.sample_tab1_options == 0",
+                             
+                             column(width = 2,
+                                    input_project_name("proj_name")
+                                    # div(class = "option-group",
+                                    #     textInput("proj_name",
+                                    #               label = "Project name",
+                                    #               value = ""))
+                             ),
+                             
+                             column(width = 2,
+                                    div(class = "option-group",
+                                        numericInput("min_cells",
+                                                     label = "Min. number of cells expressing a gene for the gene to be included",
+                                                     value = 3))
+                             ),
+                             
+                             column(width = 2,
+                                    div(class = "option-group",
+                                        numericInput("min_features",
+                                                     label = "Min. number of genes a cell must express to be included",
+                                                     value = 200))
+                             ),
+                             
+                             column( width = 3,
+                                     textInput_regex("mito_regex") ,
+                                     
+                             ),
+                             
+                             
+                             column( width = 3,
+                                     actionButtonInput("load_10X",
+                                                       HTML("Load data of the selected sample"))
+                             ),
+                             
+                         ),
+                         
+                     ), # fluid row
+                     
+                     # If data is already clustered, this options doesn't appear
+                     conditionalPanel (
+                         condition = "input.sample_tab1_options == 0",
+                         
+                         fluidRow(
+                             titlePanel("Screening plot to define filtering parameters"),
+                             br(),
+                             p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of reads that map to the mitochondrial genome."),
+                             p("The parameters can be set on the right side of the plot and must be set using a higher value than the ones above. Otherwise, they will have no effect since the cells were already excluded."),
+                             br(),
+                             p("After setting the parameters, click on \"Show plot of filtered data\" to visualize the data after filtering."),
+                             br(),
+                             br(),
+                             column(width = 10,
+                                    my_withSpinner( plotOutput("VlnPlot") )
+                             ),
+                             column(width = 2,
+                                    div(class = "option-group",
+                                        numericInput("min_count",
+                                                     label = "Keep only cells that expressed at least this number of genes",
+                                                     value = 200),
+                                        numericInput("max_count",
+                                                     label = "Exclude any cell that expressed more than this number of genes (i.e. possible doublets)",
+                                                     value = 2200)),
+                                    
+                                    #  my_withSpinner( uiOutput("min_count_ui")),
+                                    #  my_withSpinner( uiOutput("max_count_ui"))),
+                                    
+                                    #lognorm_UI("lognorm_sing_sample"),
+                                    numericInput_max_mito_perc("max_mito_perc"),
+                                    actionButtonInput("run_vinplot",
+                                                      HTML("Show plot of filtered data"))
+                             )
+                         ), # fluid row
+                         conditionalPanel(
+                             condition = "input.run_vinplot!= 0",
+                             
+                             fluidRow (
+                                 titlePanel("Screening plot showing the remaining cells after filtering"),
+                                 column(width = 10,
+                                        my_withSpinner( plotOutput("VlnPlot_filt") )
+                                 ),
+                                 # download plot
+                                 column(2,
+                                        numericInput_plot_height("p1_height"),
+                                        numericInput_plot_width("p1_width", value=25),
+                                        selectInput_plot_res("p1_res"),
+                                        selectInput_plot_format("p1_format"),
+                                        downloadButton("p1_down", HTML("Download Plot") )
+                                 )
+                             ), # fluid row
+                             
+                         ), # Ends conditional
+                         
+                         fluidRow(
+                             titlePanel("Normalization and dimension reduction analysis (PCA)"),
+                             br(),
+                             p("Note that only the most variable genes are used in the dimension reduction step (PCA)."),
+                             br(),
+                             column(width = 3,
+                                    select_norm_methods("normaliz_method")
+                                    
+                                    # div(class = "option-group",
+                                    #     radioButtons("normaliz_method",
+                                    #                  "Select the normalization method",
+                                    #                  choices = list("LogNormalize" = 0,
+                                    #                                 "SCTransform"  = 1),
+                                    #                  selected = 0))
+                             ),
+                             conditionalPanel(
+                                 condition = "input.normaliz_method == 0",
+                                 column(width = 4,
+                                        numericInput_scale_factor("scale_factor"),
+                                        radioInput_most_var_method("most_var_method"),
+                                        numericInput_var_genes("n_of_var_genes")
+                                 ),
+                             ),
+                             column(width = 3,
+                                    actionButtonInput("run_pca",
+                                                      HTML("Run the PCA analysis"))
                              )
                              
-                         ) # Fluid row
-                     ), # Ends conditional
+                         ), # Fluid row,
+                         
+                         conditionalPanel(
+                             condition = "input.run_pca!= 0",
+                             
+                             fluidRow(
+                                 titlePanel("Elbow plot showing the variation explained by each Principal Component"),
+                                 br(),
+                                 p("Choose the number of components that explain the most variation."),
+                                 br(),
+                                 column(width = 6,
+                                        my_withSpinner( plotOutput("n_of_PCAs") )
+                                 ),
+                                 # Plot download
+                                 column(2,
+                                        
+                                        #   download_ElbowPlot_UI("down_elbow1")
+                                        numericInput_plot_height("p2_height", value=12),
+                                        numericInput_plot_width("p2_width", value=18),
+                                        selectInput_plot_res("p2_res"),
+                                        selectInput_plot_format("p2_format"),
+                                        downloadButton("p2_down", HTML("Download Plot"))
+                                        
+                                 ),
+                                 
+                                 column(width = 3,
+                                        numericInput_n_of_PCs("n_of_PCs")
+                                 )
+                                 
+                             ) # Fluid row
+                         ), # Ends conditional
+                         
+                     ),
                      
                      fluidRow(
                          titlePanel("Clustering"),
-                         br(),
-                         p("Be aware that this parameter is central in the cluster definition. It is recommended to try different values and define the most appropriate according to the expectations of the cell populations present in the sample."),
-                         p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
-                         br(),
-                         column(width = 3,
-                                numericInput_resolution_clust("resolution_clust")
-                         ),
-                         column(width = 3,
-                                actionButtonInput("run_clustering",
-                                                  HTML("Run the clustering analysis"))
-                         )
                          
-                     ), # Fluid row
+                         conditionalPanel (
+                             condition = "input.sample_tab1_options == 0",
+                             
+                             br(),
+                             p("Be aware that this parameter is central in the cluster definition. It is recommended to try different values and define the most appropriate according to the expectations of the cell populations present in the sample."),
+                             p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
+                             br(),
+                             column(width = 3,
+                                    numericInput_resolution_clust("resolution_clust")
+                             ),
+                             column(width = 3,
+                                    actionButtonInput("run_clustering",
+                                                      HTML("Run the clustering analysis"))
+                             )
+                             
+                         ), # Fluid row
+                     ),
+                     
                      
                      conditionalPanel(
-                         condition = "input.run_clustering!= 0",
+                         condition = "input.run_clustering!= 0 || input.load_10X_rds!= 0",
                          
                          fluidRow(
                              titlePanel("Clustering plots"),
@@ -343,50 +413,55 @@ function(request) {
                          
                      ), # Ends conditional
                      
-                     fluidRow(
-                         titlePanel("Excluding or selecting clusters for reanalysis"),
-                         br(),
-                         p("Sometimes, it is helpful to exclude or select the clusters that are of interest. After excluding or selecting the cells of interest, it is recommended to repeat the clustering step using only the subset."),
-                         p("After selecting the clusters, click on the blue button (Reanalyze after selection/exclusion of clusters). Asc-Seurat will run the analyses of the new subset until the PCA step.", strong("Then, users need to set the new number of components using the elbow plot (above) and click on the button \"Run the clustering analysis\" again.")),
-                         br(),
-                         column(3,
-                                radioButtons_filter_clusters("filter_clusters")
+                     conditionalPanel (
+                         condition = "input.sample_tab1_options == 0",
+                         
+                         fluidRow(
+                             titlePanel("Excluding or selecting clusters for reanalysis"),
+                             br(),
+                             p("Sometimes, it is helpful to exclude or select the clusters that are of interest. After excluding or selecting the cells of interest, it is recommended to repeat the clustering step using only the subset."),
+                             p("After selecting the clusters, click on the blue button (Reanalyze after selection/exclusion of clusters). Asc-Seurat will run the analyses of the new subset until the PCA step.", strong("Then, users need to set the new number of components using the elbow plot (above) and click on the button \"Run the clustering analysis\" again.")),
+                             br(),
+                             column(3,
+                                    radioButtons_filter_clusters("filter_clusters")
+                             ),
+                             
+                             conditionalPanel(
+                                 condition = "input.filter_clusters != 0",
+                                 
+                                 column(3,
+                                        radioButtons_filter_clusters_opt("filter_clusters_opt")
+                                 ),
+                                 
+                                 column( 3,
+                                         div(class = "option-group",
+                                             my_withSpinner( uiOutput("cluster_list_ui") ))
+                                 ),
+                                 
+                                 column( 3,
+                                         div(class = "option-group",
+                                             actionButtonInput("rerun_after_filtering",
+                                                               HTML("Reanalyze after selection/exclusion of clusters")))
+                                 ),
+                                 
+                             ) # ends conditional
                          ),
                          
-                         conditionalPanel(
-                             condition = "input.filter_clusters != 0",
-                             
-                             column(3,
-                                    radioButtons_filter_clusters_opt("filter_clusters_opt")
-                             ),
-                             
-                             column( 3,
-                                     div(class = "option-group",
-                                         my_withSpinner( uiOutput("cluster_list_ui") ))
-                             ),
-                             
-                             column( 3,
-                                     div(class = "option-group",
-                                         actionButtonInput("rerun_after_filtering",
-                                                           HTML("Reanalyze after selection/exclusion of clusters")))
-                             ),
-                             
-                         ) # ends conditional
+                         fluidRow(
+                             br(),
+                             h3("Saving the processed data for the trajectory inference analysis"),
+                             p("The button below allows for saving the processed data in a file that can be used for the pseudo-time analysis."),
+                             p("Asc-Seurat will save only the most recently processed data."),
+                             br(),
+                             p(strong("Note:", "The processed data needs to be saved in the folder", code("RDS_files/"), "so it can load automatically in the tab \"Trajectory inference.\"" )),
+                             column(6,
+                                    br(),
+                                    downloadButton("downloadRDS",
+                                                   "Download the processed data to use in the trajectory inference analysis",
+                                                   class = "down_butt")
+                             )
+                         ),
                      ),
-                     
-                     fluidRow(
-                         br(),
-                         h3("Saving the processed data for the trajectory inference analysis"),
-                         p("The button below allows for saving the processed data in a file that can be used for the pseudo-time analysis."),
-                         p("Asc-Seurat will save only the most recently processed data."),
-                         br(),
-                         p(strong("Note:", "The processed data needs to be saved in the folder", code("RDS_files/"), "so it can load automatically in the tab \"Trajectory inference.\"" )),
-                         column(6,
-                                br(),
-                                downloadButton("downloadRDS",
-                                               "Download the processed data to use in the trajectory inference analysis",
-                                               class = "down_butt")
-                         )),
                      
                      fluidRow(
                          titlePanel("Identification of markers / Differential expression analysis"),

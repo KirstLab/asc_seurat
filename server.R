@@ -1,5 +1,5 @@
 # Asc-Seurat
-# Version 2.1
+# Version 2.2
 set.seed(1407)
 options(shiny.sanitize.errors = FALSE)
 
@@ -119,34 +119,49 @@ function(input, output, session) {
             ))
     })
     
-    single_cell_data_reac <- eventReactive(input$load_10X, {
+    output$select_sample_tab1_rds_ui <- renderUI({
         
-        shinyFeedback::feedbackWarning("min_cells", is.na(input$min_cells), "Required value")
-        shinyFeedback::feedbackWarning("min_features", is.na(input$min_features), "Required value")
-        shinyFeedback::feedbackWarning("mito_regex", !shiny::isTruthy(input$mito_regex), "Required value")
+        rds_list <- list.files('./RDS_files/', pattern = "*.rds")
         
-        req(input$min_cells)
-        req(input$min_features)
-        req(input$mito_regex)
+        div(class = "option-group",
+            shinyWidgets::pickerInput(
+                inputId = "select_sample_tab1_rds",
+                label = "Select the file containing the data",
+                choices = sort(rds_list),
+                multiple = FALSE,
+                options = list(`actions-box` = TRUE)
+            ))
         
-        showNotification("Loading the data",
-                         duration = NULL,
-                         id = "p1")
-        
-        sing_cell_data.data <- Seurat::Read10X(data.dir = req(input$sample_folder_tab1))
-        
-        # Initialize the Seurat object with the raw (non-normalized data).
-        sing_cell_data <- Seurat::CreateSeuratObject(counts = sing_cell_data.data,
-                                                     project = input$proj_name,
-                                                     min.cells = input$min_cells,
-                                                     min.features = input$min_features)
-        
-        # Calculate the % of mithocondrial contamination
-        sing_cell_data <- Seurat::PercentageFeatureSet(sing_cell_data,
-                                                       pattern = input$mito_regex,
-                                                       col.name = "percent.mt")
-        
-        return(sing_cell_data)
+    })
+    
+    single_cell_data_reac <- eventReactive( input$load_10X, {
+       
+            shinyFeedback::feedbackWarning("min_cells", is.na(input$min_cells), "Required value")
+            shinyFeedback::feedbackWarning("min_features", is.na(input$min_features), "Required value")
+            shinyFeedback::feedbackWarning("mito_regex", !shiny::isTruthy(input$mito_regex), "Required value")
+            
+            req(input$min_cells)
+            req(input$min_features)
+            req(input$mito_regex)
+            
+            showNotification("Loading the data",
+                             duration = NULL,
+                             id = "p1")
+            
+            sing_cell_data.data <- Seurat::Read10X(data.dir = req(input$sample_folder_tab1))
+            
+            # Initialize the Seurat object with the raw (non-normalized data).
+            sing_cell_data <- Seurat::CreateSeuratObject(counts = sing_cell_data.data,
+                                                         project = input$proj_name,
+                                                         min.cells = input$min_cells,
+                                                         min.features = input$min_features)
+            
+            # Calculate the % of mithocondrial contamination
+            sing_cell_data <- Seurat::PercentageFeatureSet(sing_cell_data,
+                                                           pattern = input$mito_regex,
+                                                           col.name = "percent.mt")
+            
+            return(sing_cell_data)
         
     })
     
@@ -470,31 +485,90 @@ function(input, output, session) {
     
     ############################################################
     
-    single_cell_data_reso_umap <- eventReactive(input$run_clustering, {
-        
-        shinyFeedback::feedbackWarning("n_of_PCs", is.na(input$n_of_PCs), "Required value")
-        shinyFeedback::feedbackWarning("resolution_clust", is.na(input$resolution_clust), "Required value")
-        
-        req(input$n_of_PCs)
-        req(input$resolution_clust)
-        
-        showNotification("Running the clustering step",
-                         duration = NULL,
-                         id = "m6")
-        
-        data_sc <- req( single_cell_data_pca() )
-        
-        data_sc <- Seurat::FindNeighbors(data_sc, dims = 1:input$n_of_PCs)
-        
-        data_sc <- Seurat::FindClusters(data_sc, resolution = input$resolution_clust)
-        
-        sc_data <- Seurat::RunUMAP(data_sc, dims = 1:input$n_of_PCs)
-        sc_data <- Seurat::RunTSNE(sc_data, dims = 1:input$n_of_PCs)
-        
-        sc_data
-    })
+    # test_intermediate <- reactive({
+    #     
+    #     if ( input$sample_tab1_options == 1) { # Load file
+    #         
+    #         sc_data <- req(single_cell_data_reac() )
+    #         
+    #     } else if (input$sample_tab1_options == 0 ) { # new analysis
+    #         
+    #         shinyFeedback::feedbackWarning("n_of_PCs", is.na(input$n_of_PCs), "Required value")
+    #         shinyFeedback::feedbackWarning("resolution_clust", is.na(input$resolution_clust), "Required value")
+    #         
+    #         req(input$n_of_PCs)
+    #         req(input$resolution_clust)
+    #         
+    #         showNotification("Running the clustering step",
+    #                          duration = NULL,
+    #                          id = "m6")
+    #         
+    #         data_sc <- req( single_cell_data_pca() )
+    #         
+    #         data_sc <- Seurat::FindNeighbors(data_sc, dims = 1:input$n_of_PCs)
+    #         
+    #         data_sc <- Seurat::FindClusters(data_sc, resolution = input$resolution_clust)
+    #         
+    #         sc_data <- Seurat::RunUMAP(data_sc, dims = 1:input$n_of_PCs)
+    #         sc_data <- Seurat::RunTSNE(sc_data, dims = 1:input$n_of_PCs)
+    #         
+    #     }
+    #     
+    #     sc_data
+    # })
     
-    observeEvent(input$run_clustering, {
+    
+    single_cell_data_reso_umap <- eventReactive(  list(input$run_clustering, input$load_10X_rds), {
+        #single_cell_data_reso_umap <- reactive( { 
+        
+        #req( test_intermediate() )
+        
+        if ( input$sample_tab1_options == 1) { # Load file
+            
+            # ##  the user needs to tell what normalization was used, since we should not scale the data when using SCTransform.
+            # shinyFeedback::feedbackWarning("select_sample_tab1_rds_normalization",
+            #                                input$select_sample_tab1_rds_normalization == "",
+            #                                #T,
+            #                                "Please select an option")
+            # 
+            # validate(need(input$select_sample_tab1_rds_normalization != "",
+            #               message = "",
+            #               label = "select_sample_tab1_rds_normalization"))
+            
+            showNotification("Loading the data",
+                             id = "m9",
+                             duration = NULL)
+            
+            sc_data <- readRDS( paste0("./RDS_files/", req(input$select_sample_tab1_rds)) )
+            
+            on.exit(removeNotification(id = "m9"), add = TRUE)
+            
+        } else if (input$sample_tab1_options == 0 ) { # new analysis
+            
+            shinyFeedback::feedbackWarning("n_of_PCs", is.na(input$n_of_PCs), "Required value")
+            shinyFeedback::feedbackWarning("resolution_clust", is.na(input$resolution_clust), "Required value")
+            
+            req(input$n_of_PCs)
+            req(input$resolution_clust)
+            
+            showNotification("Running the clustering step",
+                             duration = NULL,
+                             id = "m6")
+            
+            data_sc <- req( single_cell_data_pca() )
+            
+            data_sc <- Seurat::FindNeighbors(data_sc, dims = 1:input$n_of_PCs)
+            
+            data_sc <- Seurat::FindClusters(data_sc, resolution = input$resolution_clust)
+            
+            sc_data <- Seurat::RunUMAP(data_sc, dims = 1:input$n_of_PCs)
+            sc_data <- Seurat::RunTSNE(sc_data, dims = 1:input$n_of_PCs)
+            
+        }
+            sc_data
+        })
+    
+    observeEvent( list(input$run_clustering, input$load_10X_rds), {
         
         output$tSNE <- renderPlot({
             
@@ -839,7 +913,9 @@ function(input, output, session) {
                                                  assays = "RNA",
                                                  slot = input$slot_selection_heatmap)
         
-        sc_data_av <- as.matrix(sc_data_av[[1]])
+        #sc_data_av <- as.matrix(sc_data_av[[1]])
+        
+        sc_data_av <- sc_data_av[[1]]
         
         on.exit(removeNotification(id = "m7"), add = TRUE)
         sc_data_av
@@ -869,7 +945,9 @@ function(input, output, session) {
             if (nrow(features) == 1) {
                 
                 sc_data_av_feat <- sc_data_av[base::rownames(sc_data_av) %in% features_selec[, 1], ]
-                sc_data_av_feat <- as.matrix(t(sc_data_av_feat))
+                #sc_data_av_feat <- as.matrix(t(sc_data_av_feat))
+                sc_data_av_feat <- t(sc_data_av_feat)
+                
                 base::rownames(sc_data_av_feat) <- features_selec[1, 1]
                 
             } else {
@@ -1562,7 +1640,7 @@ function(input, output, session) {
                   on.exit(removeNotification(id = "tab2_m4"), add = TRUE)
                   
               }
-
+              
               single_cell_data_filt_tab2
           })
     
@@ -1757,7 +1835,7 @@ function(input, output, session) {
         output$umap_tab2 <- renderPlot({
             
             Seurat::DimPlot(req( single_cell_data_clustered() ), reduction = "umap", label = T, pt.size = .1)
-
+            
         })
         
         output$umap_three_samples_comb <- renderPlot({
@@ -1868,7 +1946,7 @@ function(input, output, session) {
         unique( as.character(sc_data@meta.data$treat ) )
         
     })
- 
+    
     output$downloadRDS_tab2 <- downloadHandler(
         
         filename = function() {
@@ -2159,7 +2237,7 @@ function(input, output, session) {
         }
         
     )
-
+    
     features_tab2 <- reactive({
         
         req(input$markers_list_tab2)
@@ -2237,7 +2315,8 @@ function(input, output, session) {
                                                       assays = "RNA",
                                                       slot = input$slot_selection_heatmap_tab2)
         
-        sc_data_av_tab2 <- as.matrix(sc_data_av_tab2[[1]])
+        #sc_data_av_tab2 <- as.matrix(sc_data_av_tab2[[1]])
+        sc_data_av_tab2 <- sc_data_av_tab2[[1]]
         
         on.exit(removeNotification(id = "m7"), add = TRUE)
         sc_data_av_tab2
@@ -2704,7 +2783,7 @@ function(input, output, session) {
                                              width = ( req(input$add_p_tab2_violin_width) * length(groups) ),
                                              units = "cm",
                                              dpi = as.numeric( req(input$add_p_tab2_violin_res) ))
-
+                             
                              file <- paste0(path_new, "/dot_plots/", genes[i], ".", req(input$add_p_tab2_dot_format) )
                              
                              p2 <- Seurat::DotPlot(sc_data,
@@ -4857,4 +4936,5 @@ function(input, output, session) {
     #     my_reactable(filt_features())
     # })
     
-}
+    }
+    
