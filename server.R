@@ -2137,6 +2137,7 @@ function(input, output, session) {
                                                     assay = "RNA" )
                     
                     markers$cluster <- i
+                    markers$geneID <- base::rownames(markers)
                     
                     markers_tab2 <- rbind(markers_tab2, markers)
                     
@@ -2153,6 +2154,8 @@ function(input, output, session) {
                 
                 markers_tab2$cluster <- input$find_markers_clust_id_tab2
                 
+                markers_tab2$geneID <- base::rownames(markers_tab2)
+                
             } else if ( input$find_markers_tab2_opt == 2 ) {
                 
                 markers_tab2 <- FindConservedMarkers(sc_data,
@@ -2165,6 +2168,7 @@ function(input, output, session) {
                                                "_vs_",
                                                input$find_markers_clust_ID2_tab2)
                 
+                markers_tab2$geneID <- base::rownames(markers_tab2)
             }
             
         } else if (input$find_markers_or_DE_tab2 == 1 ) {
@@ -2176,6 +2180,7 @@ function(input, output, session) {
             shinyFeedback::feedbackWarning("find_markers_or_DE_tab2_pvalue",
                                            is.na(input$find_markers_or_DE_tab2_pvalue),
                                            "Required value")
+            
             req(input$find_markers_or_DE_tab2_pvalue)
             
             sc_data$celltype.treat <- paste(Idents(sc_data), sc_data$treat, sep = "_")
@@ -2201,9 +2206,10 @@ function(input, output, session) {
                                              input$find_markers_or_DE_tab2_treat2,
                                              sep = "_")
             
+            markers_tab2$geneID <- base::rownames(markers_tab2)
+            
         }
         
-        markers_tab2$geneID <- base::rownames(markers_tab2)
         markers_tab2
         
     })
