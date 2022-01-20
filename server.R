@@ -1404,28 +1404,28 @@ function(input, output, session) {
         
     })
     
-    single_cell_data_reac_tab2 <- eventReactive(input$load_rds_file, {
+    single_cell_data_reac_tab2 <- eventReactive( c(input$load_rds_file, input$load_rds_file2), {
         
         if ( input$integration_options == 1) { # Load file
             
-            ##  the user needs to tell what normalization was used, since we should not scale the data when using SCTransform.
-            shinyFeedback::feedbackWarning("load_rds_int_normalization",
-                                           input$load_rds_int_normalization == "",
-                                           #T,
-                                           "Please select an option")
-            validate(need(input$load_rds_int_normalization != "",
-                          message = "",
-                          label = "load_rds_int_normalization"))
-            
-            showNotification("Loading the integrated data",
-                             id = "m9",
-                             duration = NULL)
-            
-            sc_data <- readRDS( paste0("./RDS_files/", req(input$load_integrated)) )
-            
-            on.exit(removeNotification(id = "m9"), add = TRUE)
-            
-            sc_data
+            # ##  the user needs to tell what normalization was used, since we should not scale the data when using SCTransform.
+            # shinyFeedback::feedbackWarning("load_rds_int_normalization",
+            #                                input$load_rds_int_normalization == "",
+            #                                #T,
+            #                                "Please select an option")
+            # validate(need(input$load_rds_int_normalization != "",
+            #               message = "",
+            #               label = "load_rds_int_normalization"))
+            # 
+            # showNotification("Loading the integrated data",
+            #                  id = "m9",
+            #                  duration = NULL)
+            # 
+            # sc_data <- readRDS( paste0("./RDS_files/", req(input$load_integrated)) )
+            # 
+            # on.exit(removeNotification(id = "m9"), add = TRUE)
+            # 
+            # sc_data
             
         } else if (input$integration_options == 0 ) { # new analysis
             
@@ -1801,7 +1801,31 @@ function(input, output, session) {
                        
                    })
     
-    single_cell_data_clustered <- eventReactive(input$run_clustering_tab2, {
+    single_cell_data_clustered <- eventReactive( c(input$run_clustering_tab2, input$load_rds_file2), {
+        
+        if ( input$integration_options == 1) { # Load file
+            
+            # ##  the user needs to tell what normalization was used, since we should not scale the data when using SCTransform.
+            # shinyFeedback::feedbackWarning("load_rds_int_normalization",
+            #                                input$load_rds_int_normalization == "",
+            #                                #T,
+            #                                "Please select an option")
+            # validate(need(input$load_rds_int_normalization != "",
+            #               message = "",
+            #               label = "load_rds_int_normalization"))
+
+            showNotification("Loading the integrated data",
+                             id = "m9",
+                             duration = NULL)
+
+            sc_data <- readRDS( paste0("./RDS_files/", req(input$load_integrated)) )
+
+            on.exit(removeNotification(id = "m9"), add = TRUE)
+
+            sc_data
+            
+        } else if (input$integration_options == 0 ) { # new analysis
+        
         
         shinyFeedback::feedbackWarning("n_of_PCs_tab2", is.na(input$n_of_PCs_tab2), "Required value")
         shinyFeedback::feedbackWarning("resolution_clust_tab2", is.na(input$resolution_clust_tab2), "Required value")
@@ -1826,11 +1850,13 @@ function(input, output, session) {
         sc_data <- Seurat::FindClusters(sc_data,
                                         resolution = input$resolution_clust_tab2)
         
+        }
+        
         sc_data
         
     })
     
-    observeEvent(input$run_clustering_tab2, {
+    observeEvent(c(input$run_clustering_tab2, input$load_rds_file2), {
         
         output$umap_tab2 <- renderPlot({
             
@@ -1839,6 +1865,8 @@ function(input, output, session) {
         })
         
         output$umap_three_samples_comb <- renderPlot({
+            
+            ## @@@@ >>>>>>>> Create a Validate in here to check if the data was integrated using Asc-Seurat.
             
             Seurat::DimPlot(req( single_cell_data_clustered() ),
                             reduction = "umap",
