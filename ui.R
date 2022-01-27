@@ -248,16 +248,16 @@ function(request) {
                                     div(class = "option-group",
                                         numericInput("min_count",
                                                      label = "Keep only cells that expressed at least this number of genes",
-                                                     value = 200),
+                                                     value = ""),
                                         numericInput("max_count",
                                                      label = "Exclude any cell that expressed more than this number of genes (i.e. possible doublets)",
-                                                     value = 2200)),
+                                                     value = "")),
                                     
                                     #  my_withSpinner( uiOutput("min_count_ui")),
                                     #  my_withSpinner( uiOutput("max_count_ui"))),
                                     
                                     #lognorm_UI("lognorm_sing_sample"),
-                                    numericInput_max_mito_perc("max_mito_perc"),
+                                    numericInput_max_mito_perc("max_mito_perc", value = ""),
                                     actionButtonInput("run_vinplot",
                                                       HTML("Show plot of filtered data"))
                              )
@@ -829,15 +829,15 @@ function(request) {
                      conditionalPanel (
                          condition = "input.integration_options == 0",
                          
-                         fluidRow(
-                             tags$hr(),
-                             p("Since the integration is a time-consuming step, it is helpful to save the integrated data before running any additional analyses. The main advantage of saving the data is that if you need to restart the analysis (e. g., to change parameters), you can skip the integration step by loading the RDS file instead."),
-                             br(),
-                             p(strong("The rds files must be saved in the folder"), code("RDS_files."), "Otherwise, it will not be possible to read them with the \"Load file\" option."),
-                             column(6,
-                                    downloadButton("download_int_data",
-                                                   "Download RDS object containing the integrated data.")
-                             )),
+                         # fluidRow(
+                         #     tags$hr(),
+                         #     p("Since the integration is a time-consuming step, it is helpful to save the integrated data before running any additional analyses. The main advantage of saving the data is that if you need to restart the analysis (e. g., to change parameters), you can skip the integration step by loading the RDS file instead."),
+                         #     br(),
+                         #     p(strong("The rds files must be saved in the folder"), code("RDS_files."), "Otherwise, it will not be possible to read them with the \"Load file\" option."),
+                         #     column(6,
+                         #            downloadButton("download_int_data",
+                         #                           "Download RDS object containing the integrated data.")
+                         #     )),
                          
                          
                          fluidRow(
@@ -1293,10 +1293,12 @@ function(request) {
                          
                          fluidRow(
                              titlePanel("Violin and Dot plots"),
-                             column(width = 6,
-                                    my_withSpinner( uiOutput("run_vln_plot_tab2") )),
-                             column(width = 6,
-                                    my_withSpinner( uiOutput("run_dot_plot_tab2") ))),
+                             column(width = 12,
+                                    my_withSpinner( uiOutput("run_vln_plot_tab2") ))#,
+                             # column(width = 6,
+                             #        my_withSpinner( uiOutput("run_dot_plot_tab2") ))
+                             
+                             ),
                          fluidRow(
                              titlePanel("Downloading additional plots"),
                              
@@ -1325,13 +1327,13 @@ function(request) {
                                         numericInput_plot_width("add_p_tab2_violin_width", value=14),
                                         selectInput_plot_res("add_p_tab2_violin_res"),
                                         selectInput_plot_format("add_p_tab2_violin_format")),
-                                 column(2,
-                                        div(class = "option-group",
-                                            p(strong("Select the options for the dot plots")) ),
-                                        numericInput_plot_height("add_p_tab2_dot_height", value=10),
-                                        numericInput_plot_width("add_p_tab2_dot_width", value=14),
-                                        selectInput_plot_res("add_p_tab2_dot_res"),
-                                        selectInput_plot_format("add_p_tab2_dot_format")),
+                                 # column(2,
+                                 #        div(class = "option-group",
+                                 #            p(strong("Select the options for the dot plots")) ),
+                                 #        numericInput_plot_height("add_p_tab2_dot_height", value=10),
+                                 #        numericInput_plot_width("add_p_tab2_dot_width", value=14),
+                                 #        selectInput_plot_res("add_p_tab2_dot_res"),
+                                 #        selectInput_plot_format("add_p_tab2_dot_format")),
                                  column(width = 3,
                                         actionButtonInput("start_down_add_plots_tab2",
                                                           HTML("Download additional plots")))

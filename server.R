@@ -93,17 +93,17 @@ function(input, output, session) {
     ######   Tab 1 - Clustering    ######
     #####################################
     
-    observeEvent(input$min_features, {
-        
-        updateNumericInput(inputId = "min_count", value = input$min_features)
-        
-    })
-    
-    observeEvent(input$min_count, {
-        
-        updateNumericInput(inputId = "max_count", value = (input$min_count + 2000))
-        
-    })
+    # observeEvent(input$min_features, {
+    #     
+    #     updateNumericInput(inputId = "min_count", value = input$min_features)
+    #     
+    # })
+    # 
+    # observeEvent(input$min_count, {
+    #     
+    #     updateNumericInput(inputId = "max_count", value = (input$min_count + 2000))
+    #     
+    # })
     
     output$select_sample_tab1 = renderUI({
         
@@ -135,33 +135,33 @@ function(input, output, session) {
     })
     
     single_cell_data_reac <- eventReactive( input$load_10X, {
-       
-            shinyFeedback::feedbackWarning("min_cells", is.na(input$min_cells), "Required value")
-            shinyFeedback::feedbackWarning("min_features", is.na(input$min_features), "Required value")
-            shinyFeedback::feedbackWarning("mito_regex", !shiny::isTruthy(input$mito_regex), "Required value")
-            
-            req(input$min_cells)
-            req(input$min_features)
-            req(input$mito_regex)
-            
-            showNotification("Loading the data",
-                             duration = NULL,
-                             id = "p1")
-            
-            sing_cell_data.data <- Seurat::Read10X(data.dir = req(input$sample_folder_tab1))
-            
-            # Initialize the Seurat object with the raw (non-normalized data).
-            sing_cell_data <- Seurat::CreateSeuratObject(counts = sing_cell_data.data,
-                                                         project = input$proj_name,
-                                                         min.cells = input$min_cells,
-                                                         min.features = input$min_features)
-            
-            # Calculate the % of mithocondrial contamination
-            sing_cell_data <- Seurat::PercentageFeatureSet(sing_cell_data,
-                                                           pattern = input$mito_regex,
-                                                           col.name = "percent.mt")
-            
-            return(sing_cell_data)
+        
+        shinyFeedback::feedbackWarning("min_cells", is.na(input$min_cells), "Required value")
+        shinyFeedback::feedbackWarning("min_features", is.na(input$min_features), "Required value")
+        shinyFeedback::feedbackWarning("mito_regex", !shiny::isTruthy(input$mito_regex), "Required value")
+        
+        req(input$min_cells)
+        req(input$min_features)
+        req(input$mito_regex)
+        
+        showNotification("Loading the data",
+                         duration = NULL,
+                         id = "p1")
+        
+        sing_cell_data.data <- Seurat::Read10X(data.dir = req(input$sample_folder_tab1))
+        
+        # Initialize the Seurat object with the raw (non-normalized data).
+        sing_cell_data <- Seurat::CreateSeuratObject(counts = sing_cell_data.data,
+                                                     project = input$proj_name,
+                                                     min.cells = input$min_cells,
+                                                     min.features = input$min_features)
+        
+        # Calculate the % of mithocondrial contamination
+        sing_cell_data <- Seurat::PercentageFeatureSet(sing_cell_data,
+                                                       pattern = input$mito_regex,
+                                                       col.name = "percent.mt")
+        
+        return(sing_cell_data)
         
     })
     
@@ -565,8 +565,8 @@ function(input, output, session) {
             sc_data <- Seurat::RunTSNE(sc_data, dims = 1:input$n_of_PCs)
             
         }
-            sc_data
-        })
+        sc_data
+    })
     
     observeEvent( list(input$run_clustering, input$load_10X_rds), {
         
@@ -1489,23 +1489,23 @@ function(input, output, session) {
         
     })
     
-    output$download_int_data <- downloadHandler(
-        
-        filename = function() {
-            paste("Integrated_datasets_without_clutering", ".rds", sep = "")
-        },
-        content = function(file) {
-            
-            withProgress(message = "Please wait, preparing the data for download.",
-                         value = 0.5, {
-                             
-                             saveRDS( req( single_cell_data_reac_tab2() ), file)
-                             
-                         })
-            
-        }
-        
-    )
+    # output$download_int_data <- downloadHandler(
+    #     
+    #     filename = function() {
+    #         paste("Integrated_datasets_without_clutering", ".rds", sep = "")
+    #     },
+    #     content = function(file) {
+    #         
+    #         withProgress(message = "Please wait, preparing the data for download.",
+    #                      value = 0.5, {
+    #                          
+    #                          saveRDS( req( single_cell_data_reac_tab2() ), file)
+    #                          
+    #                      })
+    #         
+    #     }
+    #     
+    # )
     
     output$VlnPlot_tab2 <- renderPlot({
         
@@ -1622,11 +1622,17 @@ function(input, output, session) {
               
               single_cell_data_filt_tab2 <- req( single_cell_data_filt_tab2() )
               
+             # req(input$load_rds_int_normalization)
+              
               # If loading the data and normalization is SCTransform, skip the scaling.
-              if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
+              #if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
                   
                   ## Same if running new analysis and normalization is SCtransform
-              } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+              ##  } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+              
+              
+              ## Same if running new analysis and normalization is SCtransform
+               if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
                   
               } else { # lognormalization
                   
@@ -1732,9 +1738,11 @@ function(input, output, session) {
             
         }
         
-        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
+     #   if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
             
-        } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+      ##  } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+        
+        if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
             
         } else { # lognormalization
             
@@ -1813,43 +1821,43 @@ function(input, output, session) {
             # validate(need(input$load_rds_int_normalization != "",
             #               message = "",
             #               label = "load_rds_int_normalization"))
-
+            
             showNotification("Loading the integrated data",
                              id = "m9",
                              duration = NULL)
-
+            
             sc_data <- readRDS( paste0("./RDS_files/", req(input$load_integrated)) )
-
+            
             on.exit(removeNotification(id = "m9"), add = TRUE)
-
+            
             sc_data
             
         } else if (input$integration_options == 0 ) { # new analysis
-        
-        
-        shinyFeedback::feedbackWarning("n_of_PCs_tab2", is.na(input$n_of_PCs_tab2), "Required value")
-        shinyFeedback::feedbackWarning("resolution_clust_tab2", is.na(input$resolution_clust_tab2), "Required value")
-        
-        req(input$n_of_PCs_tab2)
-        req(input$resolution_clust_tab2)
-        
-        showNotification("Running the clustering step",
-                         duration = NULL,
-                         id = "m6")
-        
-        sc_data <- req( single_cell_data_pca_tab2() )
-        
-        sc_data <- Seurat::RunUMAP(sc_data,
-                                   reduction = "pca",
-                                   dims = 1:input$n_of_PCs_tab2)
-        
-        sc_data <- Seurat::FindNeighbors(sc_data,
-                                         reduction = "pca",
-                                         dims = 1:input$n_of_PCs_tab2)
-        
-        sc_data <- Seurat::FindClusters(sc_data,
-                                        resolution = input$resolution_clust_tab2)
-        
+            
+            
+            shinyFeedback::feedbackWarning("n_of_PCs_tab2", is.na(input$n_of_PCs_tab2), "Required value")
+            shinyFeedback::feedbackWarning("resolution_clust_tab2", is.na(input$resolution_clust_tab2), "Required value")
+            
+            req(input$n_of_PCs_tab2)
+            req(input$resolution_clust_tab2)
+            
+            showNotification("Running the clustering step",
+                             duration = NULL,
+                             id = "m6")
+            
+            sc_data <- req( single_cell_data_pca_tab2() )
+            
+            sc_data <- Seurat::RunUMAP(sc_data,
+                                       reduction = "pca",
+                                       dims = 1:input$n_of_PCs_tab2)
+            
+            sc_data <- Seurat::FindNeighbors(sc_data,
+                                             reduction = "pca",
+                                             dims = 1:input$n_of_PCs_tab2)
+            
+            sc_data <- Seurat::FindClusters(sc_data,
+                                            resolution = input$resolution_clust_tab2)
+            
         }
         
         sc_data
@@ -2546,17 +2554,17 @@ function(input, output, session) {
             do.call(tagList, plot_output_list)
         })
         
-        output$run_dot_plot_tab2 <- renderUI({
-            
-            feat_length <- length(req( features_selec_tab2()) )
-            
-            plot_output_list <- lapply(1:feat_length, function(i) {
-                plotname <- paste("plot5_tab2", i, sep="")
-                plotOutput(plotname, height = 300)
-            })
-            
-            do.call(tagList, plot_output_list)
-        })
+        # output$run_dot_plot_tab2 <- renderUI({
+        #     
+        #     feat_length <- length(req( features_selec_tab2()) )
+        #     
+        #     plot_output_list <- lapply(1:feat_length, function(i) {
+        #         plotname <- paste("plot5_tab2", i, sep="")
+        #         plotOutput(plotname, height = 300)
+        #     })
+        #     
+        #     do.call(tagList, plot_output_list)
+        # })
         
         sc_data_tab2 <- req( single_cell_data_clustered_to_DE_vis() )
         assay_id <- "RNA"
@@ -2625,26 +2633,26 @@ function(input, output, session) {
                     
                 })
                 
-                plotname <- paste("plot5_tab2", my_i, sep="")
-                output[[plotname]] <- renderPlot({
-                    
-                    Seurat::DotPlot(sc_data_tab2,
-                                    features = features[my_i],
-                                    cols = c("lightgrey", "red"),
-                                    split.by = "treat",
-                                    assay = "RNA" ) +
-                        scale_x_discrete(position = "top") +
-                        xlab("")+
-                        ylab("") +
-                        ggtitle("") +
-                        theme(legend.position = "",
-                              axis.title.x=element_blank(),
-                              axis.title.y=element_blank(),
-                              axis.text.y = element_text( size = rel(1) ),
-                              axis.text.x = element_text( angle = 90) ) +
-                        coord_flip()
-                    
-                })
+                # plotname <- paste("plot5_tab2", my_i, sep="")
+                # output[[plotname]] <- renderPlot({
+                #     
+                #     Seurat::DotPlot(sc_data_tab2,
+                #                     features = features[my_i],
+                #                     cols = c("lightgrey", "red"),
+                #                     split.by = "treat",
+                #                     assay = "RNA" ) +
+                #         scale_x_discrete(position = "top") +
+                #         xlab("")+
+                #         ylab("") +
+                #         ggtitle("") +
+                #         theme(legend.position = "",
+                #               axis.title.x=element_blank(),
+                #               axis.title.y=element_blank(),
+                #               axis.text.y = element_text( size = rel(1) ),
+                #               axis.text.x = element_text( angle = 90) ) +
+                #         coord_flip()
+                #     
+                # })
                 
             })
             
@@ -2691,11 +2699,11 @@ function(input, output, session) {
                          dir.create(path_new)
                          dir.create( paste0(path_new,"/feature_plots_combined_samples") )
                          dir.create( paste0(path_new,"/violin_plots_combined_samples") )
-                         dir.create( paste0(path_new, "/dot_plots_combined_samples") )
+                         #dir.create( paste0(path_new, "/dot_plots_combined_samples") )
                          
                          dir.create( paste0(path_new,"/feature_plots") )
                          dir.create( paste0(path_new,"/violin_plots") )
-                         dir.create( paste0(path_new, "/dot_plots") )
+                         # dir.create( paste0(path_new, "/dot_plots") )
                          
                          sc_data <- req( single_cell_data_clustered_to_DE_vis() )
                          assay_id <- "RNA"
@@ -2737,28 +2745,28 @@ function(input, output, session) {
                                              units="cm",
                                              dpi=as.numeric( req(input$add_p_tab2_violin_res) ))
                              
-                             file <- paste0(path_new, "/dot_plots_combined_samples/", genes[i], ".", req(input$add_p_tab2_dot_format) )
-                             
-                             p <- Seurat::DotPlot(sc_data,
-                                                  features = genes[i],
-                                                  cols = c("lightgrey", "red")) +
-                                 scale_x_discrete(position = "top") +
-                                 xlab("")+
-                                 ylab("") +
-                                 ggtitle("") +
-                                 theme(legend.position = "",
-                                       axis.title.x=element_blank(),
-                                       axis.title.y=element_blank(),
-                                       axis.text.y = element_text( size = rel(1) ),
-                                       axis.text.x = element_text( angle = 90) ) +
-                                 coord_flip()
-                             
-                             ggplot2::ggsave(file,
-                                             p,
-                                             height= req(input$add_p_tab2_dot_height),
-                                             width= req(input$add_p_tab2_dot_width),
-                                             units="cm",
-                                             dpi=as.numeric( req(input$add_p_tab2_dot_res) ))
+                             # file <- paste0(path_new, "/dot_plots_combined_samples/", genes[i], ".", req(input$add_p_tab2_dot_format) )
+                             # 
+                             # p <- Seurat::DotPlot(sc_data,
+                             #                      features = genes[i],
+                             #                      cols = c("lightgrey", "red")) +
+                             #     scale_x_discrete(position = "top") +
+                             #     xlab("")+
+                             #     ylab("") +
+                             #     ggtitle("") +
+                             #     theme(legend.position = "",
+                             #           axis.title.x=element_blank(),
+                             #           axis.title.y=element_blank(),
+                             #           axis.text.y = element_text( size = rel(1) ),
+                             #           axis.text.x = element_text( angle = 90) ) +
+                             #     coord_flip()
+                             # 
+                             # ggplot2::ggsave(file,
+                             #                 p,
+                             #                 height= req(input$add_p_tab2_dot_height),
+                             #                 width= req(input$add_p_tab2_dot_width),
+                             #                 units="cm",
+                             #                 dpi=as.numeric( req(input$add_p_tab2_dot_res) ))
                              
                              p_list <- FeaturePlotSingle(sc_data,
                                                          feature = genes[i],
@@ -2818,30 +2826,30 @@ function(input, output, session) {
                                              units = "cm",
                                              dpi = as.numeric( req(input$add_p_tab2_violin_res) ))
                              
-                             file <- paste0(path_new, "/dot_plots/", genes[i], ".", req(input$add_p_tab2_dot_format) )
-                             
-                             p2 <- Seurat::DotPlot(sc_data,
-                                                   features = genes[i],
-                                                   cols = c("lightgrey", "red"),
-                                                   split.by = "treat",
-                                                   assay = "RNA" ) +
-                                 scale_x_discrete(position = "top") +
-                                 xlab("")+
-                                 ylab("") +
-                                 ggtitle("") +
-                                 theme(legend.position = "",
-                                       axis.title.x=element_blank(),
-                                       axis.title.y=element_blank(),
-                                       axis.text.y = element_text( size = rel(1) ),
-                                       axis.text.x = element_text( angle = 90) ) +
-                                 coord_flip()
-                             
-                             ggplot2::ggsave(file,
-                                             p2,
-                                             height= req(input$add_p_tab2_dot_height),
-                                             width= ( req(input$add_p_tab2_dot_width) * length(groups) ),
-                                             units="cm",
-                                             dpi=as.numeric( req(input$add_p_tab2_dot_res) ))
+                             # file <- paste0(path_new, "/dot_plots/", genes[i], ".", req(input$add_p_tab2_dot_format) )
+                             # 
+                             # p2 <- Seurat::DotPlot(sc_data,
+                             #                       features = genes[i],
+                             #                       cols = c("lightgrey", "red"),
+                             #                       split.by = "treat",
+                             #                       assay = "RNA" ) +
+                             #     scale_x_discrete(position = "top") +
+                             #     xlab("")+
+                             #     ylab("") +
+                             #     ggtitle("") +
+                             #     theme(legend.position = "",
+                             #           axis.title.x=element_blank(),
+                             #           axis.title.y=element_blank(),
+                             #           axis.text.y = element_text( size = rel(1) ),
+                             #           axis.text.x = element_text( angle = 90) ) +
+                             #     coord_flip()
+                             # 
+                             # ggplot2::ggsave(file,
+                             #                 p2,
+                             #                 height= req(input$add_p_tab2_dot_height),
+                             #                 width= ( req(input$add_p_tab2_dot_width) * length(groups) ),
+                             #                 units="cm",
+                             #                 dpi=as.numeric( req(input$add_p_tab2_dot_res) ))
                          }
                          
                      })
@@ -4970,5 +4978,4 @@ function(input, output, session) {
     #     my_reactable(filt_features())
     # })
     
-    }
-    
+}
