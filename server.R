@@ -2,6 +2,7 @@
 # Version 2.2
 set.seed(1407)
 options(shiny.sanitize.errors = FALSE)
+options(max.print=100)
 
 # CRAN
 suppressMessages( require(tidyverse) )
@@ -162,6 +163,33 @@ function(input, output, session) {
                                                        col.name = "percent.mt")
         
         return(sing_cell_data)
+        
+    })
+    
+    
+    observeEvent( input$load_10X, {
+        
+        output$target_genes_mitho <- renderPrint({
+            
+            sc_object <- req(single_cell_data_reac())
+            mito_regex <- req(input$mito_regex)
+            assay <- DefaultAssay(object = sc_object)
+            
+            mitho_genes <- grep(pattern = mito_regex,
+                                x = rownames(x = sc_object[[assay]]), 
+                                value = TRUE)
+            
+            if ( length(mitho_genes) <= 0) {
+                
+                print("No gene target by the common identifier!")
+                
+            }else {
+                
+                mitho_genes
+                
+            }
+            
+        })
         
     })
     
@@ -1489,6 +1517,33 @@ function(input, output, session) {
         
     })
     
+    observeEvent( input$load_rds_file, {
+        
+        output$target_genes_mitho_tab2 <- renderPrint({
+            
+            sc_object <- req(single_cell_data_reac_tab2())
+            mito_regex <- req(input$int_regex_mito)
+            
+            assay <- DefaultAssay(object = sc_object)
+            
+            mito_genes <- grep(pattern = mito_regex,
+                               x = rownames(x = sc_object[[assay]]), 
+                               value = TRUE)
+            
+            if ( length(mito_genes) <= 0) {
+                
+                print("No gene target by the common identifier!")
+                
+            }else {
+                
+                mito_genes
+                
+            }
+            
+        })
+        
+    })
+    
     # output$download_int_data <- downloadHandler(
     #     
     #     filename = function() {
@@ -1622,17 +1677,17 @@ function(input, output, session) {
               
               single_cell_data_filt_tab2 <- req( single_cell_data_filt_tab2() )
               
-             # req(input$load_rds_int_normalization)
+              # req(input$load_rds_int_normalization)
               
               # If loading the data and normalization is SCTransform, skip the scaling.
               #if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-                  
-                  ## Same if running new analysis and normalization is SCtransform
+              
+              ## Same if running new analysis and normalization is SCtransform
               ##  } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
               
               
               ## Same if running new analysis and normalization is SCtransform
-               if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+              if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
                   
               } else { # lognormalization
                   
@@ -1738,9 +1793,9 @@ function(input, output, session) {
             
         }
         
-     #   if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-            
-      ##  } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+        #   if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
+        
+        ##  } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
         
         if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
             

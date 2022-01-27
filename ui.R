@@ -232,6 +232,18 @@ function(request) {
                      conditionalPanel (
                          condition = "input.sample_tab1_options == 0",
                          
+                         conditionalPanel (
+                             condition = "input.load_10X != 0",
+                             
+                             fluidRow(
+                                 titlePanel("Genes targeted as mitochondrial by the \"Common identifier of mitochondrial genes\""),
+                                 #p("First row shows the cluster ID. The second row shows the number of cells per cluster."),
+                                 column(12,
+                                        my_withSpinner( verbatimTextOutput("target_genes_mitho") )
+                                 )
+                             ), # Fluid row
+                         ),
+                         
                          fluidRow(
                              titlePanel("Screening plot to define filtering parameters"),
                              br(),
@@ -248,16 +260,16 @@ function(request) {
                                     div(class = "option-group",
                                         numericInput("min_count",
                                                      label = "Keep only cells that expressed at least this number of genes",
-                                                     value = ""),
+                                                     value = 0),
                                         numericInput("max_count",
                                                      label = "Exclude any cell that expressed more than this number of genes (i.e. possible doublets)",
-                                                     value = "")),
+                                                     value = 10000)),
                                     
                                     #  my_withSpinner( uiOutput("min_count_ui")),
                                     #  my_withSpinner( uiOutput("max_count_ui"))),
                                     
                                     #lognorm_UI("lognorm_sing_sample"),
-                                    numericInput_max_mito_perc("max_mito_perc", value = ""),
+                                    numericInput_max_mito_perc("max_mito_perc", value = 100),
                                     actionButtonInput("run_vinplot",
                                                       HTML("Show plot of filtered data"))
                              )
@@ -829,6 +841,18 @@ function(request) {
                      conditionalPanel (
                          condition = "input.integration_options == 0",
                          
+                         conditionalPanel (
+                             condition = "input.load_rds_file != 0",
+                             
+                             fluidRow(
+                                 titlePanel("Genes targeted as mitochondrial by the \"Common identifier of mitochondrial genes\""),
+                                 #p("First row shows the cluster ID. The second row shows the number of cells per cluster."),
+                                 column(12,
+                                        my_withSpinner( verbatimTextOutput("target_genes_mitho_tab2") )
+                                 )
+                             ), # Fluid row
+                         ),
+                         
                          # fluidRow(
                          #     tags$hr(),
                          #     p("Since the integration is a time-consuming step, it is helpful to save the integrated data before running any additional analyses. The main advantage of saving the data is that if you need to restart the analysis (e. g., to change parameters), you can skip the integration step by loading the RDS file instead."),
@@ -1298,7 +1322,7 @@ function(request) {
                              # column(width = 6,
                              #        my_withSpinner( uiOutput("run_dot_plot_tab2") ))
                              
-                             ),
+                         ),
                          fluidRow(
                              titlePanel("Downloading additional plots"),
                              
