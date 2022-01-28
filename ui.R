@@ -250,7 +250,7 @@ function(request) {
                              p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of reads that map to the mitochondrial genome."),
                              p("The parameters can be set on the right side of the plot and must be set using a higher value than the ones above. Otherwise, they will have no effect since the cells were already excluded."),
                              br(),
-                             p("After setting the parameters, click on \"Show plot of filtered data\" to visualize the data after filtering."),
+                             p("After setting the parameters, click on \"Show/update plot of filtered data\" to visualize the data after filtering."),
                              br(),
                              br(),
                              column(width = 10,
@@ -271,7 +271,7 @@ function(request) {
                                     #lognorm_UI("lognorm_sing_sample"),
                                     numericInput_max_mito_perc("max_mito_perc", value = 100),
                                     actionButtonInput("run_vinplot",
-                                                      HTML("Show plot of filtered data"))
+                                                      HTML("Show/update plot of filtered data"))
                              )
                          ), # fluid row
                          conditionalPanel(
@@ -523,8 +523,9 @@ function(request) {
                                                      label = "Select the (log) fold change threshold",
                                                      value = 0.25),
                                         numericInput("find_markers_tab1_min_pct",
-                                                     label = "Select the minimal percentage of cells expressing a gene for this gene to be tested",
-                                                     value = 0.1),
+                                                     label = "Select the minimal percentage of cells expressing a gene for this gene to be tested (0 = 0%, 1 = 100%)",
+                                                     value = 0.1,
+                                                     step = 0.01),
                                         pickerInput_find_markers_test("find_markers_tab1_test.use"),
                                         conditionalPanel(
                                             condition = "input.find_markers_tab1_opt != 0",
@@ -870,7 +871,7 @@ function(request) {
                              p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of expressed genes from the mitochondria."),
                              p("The parameters can be set on the right side of the plot."),
                              br(),
-                             p("After setting the parameters, click on \"Show plot of filtered data\" to visualize the data after filtering."),
+                             p("After setting the parameters, click on \"Show/update plot of filtered data\" to visualize the data after filtering."),
                              
                              column(width = 10,
                                     my_withSpinner( plotOutput("VlnPlot_tab2") )),
@@ -887,7 +888,7 @@ function(request) {
                                     numericInput_max_mito_perc("max_mito_perc_tab2", value = "")),
                              column(width = 2,
                                     actionButtonInput("run_vinplot_tab2",
-                                                      HTML("Show plot of filtered data")),
+                                                      HTML("Show/update plot of filtered data")),
                                     conditionalPanel(
                                         condition = "input.run_vinplot_tab2 == 0",
                                         actionButtonInput("run_pca_tab2_1",
