@@ -2202,7 +2202,15 @@ function(input, output, session) {
                     markers$cluster <- i
                     markers$geneID <- base::rownames(markers)
                     
-                    markers_tab2 <- rbind(markers_tab2, markers)
+                    if ( nrow(markers) == 0) {
+                    
+                        markers <- rbind(rep(paste("No markers identified for cluster", i ) , ncol(markers_tab2)))
+                        colnames(markers) <- colnames(markers_tab2)
+                        
+                        
+                    }
+                    
+                    markers_tab2 <- dplyr::bind_rows(markers_tab2, markers)
                     
                 }
                 
