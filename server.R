@@ -344,7 +344,8 @@ function(input, output, session) {
                                              height=height,
                                              width=width,
                                              units="cm",
-                                             dpi=res)
+                                             dpi=res,
+                                             bg = "#FFFFFF")
                              
                          })
             
@@ -449,7 +450,8 @@ function(input, output, session) {
                                              height=height,
                                              width=width,
                                              units="cm",
-                                             dpi=res)
+                                             dpi=res,
+                                             bg = "#FFFFFF")
                              
                          })
         }
@@ -657,7 +659,8 @@ function(input, output, session) {
                                              height=height,
                                              width=width,
                                              units="cm",
-                                             dpi=res)
+                                             dpi=res,
+                                             bg = "#FFFFFF")
                              
                          })
         }
@@ -1048,7 +1051,8 @@ function(input, output, session) {
                                                  height=height,
                                                  width=width,
                                                  units="cm",
-                                                 dpi=res)
+                                                 dpi=res,
+                                                 bg = "#FFFFFF")
                                  
                              })
             }
@@ -1309,7 +1313,8 @@ function(input, output, session) {
                                              height=input$add_p_tab1_feat_height,
                                              width=input$add_p_tab1_feat_width,
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab1_feat_res))
+                                             dpi=as.numeric(input$add_p_tab1_feat_res),
+                                             bg = "#FFFFFF")
                              
                              file <- paste0(path_new, "/violin_plots/", genes[i], ".", input$add_p_tab1_violin_format)
                              
@@ -1322,7 +1327,8 @@ function(input, output, session) {
                                              height=input$add_p_tab1_violin_height,
                                              width=input$add_p_tab1_violin_width,
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab1_violin_res))
+                                             dpi=as.numeric(input$add_p_tab1_violin_res),
+                                             bg = "#FFFFFF")
                              
                              file <- paste0(path_new, "/dot_plots/", genes[i], ".", input$add_p_tab1_dot_format)
                              
@@ -1344,7 +1350,8 @@ function(input, output, session) {
                                              height=input$add_p_tab1_dot_height,
                                              width=input$add_p_tab1_dot_width,
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab1_dot_res))
+                                             dpi=as.numeric(input$add_p_tab1_dot_res),
+                                             bg = "#FFFFFF")
                          }
                          
                      })
@@ -1662,7 +1669,8 @@ function(input, output, session) {
                                                  height=height,
                                                  width=width,
                                                  units="cm",
-                                                 dpi=res)
+                                                 dpi=res,
+                                                 bg = "#FFFFFF")
                                  
                              })
             }
@@ -1855,7 +1863,8 @@ function(input, output, session) {
                                                                 height=height,
                                                                 width=width,
                                                                 units="cm",
-                                                                dpi=res)
+                                                                dpi=res,
+                                                                bg = "#FFFFFF")
                                                 
                                             })
                            }
@@ -1997,7 +2006,8 @@ function(input, output, session) {
                                                  height=height,
                                                  width=width,
                                                  units="cm",
-                                                 dpi=res)
+                                                 dpi=res,
+                                                 bg = "#FFFFFF")
                                  
                              })
             }
@@ -2543,7 +2553,8 @@ function(input, output, session) {
                                                  height=height,
                                                  width=width,
                                                  units="cm",
-                                                 dpi=res)
+                                                 dpi=res,
+                                                 bg = "#FFFFFF")
                                  
                              })
             }
@@ -2793,7 +2804,8 @@ function(input, output, session) {
                                              height= req(input$add_p_tab2_feat_height),
                                              width=req(input$add_p_tab2_feat_width),
                                              units="cm",
-                                             dpi=as.numeric(req(input$add_p_tab2_feat_res)))
+                                             dpi=as.numeric(req(input$add_p_tab2_feat_res)),
+                                             bg = "#FFFFFF")
                              
                              file <- paste0(path_new, "/violin_plots_combined_samples/", genes[i], ".", req(input$add_p_tab2_violin_format) )
                              
@@ -2806,7 +2818,8 @@ function(input, output, session) {
                                              height=req(input$add_p_tab2_violin_height),
                                              width=req(input$add_p_tab2_violin_width),
                                              units="cm",
-                                             dpi=as.numeric( req(input$add_p_tab2_violin_res) ))
+                                             dpi=as.numeric( req(input$add_p_tab2_violin_res) ),
+                                             bg = "#FFFFFF")
                              
                              # file <- paste0(path_new, "/dot_plots_combined_samples/", genes[i], ".", req(input$add_p_tab2_dot_format) )
                              # 
@@ -2872,7 +2885,8 @@ function(input, output, session) {
                                              height = req(input$add_p_tab2_feat_height),
                                              width = (req(input$add_p_tab2_feat_width) * length(groups)),
                                              units = "cm",
-                                             dpi = as.numeric(req(input$add_p_tab2_feat_res)))
+                                             dpi = as.numeric(req(input$add_p_tab2_feat_res)),
+                                             bg = "#FFFFFF")
                              
                              file <- paste0(path_new, "/violin_plots/", genes[i], ".", req(input$add_p_tab2_violin_format) )
                              
@@ -2887,7 +2901,8 @@ function(input, output, session) {
                                              height = req(input$add_p_tab2_violin_height),
                                              width = ( req(input$add_p_tab2_violin_width) * length(groups) ),
                                              units = "cm",
-                                             dpi = as.numeric( req(input$add_p_tab2_violin_res) ))
+                                             dpi = as.numeric( req(input$add_p_tab2_violin_res) ),
+                                             bg = "#FFFFFF")
                              
                              # file <- paste0(path_new, "/dot_plots/", genes[i], ".", req(input$add_p_tab2_dot_format) )
                              # 
@@ -3422,7 +3437,8 @@ function(input, output, session) {
                                              height=height,
                                              width=width,
                                              units="cm",
-                                             dpi=res)
+                                             dpi=res,
+                                             bg = "#FFFFFF")
                              
                          })
         }
@@ -3762,7 +3778,8 @@ function(input, output, session) {
                                                  height=height,
                                                  width=width,
                                                  units="cm",
-                                                 dpi=res)
+                                                 dpi=res,
+                                                 bg = "#FFFFFF")
                                  
                              })
             }
@@ -3976,7 +3993,8 @@ function(input, output, session) {
                                              height=input$add_p_tab3_feat_height,
                                              width=input$add_p_tab3_feat_width,
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_feat_res))
+                                             dpi=as.numeric(input$add_p_tab3_feat_res),
+                                             bg = "#FFFFFF")
                              
                              # Saves the violin plots
                              
@@ -3992,7 +4010,8 @@ function(input, output, session) {
                                              height=input$add_p_tab3_violin_height,
                                              width=input$add_p_tab3_violin_width,
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_violin_res))
+                                             dpi=as.numeric(input$add_p_tab3_violin_res),
+                                             bg = "#FFFFFF")
                              
                              # Saves the dot plots
                              
@@ -4008,7 +4027,8 @@ function(input, output, session) {
                                              height=input$add_p_tab3_dot_height,
                                              width=input$add_p_tab3_dot_width,
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_dot_res))
+                                             dpi=as.numeric(input$add_p_tab3_dot_res),
+                                             bg = "#FFFFFF")
                              
                              
                          }
@@ -4164,7 +4184,8 @@ function(input, output, session) {
                                                  height=height,
                                                  width=width,
                                                  units="cm",
-                                                 dpi=res)
+                                                 dpi=res,
+                                                 bg = "#FFFFFF")
                                  
                              })
             }
@@ -4344,7 +4365,8 @@ function(input, output, session) {
                                              height=input$add_p_tab3_feat_height_dynv,
                                              width=input$add_p_tab3_feat_width_dynv,
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_feat_res_dynv))
+                                             dpi=as.numeric(input$add_p_tab3_feat_res_dynv),
+                                             bg = "#FFFFFF")
                              
                              # Saves the violin plots
                              
@@ -4360,7 +4382,8 @@ function(input, output, session) {
                                              height=input$add_p_tab3_violin_height_dynv,
                                              width=input$add_p_tab3_violin_width_dynv,
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_violin_res_dynv))
+                                             dpi=as.numeric(input$add_p_tab3_violin_res_dynv),
+                                             bg = "#FFFFFF")
                              
                              # Saves the dot plots
                              
@@ -4376,7 +4399,8 @@ function(input, output, session) {
                                              height=input$add_p_tab3_dot_height_dynv,
                                              width=input$add_p_tab3_dot_width_dynv,
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_dot_res_dynv
+                                             dpi=as.numeric(input$add_p_tab3_dot_res_dynv,
+                                                            bg = "#FFFFFF"
                                                             
                                              ))
                              
@@ -5015,7 +5039,8 @@ function(input, output, session) {
                                  width  = as.numeric(input$goplotwidth),
                                  height = as.numeric(input$goplotheight),
                                  dpi    = as.numeric(input$goplotdpi),
-                                 units  = 'cm'
+                                 units  = 'cm',
+                                 bg = "#FFFFFF"
                              )
                              
                          })
