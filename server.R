@@ -571,6 +571,9 @@ function(input, output, session) {
             
             sc_data <- readRDS( paste0("./RDS_files/", req(input$select_sample_tab1_rds)) )
             
+            validate(need("seurat_clusters" %in% colnames(sc_data@meta.data),
+                          "Clustering was not detected in the rds file", ""))
+            
             on.exit(removeNotification(id = "m9"), add = TRUE)
             
         } else if (input$sample_tab1_options == 0 ) { # new analysis
@@ -1891,7 +1894,9 @@ function(input, output, session) {
                              duration = NULL)
             
             sc_data <- readRDS( paste0("./RDS_files/", req(input$load_integrated)) )
-            
+           
+            validate(need("seurat_clusters" %in% colnames(sc_data@meta.data),
+                          "Clustering was not detected. Was the data clustered in the other tab?", ""))
             on.exit(removeNotification(id = "m9"), add = TRUE)
             
             sc_data
@@ -2987,6 +2992,10 @@ function(input, output, session) {
         
         validate(need("seurat_clusters" %in% colnames(sc_data@meta.data),
                       "Clustering was not detected. Was the data clustered in the other tabs?", ""))
+        
+        validate( need( length( unique(sc_data@meta.data$seurat_clusters) ) > 1,
+                      "Only one cluster was detected. This module relies on the dynverse toolkit, and it does not support the analysis using a single cluster."))
+        
         sc_data
         
     } )
