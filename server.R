@@ -3941,7 +3941,6 @@ function(input, output, session) {
         
     })
     
-    
     output$select_genes_add_plot_to_down_tab3_ui <- renderUI({
         shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3",
                                        is.null(input$selected_genes_for_feature_plot_tab3),
@@ -3966,6 +3965,7 @@ function(input, output, session) {
         shinyFeedback::feedbackWarning("select_genes_add_plot_to_down_tab3",
                                        is.null(input$select_genes_add_plot_to_down_tab3),
                                        "Please, select one or more genes")
+        
         genes <- req(input$select_genes_add_plot_to_down_tab3)
         
         withProgress(message = "Please wait, preparing the data for download.",
@@ -4337,7 +4337,8 @@ function(input, output, session) {
         shinyFeedback::feedbackWarning("select_genes_add_plot_to_down_tab3_dynv",
                                        is.null(input$select_genes_add_plot_to_down_tab3_dynv),
                                        "Please, select one or more genes")
-        req(input$select_genes_add_plot_to_down_tab3_dynv)
+        
+        genes <- req(input$select_genes_add_plot_to_down_tab3_dynv)
         
         withProgress(message = "Please wait, preparing the data for download.",
                      value = 0.5, {

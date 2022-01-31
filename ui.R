@@ -1488,7 +1488,7 @@ function(request) {
                                             radioButtons("ti_graphs_color_choice",
                                                          "Color plots by",
                                                          choices = list("Clusters" = 1,
-                                                                        "Samples (treatment)" = 0),
+                                                                        "Samples" = 0),
                                                          selected = c(1)
                                             ))),
                              ), #ends conditional
