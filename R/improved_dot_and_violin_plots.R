@@ -169,8 +169,6 @@ stacked_violin_Server <- function(id) {
                     options = list(`actions-box` = TRUE)
                 ))
             
-            
-            
         })
         
         sc_data <- eventReactive(input$start_violin, {
@@ -227,6 +225,15 @@ stacked_violin_Server <- function(id) {
                               header_opt = input$markers_list_header_opt)
         })
         
+        expressed_genes <- reactive( {
+            
+            load_rds <- req(input$load_rds)
+            sc_data <- readRDS( paste0("./RDS_files/", load_rds) )
+            
+            genes <- base::rownames(sc_data@assays$RNA)
+            genes
+        })
+        
         observeEvent(input$load_markers, {
             
             # Painel that will apper after loading the list of markers containing the filter options
@@ -251,6 +258,7 @@ stacked_violin_Server <- function(id) {
             output$marker_genes_selec2 = renderUI( {
                 
                 req(input$features_group)
+                
                 
                 features_group <- input$features_group
                 id_choice <- req(input$genes_ids)
@@ -300,6 +308,10 @@ stacked_violin_Server <- function(id) {
             
             features_f <- dplyr::filter(features_f,
                                         Group %in% features_group)
+            
+            ## Check if the list of genes exist in the dataset, to avoid a crash
+            expressed_genes <- req( expressed_genes() )
+            features_f <- features_f[features_f$GeneID %in% expressed_genes, ]
             
             if (input$filter_genes_q == 0) {
                 
@@ -437,7 +449,8 @@ stacked_violin_Server <- function(id) {
             Seurat::DotPlot(object = sc_data,
                             features = rev(selected_genes),
                             cols = c("Darkblue", "red"),
-                            group.by = "seurat_clusters2"
+                            group.by = "seurat_clusters2",
+                            assay = "RNA"
             ) +
                 scale_x_discrete(position = "top") +
                 xlab("")+
@@ -540,7 +553,8 @@ stacked_violin_Server <- function(id) {
                                  p <- Seurat::DotPlot(object = sc_data,
                                                       features = rev(selected_genes),
                                                       cols = c("Darkblue", "red"),
-                                                      group.by = "seurat_clusters2"
+                                                      group.by = "seurat_clusters2",
+                                                      assay = "RNA"
                                  ) +
                                      scale_x_discrete(position = "top") +
                                      xlab("")+

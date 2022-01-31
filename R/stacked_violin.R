@@ -59,7 +59,8 @@ stacked_violin <- function(name,
 
     StackedVlnPlot(obj = rds_file,
                    features = selected_genes,
-                   pt.size = pt.size) # Set 0 if you want to remove the dots
+                   pt.size = pt.size,
+                   assay = "RNA") # Set 0 if you want to remove the dots
     
 
 }
