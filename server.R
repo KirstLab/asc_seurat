@@ -3217,12 +3217,16 @@ function(input, output, session) {
         model <- req( model() )
         sc_meta_cluster <- req( sc_meta_cluster() )
         
+        my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
+        
         if ( input$ti_sample_number == 0 ) {
             
             plot_dimred(model,
                         grouping = sc_meta_cluster,
                         color_density = "grouping") +
-                ggtitle("Cell grouping")#,
+                ggtitle("Cell grouping") +
+                scale_color_manual(values = my_color_palette) +
+                scale_fill_manual(values = my_color_palette)
             
         } else if (input$ti_sample_number == 1) {
             
@@ -3231,7 +3235,9 @@ function(input, output, session) {
                 plot_dimred(model,
                             grouping = sc_meta_cluster,
                             color_density = "grouping") +
-                    ggtitle("Cell grouping")#,
+                    ggtitle("Cell grouping")  +
+                    scale_color_manual(values = my_color_palette) +
+                    scale_fill_manual(values = my_color_palette)
                 
             } else if (input$ti_graphs_color_choice == 0 ) {
                 
@@ -3251,12 +3257,15 @@ function(input, output, session) {
         
         model <- req( model() )
         sc_meta_cluster <- req( sc_meta_cluster() )
+        my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
         
         if ( input$ti_sample_number == 0 ) {
             
             plot_dendro(model,
                         grouping = sc_meta_cluster) +
-                ggtitle("Trajectory")#,
+                ggtitle("Trajectory") +
+                scale_color_manual(values = my_color_palette) +
+                scale_fill_manual(values = my_color_palette)
             
         } else if (input$ti_sample_number == 1) {
             
@@ -3264,7 +3273,9 @@ function(input, output, session) {
                 
                 plot_dendro(model,
                             grouping = sc_meta_cluster) +
-                    ggtitle("Trajectory")#,
+                    ggtitle("Trajectory") +
+                    scale_color_manual(values = my_color_palette) +
+                    scale_fill_manual(values = my_color_palette)
                 
             } else if (input$ti_graphs_color_choice == 0 ) {
                 sc_cells_time_vec <- req( sc_cells_time_vec() )
@@ -3283,13 +3294,16 @@ function(input, output, session) {
         
         model <- req( model() )
         sc_meta_cluster <- req( sc_meta_cluster() )
+        my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
         
         if ( input$ti_sample_number == 0 ) {
             
             plot_graph(model,
                        grouping = sc_meta_cluster,
                        expression_source = dataset) +
-                ggtitle("Trajectory represented as a graph")
+                ggtitle("Trajectory represented as a graph") +
+                scale_color_manual(values = my_color_palette) +
+                scale_fill_manual(values = my_color_palette)
             
         } else if (input$ti_sample_number == 1) {
             
@@ -3298,7 +3312,9 @@ function(input, output, session) {
                 plot_graph(model,
                            grouping = sc_meta_cluster,
                            expression_source = dataset) +
-                    ggtitle("Trajectory represented as a graph")
+                    ggtitle("Trajectory represented as a graph") +
+                    scale_color_manual(values = my_color_palette) +
+                    scale_fill_manual(values = my_color_palette)
                 
             } else if (input$ti_graphs_color_choice == 0 ) {
                 sc_cells_time_vec <- req( sc_cells_time_vec() )
@@ -3348,13 +3364,16 @@ function(input, output, session) {
                                  
                                  model <- req( model() )
                                  sc_meta_cluster <- req( sc_meta_cluster() )
+                                 my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
                                  
                                  if ( input$ti_sample_number == 0 ) {
                                      
                                      p <- plot_dimred(model,
                                                       grouping = sc_meta_cluster,
                                                       color_density = "grouping") +
-                                         ggtitle("Cell grouping")#,
+                                         ggtitle("Cell grouping") +
+                                         scale_color_manual(values = my_color_palette) +
+                                         scale_fill_manual(values = my_color_palette)
                                      
                                  } else if (input$ti_sample_number == 1) {
                                      
@@ -3363,7 +3382,9 @@ function(input, output, session) {
                                          p <-  plot_dimred(model,
                                                            grouping = sc_meta_cluster,
                                                            color_density = "grouping") +
-                                             ggtitle("Cell grouping")#,
+                                             ggtitle("Cell grouping") +
+                                             scale_color_manual(values = my_color_palette) +
+                                             scale_fill_manual(values = my_color_palette)
                                          
                                      } else if (input$ti_graphs_color_choice == 0 ) {
                                          
@@ -3381,12 +3402,15 @@ function(input, output, session) {
                                  
                                  model <- req( model() )
                                  sc_meta_cluster <- req( sc_meta_cluster() )
+                                 my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
                                  
                                  if ( input$ti_sample_number == 0 ) {
                                      
                                      p <- plot_dendro(model,
                                                       grouping = sc_meta_cluster) +
-                                         ggtitle("Trajectory")#,
+                                         ggtitle("Trajectory") +
+                                         scale_color_manual(values = my_color_palette) +
+                                         scale_fill_manual(values = my_color_palette)
                                      
                                  } else if (input$ti_sample_number == 1) {
                                      
@@ -3394,7 +3418,9 @@ function(input, output, session) {
                                          
                                          p <- plot_dendro(model,
                                                           grouping = sc_meta_cluster) +
-                                             ggtitle("Trajectory")#,
+                                             ggtitle("Trajectory") +
+                                             scale_color_manual(values = my_color_palette) +
+                                             scale_fill_manual(values = my_color_palette)
                                          
                                      } else if (input$ti_graphs_color_choice == 0 ) {
                                          sc_cells_time_vec <- req( sc_cells_time_vec() )
@@ -3410,13 +3436,16 @@ function(input, output, session) {
                                  
                                  model <- req( model() )
                                  sc_meta_cluster <- req( sc_meta_cluster() )
+                                 my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
                                  
                                  if ( input$ti_sample_number == 0 ) {
                                      
                                      p <- plot_graph(model,
                                                      grouping = sc_meta_cluster,
                                                      expression_source = dataset) +
-                                         ggtitle("Trajectory represented as a graph")
+                                         ggtitle("Trajectory represented as a graph") +
+                                         scale_color_manual(values = my_color_palette) +
+                                         scale_fill_manual(values = my_color_palette)
                                      
                                  } else if (input$ti_sample_number == 1) {
                                      
@@ -3425,7 +3454,9 @@ function(input, output, session) {
                                          p <- plot_graph(model,
                                                          grouping = sc_meta_cluster,
                                                          expression_source = dataset) +
-                                             ggtitle("Trajectory represented as a graph")
+                                             ggtitle("Trajectory represented as a graph") +
+                                             scale_color_manual(values = my_color_palette) +
+                                             scale_fill_manual(values = my_color_palette)
                                          
                                      } else if (input$ti_graphs_color_choice == 0 ) {
                                          
