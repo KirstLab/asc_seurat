@@ -19,7 +19,7 @@ suppressMessages( require(shinyFeedback) )
 suppressMessages( require(rclipboard) )
 suppressMessages( require(future) )
 suppressMessages( require(ggthemes) )
-suppressMessages( require(metap) )
+#suppressMessages( require(metap) )
 suppressMessages( require(shinycssloaders) )
 suppressMessages( require(DT) )
 suppressMessages( require(dplyr) )
@@ -1442,30 +1442,9 @@ function(input, output, session) {
         
     })
     
-    single_cell_data_reac_tab2 <- eventReactive( c(input$load_rds_file, input$load_rds_file2), {
+    single_cell_data_reac_tab2 <- eventReactive( c(input$load_rds_file, input$load_rds_file3), {
         
-        if ( input$integration_options == 1) { # Load file
-            
-            # ##  the user needs to tell what normalization was used, since we should not scale the data when using SCTransform.
-            # shinyFeedback::feedbackWarning("load_rds_int_normalization",
-            #                                input$load_rds_int_normalization == "",
-            #                                #T,
-            #                                "Please select an option")
-            # validate(need(input$load_rds_int_normalization != "",
-            #               message = "",
-            #               label = "load_rds_int_normalization"))
-            # 
-            # showNotification("Loading the integrated data",
-            #                  id = "m9",
-            #                  duration = NULL)
-            # 
-            # sc_data <- readRDS( paste0("./RDS_files/", req(input$load_integrated)) )
-            # 
-            # on.exit(removeNotification(id = "m9"), add = TRUE)
-            # 
-            # sc_data
-            
-        } else if (input$integration_options == 0 ) { # new analysis
+        if ( input$integration_options == 0 ) { # new analysis
             
             shinyFeedback::feedbackWarning("sample_folder_tab2", is.null(input$sample_folder_tab2), "Required value")
             shinyFeedback::feedbackWarning("int_regex_mito", !shiny::isTruthy(input$int_regex_mito), "Required value")
@@ -1521,6 +1500,38 @@ function(input, output, session) {
                 sc_data
                 
             }
+            
+        } else if ( input$integration_options == 2 ) {
+            
+            # shinyFeedback::feedbackWarning("load_rds_int_normalization",
+            #                                input$load_rds_int_normalization == "",
+            #                                #T,
+            #                                "Please select an option")
+            # 
+            # validate(need(input$load_rds_int_normalization != "",
+            #               message = "",
+            #               label = "load_rds_int_normalization"))
+            
+            showNotification("Loading the integrated data",
+                             id = "m9",
+                             duration = NULL)
+            
+            sc_data <- readRDS( paste0("./RDS_files/", req(input$load_integrated)) )
+
+            shinyFeedback::feedbackWarning("load_integrated",
+                                           "seurat_clusters" %in% colnames(sc_data@meta.data),
+                                           "Clustering detected. Please use the option to load a clustered dataset")
+            
+            `%!in%` = Negate(`%in%`)     
+             validate(need("seurat_clusters" %!in% colnames(sc_data@meta.data),
+                           "Clustering detected. Please use the option to load a clustered dataset", ""))
+             
+             validate(need("treat" %in% colnames(sc_data@meta.data),
+                           "Integrated data not detected. Does the rds file contain an integrated dataset?", ""))
+            
+            on.exit(removeNotification(id = "m9"), add = TRUE)
+            
+            sc_data
         }
         
         sc_data
@@ -1878,7 +1889,7 @@ function(input, output, session) {
     
     single_cell_data_clustered <- eventReactive( c(input$run_clustering_tab2, input$load_rds_file2), {
         
-        if ( input$integration_options == 1) { # Load file
+        if ( input$integration_options == 1) { # Load file - Clustered
             
             # ##  the user needs to tell what normalization was used, since we should not scale the data when using SCTransform.
             # shinyFeedback::feedbackWarning("load_rds_int_normalization",
@@ -1894,14 +1905,18 @@ function(input, output, session) {
                              duration = NULL)
             
             sc_data <- readRDS( paste0("./RDS_files/", req(input$load_integrated)) )
-           
+            
+            validate(need("treat" %in% colnames(sc_data@meta.data),
+                          "Integrated data not detected. Does the rds file contain an integrated dataset?", ""))
+            
             validate(need("seurat_clusters" %in% colnames(sc_data@meta.data),
-                          "Clustering was not detected. Was the data clustered in the other tab?", ""))
+                          "Clustering was not detected. Please use the option for unclustered data", ""))
+
             on.exit(removeNotification(id = "m9"), add = TRUE)
             
             sc_data
             
-        } else if (input$integration_options == 0 ) { # new analysis
+        } else if (input$integration_options == 0 || input$integration_options == 2 ) { # new analysis or loading and integrated and unclustered data
             
             
             shinyFeedback::feedbackWarning("n_of_PCs_tab2", is.na(input$n_of_PCs_tab2), "Required value")
@@ -2218,7 +2233,7 @@ function(input, output, session) {
                     markers$geneID <- base::rownames(markers)
                     
                     if ( nrow(markers) == 0) {
-                    
+                        
                         markers <- rbind(rep(paste("No markers identified for cluster", i ) , ncol(markers_tab2)))
                         colnames(markers) <- colnames(markers_tab2)
                         
@@ -2994,7 +3009,7 @@ function(input, output, session) {
                       "Clustering was not detected. Was the data clustered in the other tabs?", ""))
         
         validate( need( length( unique(sc_data@meta.data$seurat_clusters) ) > 1,
-                      "Only one cluster was detected. This module relies on the dynverse toolkit, and it does not support the analysis using a single cluster."))
+                        "Only one cluster was detected. This module relies on the dynverse toolkit, and it does not support the analysis using a single cluster."))
         
         sc_data
         
