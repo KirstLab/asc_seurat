@@ -147,11 +147,6 @@ function(request) {
                        p(strong("After selecting the parameters, click on the blue button to load the data.")),
                        br(),
                        
-                       # column(width = 3,
-                       #        my_withSpinner(
-                       #            uiOutput('select_sample_tab1'))
-                       # ),
-                       
                        column(width = 3,
                               div(class = "option-group",
                                   radioButtons("sample_tab1_options",
@@ -163,11 +158,9 @@ function(request) {
                               conditionalPanel (
                                   condition = "input.sample_tab1_options == 0",
                                   
-                                  #column(width = 3,
                                   my_withSpinner(
                                       uiOutput('select_sample_tab1'))
                                   
-                                  #),
                               ),
                        ),
                        
@@ -176,16 +169,6 @@ function(request) {
                            
                            column(width = 3,
                                   my_withSpinner( uiOutput("select_sample_tab1_rds_ui") ),
-                                  # div(class = "option-group",
-                                  #     selectInput(
-                                  #         inputId = "select_sample_tab1_rds_normalization",
-                                  #         label = "Inform the normalization method used to generate the dataset",
-                                  #         choices = list("",
-                                  #                        "LogNormalization" = 0,
-                                  #                        "SCtransform" = 1),
-                                  #         selected = "",
-                                  #         multiple = F))
-                                  
                            ),
                            
                            column( width = 3,
@@ -199,10 +182,6 @@ function(request) {
                            
                            column(width = 2,
                                   input_project_name("proj_name")
-                                  # div(class = "option-group",
-                                  #     textInput("proj_name",
-                                  #               label = "Project name",
-                                  #               value = ""))
                            ),
                            
                            column(width = 2,
@@ -243,7 +222,6 @@ function(request) {
                            
                            fluidRow(
                                titlePanel("Genes targeted as mitochondrial by the \"Common identifier of mitochondrial genes\""),
-                               #p("First row shows the cluster ID. The second row shows the number of cells per cluster."),
                                column(12,
                                       my_withSpinner( verbatimTextOutput("target_genes_mitho") )
                                )
@@ -271,10 +249,6 @@ function(request) {
                                                    label = "Exclude any cell that expressed more than this number of genes (i.e. possible doublets)",
                                                    value = 10000)),
                                   
-                                  #  my_withSpinner( uiOutput("min_count_ui")),
-                                  #  my_withSpinner( uiOutput("max_count_ui"))),
-                                  
-                                  #lognorm_UI("lognorm_sing_sample"),
                                   numericInput_max_mito_perc("max_mito_perc", value = 100),
                                   actionButtonInput("run_vinplot",
                                                     HTML("Show/update plot of filtered data"))
@@ -307,13 +281,6 @@ function(request) {
                            br(),
                            column(width = 3,
                                   select_norm_methods("normaliz_method")
-                                  
-                                  # div(class = "option-group",
-                                  #     radioButtons("normaliz_method",
-                                  #                  "Select the normalization method",
-                                  #                  choices = list("LogNormalize" = 0,
-                                  #                                 "SCTransform"  = 1),
-                                  #                  selected = 0))
                            ),
                            conditionalPanel(
                                condition = "input.normaliz_method == 0",
@@ -343,8 +310,6 @@ function(request) {
                                ),
                                # Plot download
                                column(2,
-                                      
-                                      #   download_ElbowPlot_UI("down_elbow1")
                                       numericInput_plot_height("p2_height", value=12),
                                       numericInput_plot_width("p2_width", value=18),
                                       selectInput_plot_res("p2_res"),
@@ -777,15 +742,6 @@ function(request) {
                            condition = "input.integration_options != 0",
                            column(width = 3,
                                   my_withSpinner( uiOutput("load_integrated_ui") ),
-                                  # div(class = "option-group",
-                                  #     selectInput(
-                                  #         inputId = "load_rds_int_normalization",
-                                  #         label = "Inform the normalization method used to generate the integrated dataset",
-                                  #         choices = list("",
-                                  #                        "LogNormalization" = 0,
-                                  #                        "SCtransform" = 1),
-                                  #         selected = "",
-                                  #         multiple = F))
                            ),
                        ),
                        conditionalPanel(
@@ -801,17 +757,6 @@ function(request) {
                                                     HTML("Load the integrated, clustered, data")))
                        ),
                        
-                       
-                       
-                       
-                       # conditionalPanel (
-                       #     condition = "input.integration_options == 0",
-                       #
-                       #     column(width = 3,
-                       #            my_withSpinner( uiOutput('select_sample_tab2') )
-                       #     ),
-                       # ),
-                       
                        conditionalPanel (
                            condition = "input.integration_options == 0",
                            fluidRow(
@@ -822,24 +767,14 @@ function(request) {
                                       numericInput_n_of_PCs("n_of_PCs_integration",
                                                             "N of components for the integration"),
                                       input_project_name("int_project_name")
-                                      # div(class = "option-group",
-                                      #     textInput("int_project_name",
-                                      #               label = "Type the project name",
-                                      #               value = "")
-                                      # )
                                ),
                                column(width = 3,
                                       select_norm_methods("normaliz_method_tab2"),
                                       
                                       conditionalPanel(
                                           condition = "input.normaliz_method_tab2 == 0",
-                                          # column(width = 3,
                                           numericInput_scale_factor("scale_factor_tab2"),
                                           radioInput_most_var_method("most_var_method_tab2"),
-                                          #numericInput_var_genes("n_of_var_genes_tab2"),
-                                          
-                                          #            actionButtonInput("run_pca_tab2",
-                                          #                              HTML("Run the PCA analysis")))
                                       ),
                                ),
                                column(width = 3,
@@ -849,12 +784,6 @@ function(request) {
                            
                            
                        ), # ends conditional
-                       
-                       
-                       
-                       # column(width = 3,
-                       #        actionButtonInput("load_rds_file",
-                       #                          HTML("Load the integrated data <br> or <br> execute a new integration"))),
                        
                    ), # ends fluidRow
                    
@@ -872,17 +801,6 @@ function(request) {
                                )
                            ), # Fluid row
                        ),
-                       
-                       # fluidRow(
-                       #     tags$hr(),
-                       #     p("Since the integration is a time-consuming step, it is helpful to save the integrated data before running any additional analyses. The main advantage of saving the data is that if you need to restart the analysis (e. g., to change parameters), you can skip the integration step by loading the RDS file instead."),
-                       #     br(),
-                       #     p(strong("The rds files must be saved in the folder"), code("RDS_files."), "Otherwise, it will not be possible to read them with the \"Load file\" option."),
-                       #     column(6,
-                       #            downloadButton("download_int_data",
-                       #                           "Download RDS object containing the integrated data.")
-                       #     )),
-                       
                        
                        fluidRow(
                            titlePanel("Screening plot to define the filter parameters to exclude cells based on counts and % of mitochondrial"),
@@ -937,29 +855,6 @@ function(request) {
                            
                        ), # fluid row
                    ), # Ends conditional
-                   
-                   
-                   #            select_norm_methods("normaliz_method_tab2")
-                   #
-                   #            # div(class = "option-group",
-                   #            #     radioButtons("normaliz_method_tab2",
-                   #            #                  "Select the normalization method",
-                   #            #                  choices = list(#"SCTransform (recommended)" = "SCTransform",
-                   #            #                      "LogNormalize" = "LogNormalize"),
-                   #            #                  selected = c("LogNormalize")))
-                   #
-                   #     ),
-                   #     conditionalPanel(
-                   #         condition = "input.normaliz_method_tab2 == 0",
-                   #         column(width = 4,
-                   #                numericInput_scale_factor("scale_factor_tab2")),
-                   #         column(width = 4,
-                   #                radioInput_most_var_method("most_var_method_tab2"),
-                   #                numericInput_var_genes("n_of_var_genes_tab2"),
-                   #                actionButtonInput("run_pca_tab2",
-                   #                                  HTML("Run the PCA analysis")))
-                   #     ),
-                   # ), # Fluid row,
                    
                    conditionalPanel(
                        condition = "input.run_pca_tab2_1 != 0 || input.run_pca_tab2_2 != 0",
@@ -1249,39 +1144,6 @@ function(request) {
                                   actionButtonInput("run_heatmap_tab2",
                                                     HTML("Show heatmap"))))
                        
-                       # column(width = 4,
-                       #        fileInput_markers_list("markers_list_tab2"),
-                       #        div(class = "option-group",
-                       #            actionButtonInput("load_markers_tab2",
-                       #                              HTML("Load markers")))),
-                       # column(width = 3,
-                       #        conditionalPanel(
-                       #            condition = "input.load_markers_tab2 > 0",
-                       #            my_withSpinner( uiOutput('marker_group_selec_tab2') ),
-                       #            #my_withSpinner( uiOutput("marker_filter_genes_q_tab2") ),
-                       #            #define_what_id_to_use("marker_genes_ids_tab2"),
-                       #            define_if_use_all_genes_or_select("marker_filter_genes_q_tab2"),
-                       #            conditionalPanel(
-                       #                condition = "input.marker_filter_genes_q_tab2 == 0",
-                       #                define_what_id_to_use("genes_ids_tab2")
-                       #            )
-                       #        )),
-                       # column(width = 4,
-                       #        conditionalPanel(
-                       #            condition = "input.marker_filter_genes_q_tab2 == 0",
-                       #            my_withSpinner( uiOutput('selected_genes_tab2') )
-                       #        )),
-                       # column(width = 2,
-                       #        conditionalPanel(
-                       #            condition = "input.load_markers_tab2 > 0",
-                       #
-                       #            radioButtons_slot_selection_heatmap("slot_selection_heatmap_tab2"))),
-                       # column(width = 2,
-                       #        conditionalPanel(
-                       #            condition = "input.load_markers_tab2 > 0",
-                       #            actionButtonInput("run_heatmap_tab2",
-                       #                              HTML("Show heatmap with the average \
-                       #                                     of expression per cluster"))))
                    ), # Fluid row
                    
                    #heat map
@@ -1339,8 +1201,6 @@ function(request) {
                            titlePanel("Violin and Dot plots"),
                            column(width = 12,
                                   my_withSpinner( uiOutput("run_vln_plot_tab2") ))#,
-                           # column(width = 6,
-                           #        my_withSpinner( uiOutput("run_dot_plot_tab2") ))
                            
                        ),
                        fluidRow(
@@ -1371,13 +1231,6 @@ function(request) {
                                       numericInput_plot_width("add_p_tab2_violin_width", value=14),
                                       selectInput_plot_res("add_p_tab2_violin_res"),
                                       selectInput_plot_format("add_p_tab2_violin_format")),
-                               # column(2,
-                               #        div(class = "option-group",
-                               #            p(strong("Select the options for the dot plots")) ),
-                               #        numericInput_plot_height("add_p_tab2_dot_height", value=10),
-                               #        numericInput_plot_width("add_p_tab2_dot_width", value=14),
-                               #        selectInput_plot_res("add_p_tab2_dot_res"),
-                               #        selectInput_plot_format("add_p_tab2_dot_format")),
                                column(width = 3,
                                       actionButtonInput("start_down_add_plots_tab2",
                                                         HTML("Download additional plots")))
@@ -1406,27 +1259,7 @@ function(request) {
                        p("To start the analysis, select the file containing the data and click on", code("Run trajectory inference model"), "button."),
                        column(width = 3,
                               
-                              # div(class = "option-group",
-                              #     radioButtons("rds_location_tab3",
-                              #                  "How to load the rds file?",
-                              #                  choices = list("From RDS_files/ folder" = 0,
-                              #                                 "Load from other place" = 1),
-                              #                  selected = 0)),
-                              # conditionalPanel(
-                              #     condition = "input.rds_location_tab3 == 0",
-                              
                               my_withSpinner( uiOutput("load_integrated_ui_tab3") ),
-                              # ),
-                              # conditionalPanel(
-                              #     condition = "input.rds_location_tab3 == 1",
-                              #
-                              #     div(class = "option-group",
-                              #         fileInput("file_input_rds_tab3",
-                              #                   label = "Input the rds file",
-                              #                   accept = c(".rds")
-                              #         )
-                              #     )
-                              # ),
                               div(class = "option-group",
                                   radioButtons("ti_select_models",
                                                "Do you want to run slingshot or another dynverse model?",
@@ -1584,30 +1417,6 @@ function(request) {
                        fluidRow(
                            titlePanel("Expression of markers"),
                            br(),
-                           # column(width = 4,
-                           #        fileInput_markers_list("markers_list_tab3"),
-                           #        div(class = "option-group",
-                           #            actionButtonInput("load_markers_tab3",
-                           #                              HTML("Load markers")))),
-                           # column(width = 3,
-                           #        conditionalPanel(
-                           #            condition = "input.load_markers_tab3 > 0",
-                           #            my_withSpinner( uiOutput('marker_group_selec_tab3') ),
-                           #            my_withSpinner( uiOutput("marker_filter_genes_q_tab3") ),
-                           #            define_what_id_to_use("marker_genes_ids_tab3")
-                           #            #my_withSpinner( uiOutput("marker_genes_ids_tab3") )
-                           #        )),
-                           # column(width = 4,
-                           #        conditionalPanel(
-                           #            condition = "input.filter_genes_q_tab3 == 0",
-                           #            my_withSpinner( uiOutput('marker_genes_selec_tab3') )
-                           #        )),
-                           # column(width = 2,
-                           #        conditionalPanel(
-                           #            condition = "input.load_markers_tab3 > 0",
-                           #            actionButtonInput("run_heatmap_tab3",
-                           #                              HTML("Show heatmap demonstrating the expression \
-                           #                                 within the trajectory"))))
                            column(width = 3,
                                   fileInput_markers_list("markers_list_tab3"),
                                   div(class = "option-group",

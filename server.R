@@ -19,7 +19,6 @@ suppressMessages( require(shinyFeedback) )
 suppressMessages( require(rclipboard) )
 suppressMessages( require(future) )
 suppressMessages( require(ggthemes) )
-#suppressMessages( require(metap) )
 suppressMessages( require(shinycssloaders) )
 suppressMessages( require(DT) )
 suppressMessages( require(dplyr) )
@@ -44,9 +43,6 @@ suppressMessages( require(dynfeature) )
 ## New packages in version 2.1
 suppressMessages( require(glmGamPoi) ) # Bioconductor
 ##
-
-## Allows parallelization of some of Seurat's functions
-#plan("multicore")
 
 if (dir.exists('/app/user_work')) {
     
@@ -93,18 +89,6 @@ function(input, output, session) {
     #####################################
     ######   Tab 1 - Clustering    ######
     #####################################
-    
-    # observeEvent(input$min_features, {
-    #     
-    #     updateNumericInput(inputId = "min_count", value = input$min_features)
-    #     
-    # })
-    # 
-    # observeEvent(input$min_count, {
-    #     
-    #     updateNumericInput(inputId = "max_count", value = (input$min_count + 2000))
-    #     
-    # })
     
     output$select_sample_tab1 = renderUI({
         
@@ -165,7 +149,6 @@ function(input, output, session) {
         return(sing_cell_data)
         
     })
-    
     
     observeEvent( input$load_10X, {
         
@@ -313,8 +296,6 @@ function(input, output, session) {
                                  data_sc <- base::subset(data_sc,
                                                          subset =  nFeature_RNA < input$max_count)
                                  
-                                 
-                                 
                              }
                              
                              if ( !is.na(input$max_mito_perc) ) {
@@ -458,9 +439,6 @@ function(input, output, session) {
         
     )
     
-    ############################################################
-    ## This section allows the filtering of clusters of cells ##
-    ############################################################
     clusters_single_cell_data_reso_umap <- reactive({
         
         sc_data <- req( single_cell_data_reso_umap() )
@@ -513,57 +491,9 @@ function(input, output, session) {
         
     })
     
-    ############################################################
-    
-    # test_intermediate <- reactive({
-    #     
-    #     if ( input$sample_tab1_options == 1) { # Load file
-    #         
-    #         sc_data <- req(single_cell_data_reac() )
-    #         
-    #     } else if (input$sample_tab1_options == 0 ) { # new analysis
-    #         
-    #         shinyFeedback::feedbackWarning("n_of_PCs", is.na(input$n_of_PCs), "Required value")
-    #         shinyFeedback::feedbackWarning("resolution_clust", is.na(input$resolution_clust), "Required value")
-    #         
-    #         req(input$n_of_PCs)
-    #         req(input$resolution_clust)
-    #         
-    #         showNotification("Running the clustering step",
-    #                          duration = NULL,
-    #                          id = "m6")
-    #         
-    #         data_sc <- req( single_cell_data_pca() )
-    #         
-    #         data_sc <- Seurat::FindNeighbors(data_sc, dims = 1:input$n_of_PCs)
-    #         
-    #         data_sc <- Seurat::FindClusters(data_sc, resolution = input$resolution_clust)
-    #         
-    #         sc_data <- Seurat::RunUMAP(data_sc, dims = 1:input$n_of_PCs)
-    #         sc_data <- Seurat::RunTSNE(sc_data, dims = 1:input$n_of_PCs)
-    #         
-    #     }
-    #     
-    #     sc_data
-    # })
-    
-    
     single_cell_data_reso_umap <- eventReactive(  list(input$run_clustering, input$load_10X_rds), {
-        #single_cell_data_reso_umap <- reactive( { 
-        
-        #req( test_intermediate() )
         
         if ( input$sample_tab1_options == 1) { # Load file
-            
-            # ##  the user needs to tell what normalization was used, since we should not scale the data when using SCTransform.
-            # shinyFeedback::feedbackWarning("select_sample_tab1_rds_normalization",
-            #                                input$select_sample_tab1_rds_normalization == "",
-            #                                #T,
-            #                                "Please select an option")
-            # 
-            # validate(need(input$select_sample_tab1_rds_normalization != "",
-            #               message = "",
-            #               label = "select_sample_tab1_rds_normalization"))
             
             showNotification("Loading the data",
                              id = "m9",
@@ -863,7 +793,6 @@ function(input, output, session) {
                              
                          })
         }
-        
     )
     
     features <- reactive({
@@ -947,8 +876,6 @@ function(input, output, session) {
                                                  assays = "RNA",
                                                  slot = input$slot_selection_heatmap)
         
-        #sc_data_av <- as.matrix(sc_data_av[[1]])
-        
         sc_data_av <- sc_data_av[[1]]
         
         on.exit(removeNotification(id = "m7"), add = TRUE)
@@ -979,7 +906,6 @@ function(input, output, session) {
             if (nrow(features) == 1) {
                 
                 sc_data_av_feat <- sc_data_av[base::rownames(sc_data_av) %in% features_selec[, 1], ]
-                #sc_data_av_feat <- as.matrix(t(sc_data_av_feat))
                 sc_data_av_feat <- t(sc_data_av_feat)
                 
                 base::rownames(sc_data_av_feat) <- features_selec[1, 1]
@@ -1503,31 +1429,22 @@ function(input, output, session) {
             
         } else if ( input$integration_options == 2 ) {
             
-            # shinyFeedback::feedbackWarning("load_rds_int_normalization",
-            #                                input$load_rds_int_normalization == "",
-            #                                #T,
-            #                                "Please select an option")
-            # 
-            # validate(need(input$load_rds_int_normalization != "",
-            #               message = "",
-            #               label = "load_rds_int_normalization"))
-            
             showNotification("Loading the integrated data",
                              id = "m9",
                              duration = NULL)
             
             sc_data <- readRDS( paste0("./RDS_files/", req(input$load_integrated)) )
-
+            
             shinyFeedback::feedbackWarning("load_integrated",
                                            "seurat_clusters" %in% colnames(sc_data@meta.data),
                                            "Clustering detected. Please use the option to load a clustered dataset")
             
             `%!in%` = Negate(`%in%`)     
-             validate(need("seurat_clusters" %!in% colnames(sc_data@meta.data),
-                           "Clustering detected. Please use the option to load a clustered dataset", ""))
-             
-             validate(need("treat" %in% colnames(sc_data@meta.data),
-                           "Integrated data not detected. Does the rds file contain an integrated dataset?", ""))
+            validate(need("seurat_clusters" %!in% colnames(sc_data@meta.data),
+                          "Clustering detected. Please use the option to load a clustered dataset", ""))
+            
+            validate(need("treat" %in% colnames(sc_data@meta.data),
+                          "Integrated data not detected. Does the rds file contain an integrated dataset?", ""))
             
             on.exit(removeNotification(id = "m9"), add = TRUE)
             
@@ -1564,24 +1481,6 @@ function(input, output, session) {
         })
         
     })
-    
-    # output$download_int_data <- downloadHandler(
-    #     
-    #     filename = function() {
-    #         paste("Integrated_datasets_without_clutering", ".rds", sep = "")
-    #     },
-    #     content = function(file) {
-    #         
-    #         withProgress(message = "Please wait, preparing the data for download.",
-    #                      value = 0.5, {
-    #                          
-    #                          saveRDS( req( single_cell_data_reac_tab2() ), file)
-    #                          
-    #                      })
-    #         
-    #     }
-    #     
-    # )
     
     output$VlnPlot_tab2 <- renderPlot({
         
@@ -1699,15 +1598,6 @@ function(input, output, session) {
               
               single_cell_data_filt_tab2 <- req( single_cell_data_filt_tab2() )
               
-              # req(input$load_rds_int_normalization)
-              
-              # If loading the data and normalization is SCTransform, skip the scaling.
-              #if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-              
-              ## Same if running new analysis and normalization is SCtransform
-              ##  } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
-              
-              
               ## Same if running new analysis and normalization is SCtransform
               if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
                   
@@ -1754,9 +1644,6 @@ function(input, output, session) {
                                                      
                                                  })
     
-    ########################################################
-    ## Section that allows filtering clusters of interest ##
-    ########################################################
     output$cluster_list_tab2_ui <- renderUI ({
         
         clusters <- req( clusters_single_cell_data_reso_umap_tab2() )
@@ -1814,10 +1701,6 @@ function(input, output, session) {
                                     cells = cells_to_filter)
             
         }
-        
-        #   if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
-        
-        ##  } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
         
         if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
             
@@ -1891,15 +1774,6 @@ function(input, output, session) {
         
         if ( input$integration_options == 1) { # Load file - Clustered
             
-            # ##  the user needs to tell what normalization was used, since we should not scale the data when using SCTransform.
-            # shinyFeedback::feedbackWarning("load_rds_int_normalization",
-            #                                input$load_rds_int_normalization == "",
-            #                                #T,
-            #                                "Please select an option")
-            # validate(need(input$load_rds_int_normalization != "",
-            #               message = "",
-            #               label = "load_rds_int_normalization"))
-            
             showNotification("Loading the integrated data",
                              id = "m9",
                              duration = NULL)
@@ -1911,13 +1785,12 @@ function(input, output, session) {
             
             validate(need("seurat_clusters" %in% colnames(sc_data@meta.data),
                           "Clustering was not detected. Please use the option for unclustered data", ""))
-
+            
             on.exit(removeNotification(id = "m9"), add = TRUE)
             
             sc_data
             
         } else if (input$integration_options == 0 || input$integration_options == 2 ) { # new analysis or loading and integrated and unclustered data
-            
             
             shinyFeedback::feedbackWarning("n_of_PCs_tab2", is.na(input$n_of_PCs_tab2), "Required value")
             shinyFeedback::feedbackWarning("resolution_clust_tab2", is.na(input$resolution_clust_tab2), "Required value")
@@ -1957,8 +1830,6 @@ function(input, output, session) {
         })
         
         output$umap_three_samples_comb <- renderPlot({
-            
-            ## @@@@ >>>>>>>> Create a Validate in here to check if the data was integrated using Asc-Seurat.
             
             Seurat::DimPlot(req( single_cell_data_clustered() ),
                             reduction = "umap",
@@ -2450,7 +2321,6 @@ function(input, output, session) {
                                                       assays = "RNA",
                                                       slot = input$slot_selection_heatmap_tab2)
         
-        #sc_data_av_tab2 <- as.matrix(sc_data_av_tab2[[1]])
         sc_data_av_tab2 <- sc_data_av_tab2[[1]]
         
         on.exit(removeNotification(id = "m7"), add = TRUE)
@@ -2648,18 +2518,6 @@ function(input, output, session) {
             do.call(tagList, plot_output_list)
         })
         
-        # output$run_dot_plot_tab2 <- renderUI({
-        #     
-        #     feat_length <- length(req( features_selec_tab2()) )
-        #     
-        #     plot_output_list <- lapply(1:feat_length, function(i) {
-        #         plotname <- paste("plot5_tab2", i, sep="")
-        #         plotOutput(plotname, height = 300)
-        #     })
-        #     
-        #     do.call(tagList, plot_output_list)
-        # })
-        
         sc_data_tab2 <- req( single_cell_data_clustered_to_DE_vis() )
         assay_id <- "RNA"
         
@@ -2727,27 +2585,6 @@ function(input, output, session) {
                     
                 })
                 
-                # plotname <- paste("plot5_tab2", my_i, sep="")
-                # output[[plotname]] <- renderPlot({
-                #     
-                #     Seurat::DotPlot(sc_data_tab2,
-                #                     features = features[my_i],
-                #                     cols = c("lightgrey", "red"),
-                #                     split.by = "treat",
-                #                     assay = "RNA" ) +
-                #         scale_x_discrete(position = "top") +
-                #         xlab("")+
-                #         ylab("") +
-                #         ggtitle("") +
-                #         theme(legend.position = "",
-                #               axis.title.x=element_blank(),
-                #               axis.title.y=element_blank(),
-                #               axis.text.y = element_text( size = rel(1) ),
-                #               axis.text.x = element_text( angle = 90) ) +
-                #         coord_flip()
-                #     
-                # })
-                
             })
             
         }
@@ -2793,11 +2630,9 @@ function(input, output, session) {
                          dir.create(path_new)
                          dir.create( paste0(path_new,"/feature_plots_combined_samples") )
                          dir.create( paste0(path_new,"/violin_plots_combined_samples") )
-                         #dir.create( paste0(path_new, "/dot_plots_combined_samples") )
                          
                          dir.create( paste0(path_new,"/feature_plots") )
                          dir.create( paste0(path_new,"/violin_plots") )
-                         # dir.create( paste0(path_new, "/dot_plots") )
                          
                          sc_data <- req( single_cell_data_clustered_to_DE_vis() )
                          assay_id <- "RNA"
@@ -2840,29 +2675,6 @@ function(input, output, session) {
                                              units="cm",
                                              dpi=as.numeric( req(input$add_p_tab2_violin_res) ),
                                              bg = "#FFFFFF")
-                             
-                             # file <- paste0(path_new, "/dot_plots_combined_samples/", genes[i], ".", req(input$add_p_tab2_dot_format) )
-                             # 
-                             # p <- Seurat::DotPlot(sc_data,
-                             #                      features = genes[i],
-                             #                      cols = c("lightgrey", "red")) +
-                             #     scale_x_discrete(position = "top") +
-                             #     xlab("")+
-                             #     ylab("") +
-                             #     ggtitle("") +
-                             #     theme(legend.position = "",
-                             #           axis.title.x=element_blank(),
-                             #           axis.title.y=element_blank(),
-                             #           axis.text.y = element_text( size = rel(1) ),
-                             #           axis.text.x = element_text( angle = 90) ) +
-                             #     coord_flip()
-                             # 
-                             # ggplot2::ggsave(file,
-                             #                 p,
-                             #                 height= req(input$add_p_tab2_dot_height),
-                             #                 width= req(input$add_p_tab2_dot_width),
-                             #                 units="cm",
-                             #                 dpi=as.numeric( req(input$add_p_tab2_dot_res) ))
                              
                              p_list <- FeaturePlotSingle(sc_data,
                                                          feature = genes[i],
@@ -2924,30 +2736,6 @@ function(input, output, session) {
                                              dpi = as.numeric( req(input$add_p_tab2_violin_res) ),
                                              bg = "#FFFFFF")
                              
-                             # file <- paste0(path_new, "/dot_plots/", genes[i], ".", req(input$add_p_tab2_dot_format) )
-                             # 
-                             # p2 <- Seurat::DotPlot(sc_data,
-                             #                       features = genes[i],
-                             #                       cols = c("lightgrey", "red"),
-                             #                       split.by = "treat",
-                             #                       assay = "RNA" ) +
-                             #     scale_x_discrete(position = "top") +
-                             #     xlab("")+
-                             #     ylab("") +
-                             #     ggtitle("") +
-                             #     theme(legend.position = "",
-                             #           axis.title.x=element_blank(),
-                             #           axis.title.y=element_blank(),
-                             #           axis.text.y = element_text( size = rel(1) ),
-                             #           axis.text.x = element_text( angle = 90) ) +
-                             #     coord_flip()
-                             # 
-                             # ggplot2::ggsave(file,
-                             #                 p2,
-                             #                 height= req(input$add_p_tab2_dot_height),
-                             #                 width= ( req(input$add_p_tab2_dot_width) * length(groups) ),
-                             #                 units="cm",
-                             #                 dpi=as.numeric( req(input$add_p_tab2_dot_res) ))
                          }
                          
                      })
@@ -2978,30 +2766,12 @@ function(input, output, session) {
     
     sc_data_traj_inf <- eventReactive(input$run_ti_model, {
         
-        #if ( input$rds_location_tab3 == 0 ) {
-        
         showNotification("Loading the clustered data",
                          id = "tab3_m1",
                          duration = NULL)
         
         load_rds <- req(input$load_integrated_tab3)
         sc_data <- readRDS( paste0("./RDS_files/", load_rds) )
-        
-        # } else if ( input$rds_location_tab3 == 1 ) {
-        #
-        #     ext <- tools::file_ext(input$file_input_rds_tab3$name)
-        #     config_input_file <- input$file_input_rds_tab3$datapath
-        #
-        #     req(input$file_input_rds_tab3$datapath)
-        #
-        #     showNotification("Loading the clustered data",
-        #                      id = "tab3_m1",
-        #                      duration = NULL)
-        #
-        #     sc_data <- readRDS(config_input_file)
-        #
-        # }
-        
         
         on.exit(removeNotification(id = "tab3_m1"), add = TRUE)
         
@@ -3101,7 +2871,6 @@ function(input, output, session) {
     
     model <- eventReactive(input$run_ti_model, { # change it to run model
         
-        
         req(sc_data_traj_inf())
         sing_cell_data <- sc_data_traj_inf()
         
@@ -3181,7 +2950,6 @@ function(input, output, session) {
             methods_selected <- create_ti_method_container(method_id)
             
             if ( input$ti_sample_number == 1 ) { # there are multiple samples
-                
                 
                 dataset <- add_prior_information(
                     
@@ -3501,7 +3269,6 @@ function(input, output, session) {
     )
     
     ## Print the lineages that are been show in the plots
-    
     output$lineages <- renderPrint({
         
         sds <- req( model() )
@@ -3672,8 +3439,6 @@ function(input, output, session) {
             
         }
         
-        # features <- features$b
-        
         features
     })
     
@@ -3843,7 +3608,6 @@ function(input, output, session) {
         
     })
     
-    #######3 >>>>>>>>>sc_meta_cluster
     output$dynverse_branch_from_ui <- renderUI({
         
         sc_meta_cluster <- req( sc_meta_cluster() )
@@ -4035,7 +3799,6 @@ function(input, output, session) {
                          for( i in 1:length(genes) ){
                              
                              # Saves the feature plots
-                             
                              p <- plot_dimred(model,
                                               feature_oi = genes[i],
                                               expression_source = req( dataset_inf()) ) +
@@ -4069,7 +3832,6 @@ function(input, output, session) {
                                              bg = "#FFFFFF")
                              
                              # Saves the dot plots
-                             
                              file <- paste0(path_new, "/Graph/", genes[i], ".", input$add_p_tab3_dot_format)
                              
                              p <- plot_graph(model,
@@ -4084,16 +3846,12 @@ function(input, output, session) {
                                              units="cm",
                                              dpi=as.numeric(input$add_p_tab3_dot_res),
                                              bg = "#FFFFFF")
-                             
-                             
                          }
-                         
                      })
         
         showNotification("All plots were downloaded!",
                          duration = 15,
                          id = "")
-        
     })
     
     #################################################################
@@ -4403,12 +4161,9 @@ function(input, output, session) {
                          
                          model <- model()
                          
-                         
-                         
                          for( i in 1:length(genes) ){
                              
                              # Saves the feature plots
-                             
                              p <- plot_dimred(model,
                                               feature_oi = genes[i],
                                               expression_source = dataset_inf()) +
@@ -4425,7 +4180,6 @@ function(input, output, session) {
                                              bg = "#FFFFFF")
                              
                              # Saves the violin plots
-                             
                              file <- paste0(path_new, "/Dendrogram/", genes[i], ".", input$add_p_tab3_violin_format_dynv)
                              
                              p <- plot_dendro(model,
@@ -4442,7 +4196,6 @@ function(input, output, session) {
                                              bg = "#FFFFFF")
                              
                              # Saves the dot plots
-                             
                              file <- paste0(path_new, "/Graph/", genes[i], ".", input$add_p_tab3_dot_format_dynv)
                              
                              p <- plot_graph(model,
@@ -4459,9 +4212,7 @@ function(input, output, session) {
                                                             bg = "#FFFFFF"
                                                             
                                              ))
-                             
                          }
-                         
                      })
         
         showNotification("All plots were downloaded!",
@@ -4525,7 +4276,6 @@ function(input, output, session) {
                                   choices  = c('', 'PHYTOZOME', 'plants_mart', 'ENSEMBL_MART_ENSEMBL', 'ENSEMBL_MART_MOUSE',
                                                'ENSEMBL_MART_SNP', 'ENSEMBL_MART_FUNCGEN'),
                                   multiple = FALSE,
-                                  #selected = "plants_mart",
                                   options  = pickerOptions(actionsBox = TRUE))
     })
     
@@ -4540,10 +4290,10 @@ function(input, output, session) {
         if (as.character(req(input$dbselection) == 'PHYTOZOME')) {
             phytozome_mart
         } else if (as.character(req(input$dbselection) == 'plants_mart')) {
-            #useMart(as.character(req(input$dbselection)), host = "plants.ensembl.org", ensemblRedirect = FALSE)
+            
             useMart(as.character(req(input$dbselection)), host = "plants.ensembl.org")
         } else {
-            #useMart(as.character(req(input$dbselection)), host = "www.ensembl.org", ensemblRedirect = FALSE)
+            
             useMart(as.character(req(input$dbselection)), host = "www.ensembl.org")
         }
     })
@@ -4552,19 +4302,6 @@ function(input, output, session) {
     ### Show Biomart available datasets ###
     ### (for the selected database)     ###
     #######################################
-    # output$biomartdbs <- renderPrint({
-    #     if (length(input$dbselection) != 0) {
-    #         print(
-    #             head(as.data.frame(
-    #                 listDatasets(selectedMart())
-    #             ), 5)
-    #         )
-    #     } else {
-    #         print(
-    #             "Please select a BioMart database!"
-    #         )
-    #     }
-    # })
     
     ######################################
     ### Get available biomaRt datasets ###
@@ -4589,7 +4326,6 @@ function(input, output, session) {
                                   "Select BioMart dataset:",
                                   choices  = c('', biomartdatasets()),
                                   multiple = FALSE,
-                                  #selected = "athaliana_eg_gene",
                                   options  = pickerOptions(actionsBox = TRUE))
     })
     
@@ -4636,23 +4372,6 @@ function(input, output, session) {
                                   selected = dt_filter,
                                   options  = pickerOptions(actionsBox = TRUE))
     })
-    
-    # #########################################
-    # ### Show Biomart available attributes ###
-    # ### (for the selected db and dataset) ###
-    # #########################################
-    # output$biomartdatasets <- renderPrint({
-    #     if (input$datasetselection != '') {
-    #         print(
-    #             head( biomaRt::listAttributes(
-    #                 mart = useDataset(as.character(input$datasetselection), mart = selectedMart())), 10 )
-    #         )
-    #     } else {
-    #         print(
-    #             "Please select a BioMart dataset!"
-    #         )
-    #     }
-    # })
     
     ##############################################
     ### Get available biomaRt attributes pages ###
@@ -4850,11 +4569,7 @@ function(input, output, session) {
                 ) # try connection 5 times
             }
         )
-        # %>%
-        #     na_if("") %>%
-        #     na.omit() %>%
-        #     group_by_at(1) %>%
-        #     summarise(go_id = paste(go_id, collapse=", "))
+        
     })
     
     #########################################
@@ -5110,16 +4825,5 @@ function(input, output, session) {
     #####################
     
     stacked_violin_Server("stacked1")
-    
-    
-    # output$load_rds_ui <- stacked_violin_Server("load_rds_ui")
-    # output$list_of_genes_ui <- stacked_violin_Server("list_of_genes_ui")
-    # output$list_of_genes <- stacked_violin_Server("stacked_violing")
-    # output$stacked_violing_ui <- stacked_violin_Server("stacked_violing_ui")
-    #output$load_rds_ui_stacked <- load_rds_Server("load_rds_ui_stacked")
-    
-    # output$TEST <- renderReactable({
-    #     my_reactable(filt_features())
-    # })
     
 }
