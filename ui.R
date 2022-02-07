@@ -84,7 +84,7 @@ function(request) {
                    br(),
                    p("Asc-Seurat, pronounced \"ask Seurat\", is based on the popular R package \"Seurat\", from the Satija Lab. It includes many, but not all, features of the Seurat package."),
                    p("It also takes advantage of \"Dynverse\", a collection of R packages that allows the execution of multiple trajectory inference models."),
-                   p("Finally, Asc_Seurat uses BioMart, through the biomaRt R package, to promote the functional annotation of genes from many species."),
+                   p("Finally, Asc-Seurat uses BioMart, through the biomaRt R package, to promote the functional annotation of genes from many species."),
                    br(),
                    
                    p(
@@ -105,7 +105,7 @@ function(request) {
                    tags$hr(),
                    h2("Tutorial and documentation"),
                    br(),
-                   p("A step-by-step introduction of Asc-Seurat's functionalities is available at ", a(tags$a(href="https://asc-seurat.readthedocs.io/en/latest/index.html", "https://asc-seurat.readthedocs.io.", target="_blank"))),
+                   p("A step-by-step introduction of Asc-Seurat's functionalities is available at ", a(tags$a(href="https://asc-seurat.readthedocs.io/en/latest/index.html", "https://asc-seurat.readthedocs.io.", target="_blank")), ". Asc-Seurat is published on ", a(tags$a(href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-04472-2", "BMC Bioinformatics.", target="_blank"))),
                    p("For questions or issues related to Asc-Seurat's functionalities, please visit", a(tags$a(href="https://github.com/KirstLab/asc_seurat", "our GitHub.", target="_blank"))),
                    
                    br(),
@@ -114,7 +114,7 @@ function(request) {
                    tags$hr(),
                    h2("Funding"),
                    br(),
-                   p("Asc-Seurat was developed in the context of a project supported by the US Department of Energy, Office of Science Biological and Environmental Research [DE-SC0018247]."),
+                   p("Asc-Seurat was developed in the context of a project supported by the United States Department of Energy, Office of Science, Biological and Environmental Research program [DE-SC0018247]."),
                    br(),
                    tags$hr(),
                    h2("Acknowledgments"),
@@ -144,7 +144,8 @@ function(request) {
                        br(),
                        p("Choose the sample to be analyzed and the initial requirements to load the data. Note that cells that do not match the parameters will not be load."),
                        p("These parameters are used to exclude low-quality cells and allow the data to load quickly. Users can add more restrictive parameters after visualizing the distributions in the next section."),
-                       p(strong("After selecting the parameters, click on the blue button to load the data.")),
+                       p("Alternatively, it is possible to load a previously clustered dataset, saving some time by not running the complete analysis."),
+                      # p(strong("After selecting the parameters, click on the blue button to load the data.")),
                        br(),
                        
                        column(width = 3,
@@ -221,7 +222,8 @@ function(request) {
                            condition = "input.load_10X != 0",
                            
                            fluidRow(
-                               titlePanel("Genes targeted as mitochondrial by the \"Common identifier of mitochondrial genes\""),
+                               titlePanel("Genes targeted as mitochondrial"),
+                               p("The genes below were targeted by the parameter \"common identifier of mitochondrial genes\", set above."),
                                column(12,
                                       my_withSpinner( verbatimTextOutput("target_genes_mitho") )
                                )
@@ -232,8 +234,8 @@ function(request) {
                            titlePanel("Screening plot to define filtering parameters"),
                            br(),
                            p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of reads that map to the mitochondrial genome."),
-                           p("The parameters can be set on the right side of the plot and must be set using a higher value than the ones above. Otherwise, they will have no effect since the cells were already excluded."),
-                           br(),
+                        #   p("The parameters can be set on the right side of the plot and must be set using a higher value than the ones above. Otherwise, they will have no effect since the cells were already excluded."),
+                           #br(),
                            p("After setting the parameters, click on \"Show/update plot of filtered data\" to visualize the data after filtering."),
                            br(),
                            br(),
@@ -277,8 +279,8 @@ function(request) {
                        fluidRow(
                            titlePanel("Normalization and dimension reduction analysis (PCA)"),
                            br(),
-                           p("Note that only the most variable genes are used in the dimension reduction step (PCA)."),
-                           br(),
+                           #p("Note that only the most variable genes are used in the dimension reduction step (PCA)."),
+                           #br(),
                            column(width = 3,
                                   select_norm_methods("normaliz_method")
                            ),
@@ -334,8 +336,8 @@ function(request) {
                            condition = "input.sample_tab1_options == 0",
                            
                            br(),
-                           p("Be aware that this parameter is central in the cluster definition. It is recommended to try different values and define the most appropriate according to the expectations of the cell populations present in the sample."),
-                           p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
+                           p("Be aware that this parameter is central in the cluster definition. It is recommended to try different values and define the most appropriate value according to the expectations of the cell populations present in the sample."),
+                           p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), ":", em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
                            br(),
                            column(width = 3,
                                   numericInput_resolution_clust("resolution_clust")
@@ -434,9 +436,9 @@ function(request) {
                            br(),
                            h3("Saving the processed data for the trajectory inference analysis"),
                            p("The button below allows for saving the processed data in a file that can be used for the pseudo-time analysis."),
-                           p("Asc-Seurat will save only the most recently processed data."),
+                           #p("Asc-Seurat will save only the most recently processed data."),
                            br(),
-                           p(strong("Note:", "The processed data needs to be saved in the folder", code("RDS_files/"), "so it can load automatically in the tab \"Trajectory inference.\"" )),
+                           p(strong("Note:", "The processed data needs to be saved in the folder", code("RDS_files/"), "so it can be load automatically in the tab \"Trajectory inference.\"" )),
                            column(6,
                                   br(),
                                   downloadButton("downloadRDS",
@@ -697,18 +699,11 @@ function(request) {
                    br(),
                    p("It is necessary to choose adequate parameters before loading the data for integration to avoid bias due to poor cells interfering in the anchoring step.", strong("Therefore, we recommend exploring each sample separately in the one sample tab and defining the best parameters before the integration.")),
                    br(),
-                   p("To load the sample, it is necessary to have a configuration file in the csv format. In this file, each row contains the information of one sample, and each column is one parameter for filtering the sample before integration.", strong("The file must have six columns and a header, as described below:")),
-                   tags$ul(
-                       tags$li(strong("Folder name:"), "Name of the folder where the raw data is (must be a subfolder of data/)"),
-                       tags$li(strong("Sample name:"), "If the samples are part of a timepoint series, and you want to use this information in the trajectory analysis, the names need to be numeric (0 instead of 0h, for example. If you have replicates that should be combined, use the same name for all replicates)."),
-                       tags$li(strong("Minimum number of cells expressing a gene")),
-                       tags$li(strong("Minimum number of genes a cell must express to be included")),
-                       tags$li(strong("Maximum number of genes a cell can express and still be included")),
-                       tags$li(strong("Maximum percentage of genes belonging to the mitochondrial genome"))
-                   ),
+                   p("It is necessary to have a configuration file in the csv format to load the samples for integration. Please visit the",
+                     a(tags$a(href="https://asc-seurat.readthedocs.io/en/latest/loading_data_int.html#loading-the-data-and-integration-of-multiple-samples documentation", "Asc-Seurat's documentation", target="_blank")), "for instructions on how to generate this file."),
                    br(),
-                   p("Alternatively, it is possible to load previously integrated data, saving some time by not running the integration step. For that, save an RDS file containing the integrated data."),
-                   p("After selecting the parameters, click on the blue button to load the data."),
+                   p("Alternatively, it is possible to load previously integrated data, saving some time by not running the integration step."),
+                   #p("After selecting the parameters, click on the blue button to load the data."),
                    br(),
                    fluidRow(
                        column(width = 3,
@@ -794,12 +789,26 @@ function(request) {
                            condition = "input.load_rds_file != 0",
                            
                            fluidRow(
-                               titlePanel("Genes targeted as mitochondrial by the \"Common identifier of mitochondrial genes\""),
-                               #p("First row shows the cluster ID. The second row shows the number of cells per cluster."),
+                               titlePanel("Genes targeted as mitochondrial"),
+                               p("The genes below were targeted by the parameter \"common identifier of mitochondrial genes\", set above."),
                                column(12,
                                       my_withSpinner( verbatimTextOutput("target_genes_mitho_tab2") )
                                )
                            ), # Fluid row
+                       ),
+                       
+                       conditionalPanel (
+                           condition = "input.integration_options != 1",
+                           
+                           fluidRow(
+                               tags$hr(),
+                               p("Since the integration is a time-consuming step, it is helpful to save the integrated data before running any additional analyses. The main advantage of saving the data is that if you need to restart the analysis (e. g., to change parameters), you can skip the integration step by loading the RDS file instead."),
+                               br(),
+                               p( strong("The rds files must be saved in the folder"), code("RDS_files.") ),
+                               column(6,
+                                      downloadButton("download_int_data",
+                                                     "Download RDS object containing the integrated data.")
+                               )),
                        ),
                        
                        fluidRow(

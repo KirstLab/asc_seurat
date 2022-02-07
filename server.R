@@ -1482,6 +1482,24 @@ function(input, output, session) {
         
     })
     
+    output$download_int_data <- downloadHandler(
+        
+        filename = function() {
+            paste("Integrated_datasets_without_clutering", ".rds", sep = "")
+        },
+        content = function(file) {
+            
+            withProgress(message = "Please wait, preparing the data for download.",
+                         value = 0.5, {
+                             
+                             saveRDS( req( single_cell_data_reac_tab2() ), file)
+                             
+                         })
+            
+        }
+        
+    )
+    
     output$VlnPlot_tab2 <- renderPlot({
         
         data_set <- req( single_cell_data_reac_tab2() )
