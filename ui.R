@@ -699,7 +699,7 @@ function(request) {
                    br(),
                    p("It is necessary to choose adequate parameters before loading the data for integration to avoid bias due to poor cells interfering in the anchoring step.", strong("Therefore, we recommend exploring each sample separately in the one sample tab and defining the best parameters before the integration.")),
                    br(),
-                   p("It is necessary to have a configuration file in the csv format to load the samples for integration. Please visit the",
+                   p("It is necessary to have a configuration file in the csv format to load the samples for integration. Please visit",
                      a(tags$a(href="https://asc-seurat.readthedocs.io/en/latest/loading_data_int.html#loading-the-data-and-integration-of-multiple-samples documentation", "Asc-Seurat's documentation", target="_blank")), "for instructions on how to generate this file."),
                    br(),
                    p("Alternatively, it is possible to load previously integrated data, saving some time by not running the integration step."),
@@ -812,11 +812,11 @@ function(request) {
                        ),
                        
                        fluidRow(
-                           titlePanel("Screening plot to define the filter parameters to exclude cells based on counts and % of mitochondrial"),
+                           titlePanel("Screening plot to define filtering parameters"),
                            br(),
                            p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of expressed genes from the mitochondria."),
-                           p("The parameters can be set on the right side of the plot."),
-                           br(),
+                           #p("The parameters can be set on the right side of the plot."),
+                           #br(),
                            p("After setting the parameters, click on \"Show/update plot of filtered data\" to visualize the data after filtering."),
                            
                            column(width = 10,
@@ -1265,7 +1265,7 @@ function(request) {
                        br(),
                        p("For this analysis, it is possible to indicate what cluster is expected to be at the beginning and/or end of the trajectory. Depending on the selected model, some of this information might be required."),
                        br(),
-                       p("To start the analysis, select the file containing the data and click on", code("Run trajectory inference model"), "button."),
+                   #    p("To start the analysis, select the file containing the data and click on", code("Run trajectory inference model"), "button."),
                        column(width = 3,
                               
                               my_withSpinner( uiOutput("load_integrated_ui_tab3") ),
