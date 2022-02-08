@@ -38,10 +38,10 @@ After downloading the image, users can start the app on their working directory.
 
 For macOS and Linux
 -------------------
-
+.. _test_tip_as_target:
 .. tip::
 
-    The code below will automatically update Asc-Seurat to the latest version. You can download and execute a specific version of Asc-Seurat by adding the version's tag to the image's name, i.e., replace :code:`kirstlab/asc_seurat` by :code:`kirstlab/asc_seurat:v.1.0` to use v1.0.
+    The code below will automatically update Asc-Seurat to the latest version. You can download and execute a specific version of Asc-Seurat by adding the version's tag to the image's name, i.e., replace :code:`kirstlab/asc_seurat` by :code:`kirstlab/asc_seurat:v2.1` to use v2.1.
 
 .. code-block:: bash
 
