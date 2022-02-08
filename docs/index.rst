@@ -72,37 +72,40 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
 Release notes
 =============
 
-    * v2.2 - **Release on February 8th, 2022**
+.. tip:: 
+   **To use an older version of Asc-Seurat, check** :ref:`here <test_tip_as_target>`.
 
-        - Add the capacity to load a clustered dataset in the tab for the individual sample analysis.
-  	     - Add the capacity to load a clustered dataset in the tab for the integrated sample analysis.
-  	     - Genes identified as mitochondrial genes via the regex expression are now shown to the users.
-  	     - Changes the color scheme of the dynverse's plots to match the color scheme used by Seurat's plots. 
-  	     - Small changes in the interface to improve usability.
+* v2.2 - **Release on February 8th, 2022**
 
-  	     - Fix a bug in the download of markers identified for multiple clusters in the integrated dataset. If a gene was identified as a marker in multiple clusters, a number was appended in the gene's name.
-  	     - Fix a bug that caused the app to crash when searching for conserved markers in an integrated dataset, and the gene was not expressed in one or more of the samples.
-  	     - Fix a bug where plots were exported with a dark background.
-  	     - Fix a bug in the advanced plots that caused expressed genes not to be identified. When using integrated datasets, the function now looks for the RNA assay instead of the integrated assay.
-  	     - Fix a bug where the app would crash when downloading the plots generated in the trajectory inference tab.
+   - Add the capacity to load a clustered dataset in the tab for the individual sample analysis.
+   - Add the capacity to load a clustered dataset in the tab for the integrated sample analysis.
+   - Genes identified as mitochondrial genes via the regex expression are now shown to the users.
+   - Changes the color scheme of the dynverse's plots to match the color scheme used by Seurat's plots. 
+   - Small changes in the interface to improve usability.
 
-    * v2.1 - **Released on May 26th, 2021**.
+   - Fix a bug in the download of markers identified for multiple clusters in the integrated dataset. If a gene was identified as a marker in multiple clusters, a number was appended in the gene's name.
+   - Fix a bug that caused the app to crash when searching for conserved markers in an integrated dataset, and the gene was not expressed in one or more of the samples.
+   - Fix a bug where plots were exported with a dark background.
+   - Fix a bug in the advanced plots that caused expressed genes not to be identified. When using integrated datasets, the function now looks for the RNA assay instead of the integrated assay.
+   - Fix a bug where the app would crash when downloading the plots generated in the trajectory inference tab.
 
-        - Changes the assay used for differential expression analysis and visualization to "RNA" when using SCTransform normalization. Therefore, "SCT" assay is used for the steps until clustering the data.
-        - Changes the output of the differential expression analysis to the format required for the visualization tools. 
+* v2.1 - **Released on May 26th, 2021**.
 
-    * v2.0 - **Released on May 19th, 2021**.
+   - Changes the assay used for differential expression analysis and visualization to "RNA" when using SCTransform normalization. Therefore, "SCT" assay is used for the steps until clustering the data.
+   - Changes the output of the differential expression analysis to the format required for the visualization tools. 
 
-        - Inclusion of SCTransform normalization
-        - Addition of stacked violin plots
-        - Addition of multiple-genes dot plot
-        - Improvements on the user interface
-        - Improvements in the app stability
-        - Fix of minor bugs.
+* v2.0 - **Released on May 19th, 2021**.
 
-    * v1.0 - **Released on March 19th, 2021**.
+   - Inclusion of SCTransform normalization
+   - Addition of stacked violin plots
+   - Addition of multiple-genes dot plot
+   - Improvements on the user interface
+   - Improvements in the app stability
+   - Fix of minor bugs.
 
-        - Release of Asc-Seurat.
+* v1.0 - **Released on March 19th, 2021**.
+
+   - Release of Asc-Seurat.
 
 Reference
 =========
