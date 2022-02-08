@@ -23,6 +23,7 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
 
    installation
    references
+   packages_version
    license
 
 .. toctree::
