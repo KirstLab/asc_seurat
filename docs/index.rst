@@ -72,15 +72,15 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
 Release notes
 =============
 
-.. tip:: 
-   **To use an older version of Asc-Seurat, check** :ref:`here <test_tip_as_target>`.
+.. tip::
+   **To use an old version of Asc-Seurat, check** :ref:`here <test_tip_as_target>`.
 
 * v2.2 - **Release on February 8th, 2022**
 
    - Add the capacity to load a clustered dataset in the tab for the individual sample analysis.
    - Add the capacity to load a clustered dataset in the tab for the integrated sample analysis.
    - Genes identified as mitochondrial genes via the regex expression are now shown to the users.
-   - Changes the color scheme of the dynverse's plots to match the color scheme used by Seurat's plots. 
+   - Changes the color scheme of the dynverse's plots to match the color scheme used by Seurat's plots.
    - Small changes in the interface to improve usability.
 
    - Fix a bug in the download of markers identified for multiple clusters in the integrated dataset. If a gene was identified as a marker in multiple clusters, a number was appended in the gene's name.
@@ -92,7 +92,7 @@ Release notes
 * v2.1 - **Released on May 26th, 2021**.
 
    - Changes the assay used for differential expression analysis and visualization to "RNA" when using SCTransform normalization. Therefore, "SCT" assay is used for the steps until clustering the data.
-   - Changes the output of the differential expression analysis to the format required for the visualization tools. 
+   - Changes the output of the differential expression analysis to the format required for the visualization tools.
 
 * v2.0 - **Released on May 19th, 2021**.
 
@@ -110,7 +110,7 @@ Release notes
 Reference
 =========
 
-[1] Pereira WJ, Almeida FM, Balmant KM, Rodriguez DC, Triozzi PM, Schmidt HW, Dervinis C, Pappas Jr. GJ, Kirst M. `Asc-Seurat: analytical single-cell Seurat-based web application <https://doi.org/10.1186/s12859-021-04472-2>`_. BMC Bioinformatics 22, 556 (2021). 
+[1] Pereira WJ, Almeida FM, Balmant KM, Rodriguez DC, Triozzi PM, Schmidt HW, Dervinis C, Pappas Jr. GJ, Kirst M. `Asc-Seurat: analytical single-cell Seurat-based web application <https://doi.org/10.1186/s12859-021-04472-2>`_. BMC Bioinformatics 22, 556 (2021).
 
 Pereira WJ, Almeida FM, Balmant KM, Rodriguez DC, Triozzi PM, Schmidt HW, Dervinis C, Pappas Jr. GJ, Kirst M. `Asc-Seurat – Analytical single-cell Seurat-based web application <https://www.biorxiv.org/content/10.1101/2021.03.19.436196v1>`_. BioRxiv, 2021.
 
