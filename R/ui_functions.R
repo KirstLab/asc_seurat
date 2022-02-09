@@ -10,7 +10,7 @@ my_withSpinner <- function(ui_object_name = ui_object_name, hide_ui = FALSE) {
     
 }
 
-textInput_regex <- function(id, value = " ") {
+textInput_regex <- function(id, value = "--") {
     
     div(class = "option-group",
         textInput(id,
