@@ -1626,7 +1626,7 @@ function(input, output, session) {
               single_cell_data_filt_tab2 <- req( single_cell_data_filt_tab2() )
               
               # If loading the data and normalization is SCTransform, skip the scaling. Same if running new analysis and normalization is SCtransform
-              req(input$load_rds_int_normalization)
+              
               if (input$integration_options != 0 && input$load_rds_int_normalization == 1) {
                   
                   ## Same if running new analysis and normalization is SCtransform
@@ -1733,8 +1733,8 @@ function(input, output, session) {
             
         }
         
-        req(input$load_rds_int_normalization)
-        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
+        
+        if (input$integration_options != 0 && input$load_rds_int_normalization == 1) {
             
         } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
             
