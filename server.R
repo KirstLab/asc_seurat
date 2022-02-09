@@ -1870,7 +1870,7 @@ function(input, output, session) {
                             label = F,
                             group.by = "treat",
                             pt.size = .1
-            )
+            ) + ggtitle("Samples")
             
         })
         
@@ -1914,7 +1914,7 @@ function(input, output, session) {
                                                           label = F,
                                                           group.by = "treat",
                                                           pt.size = .1
-                                     )
+                                     ) + ggtitle("Samples")
                                      
                                  } else if ( input$p7_down_opt == "UMAP2" ) {
                                      
