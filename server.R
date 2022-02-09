@@ -1,5 +1,5 @@
 # Asc-Seurat
-# Version 2.2
+# Version 2.2.1
 set.seed(1407)
 options(shiny.sanitize.errors = FALSE)
 options(max.print=100)
@@ -1429,6 +1429,15 @@ function(input, output, session) {
             
         } else if ( input$integration_options == 2 ) {
             
+            ##  the user to tell what normalization was used, since we should not scale the data when using SCTransform.
+            shinyFeedback::feedbackWarning("load_rds_int_normalization",
+                                           input$load_rds_int_normalization == "",
+                                           #T,
+                                           "Please select an option")
+            validate(need(input$load_rds_int_normalization != "",
+                          message = "",
+                          label = "load_rds_int_normalization"))
+            
             showNotification("Loading the integrated data",
                              id = "m9",
                              duration = NULL)
@@ -1616,8 +1625,12 @@ function(input, output, session) {
               
               single_cell_data_filt_tab2 <- req( single_cell_data_filt_tab2() )
               
-              ## Same if running new analysis and normalization is SCtransform
-              if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+              # If loading the data and normalization is SCTransform, skip the scaling. Same if running new analysis and normalization is SCtransform
+              req(input$load_rds_int_normalization)
+              if (input$integration_options != 0 && input$load_rds_int_normalization == 1) {
+                  
+                  ## Same if running new analysis and normalization is SCtransform
+              } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
                   
               } else { # lognormalization
                   
@@ -1720,7 +1733,10 @@ function(input, output, session) {
             
         }
         
-        if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
+        req(input$load_rds_int_normalization)
+        if (input$integration_options == 1 && input$load_rds_int_normalization == 1) {
+            
+        } else if (input$integration_options == 0 && input$normaliz_method_tab2 == 1) {
             
         } else { # lognormalization
             

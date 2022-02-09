@@ -1,5 +1,5 @@
 # Asc-Seurat
-# Version 2.2
+# Version 2.2.1
 set.seed(1407)
 
 suppressMessages( require("shiny") )
@@ -130,7 +130,7 @@ function(request) {
                            style='border-right: 40px solid transparent'),
                    ),
                    tags$hr(),
-                   p(strong("Asc-Seurat, version 2.2"), "- Released on February, 2022.", align = "center")
+                   p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
           ),
           
           ######################################
@@ -145,7 +145,7 @@ function(request) {
                        p("Choose the sample to be analyzed and the initial requirements to load the data. Note that cells that do not match the parameters will not be load."),
                        p("These parameters are used to exclude low-quality cells and allow the data to load quickly. Users can add more restrictive parameters after visualizing the distributions in the next section."),
                        p("Alternatively, it is possible to load a previously clustered dataset, saving some time by not running the complete analysis."),
-                      # p(strong("After selecting the parameters, click on the blue button to load the data.")),
+                       # p(strong("After selecting the parameters, click on the blue button to load the data.")),
                        br(),
                        
                        column(width = 3,
@@ -234,7 +234,7 @@ function(request) {
                            titlePanel("Screening plot to define filtering parameters"),
                            br(),
                            p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of reads that map to the mitochondrial genome."),
-                        #   p("The parameters can be set on the right side of the plot and must be set using a higher value than the ones above. Otherwise, they will have no effect since the cells were already excluded."),
+                           #   p("The parameters can be set on the right side of the plot and must be set using a higher value than the ones above. Otherwise, they will have no effect since the cells were already excluded."),
                            #br(),
                            p("After setting the parameters, click on \"Show/update plot of filtered data\" to visualize the data after filtering."),
                            br(),
@@ -685,7 +685,7 @@ function(request) {
                    bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                    
                    tags$hr(),
-                   p(strong("Asc-Seurat, version 2.2"), "- Released on February, 2022.", align = "center")
+                   p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
                    # Ends page
           ),
           
@@ -737,6 +737,15 @@ function(request) {
                            condition = "input.integration_options != 0",
                            column(width = 3,
                                   my_withSpinner( uiOutput("load_integrated_ui") ),
+                                  div(class = "option-group",
+                                      selectInput(
+                                          inputId = "load_rds_int_normalization",
+                                          label = "Inform the normalization method used to generate the integrated dataset",
+                                          choices = list("",
+                                                         "LogNormalization" = 0,
+                                                         "SCtransform" = 1),
+                                          selected = "",
+                                          multiple = F))
                            ),
                        ),
                        conditionalPanel(
@@ -1249,7 +1258,7 @@ function(request) {
                    bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                    
                    tags$hr(),
-                   p(strong("Asc-Seurat, version 2.2"), "- Released on February, 2022.", align = "center")
+                   p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
           ), # ends tab
           
           ##############################
@@ -1265,7 +1274,7 @@ function(request) {
                        br(),
                        p("For this analysis, it is possible to indicate what cluster is expected to be at the beginning and/or end of the trajectory. Depending on the selected model, some of this information might be required."),
                        br(),
-                   #    p("To start the analysis, select the file containing the data and click on", code("Run trajectory inference model"), "button."),
+                       #    p("To start the analysis, select the file containing the data and click on", code("Run trajectory inference model"), "button."),
                        column(width = 3,
                               
                               my_withSpinner( uiOutput("load_integrated_ui_tab3") ),
@@ -1714,7 +1723,7 @@ function(request) {
                    bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                    
                    tags$hr(),
-                   p(strong("Asc-Seurat, version 2.2"), "- Released on February, 2022.", align = "center")
+                   p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
           ),
           
           ##########################
@@ -1815,7 +1824,7 @@ function(request) {
                            bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                            
                            tags$hr(),
-                           p(strong("Asc-Seurat, version 2.2"), "- Released on February, 2022.", align = "center")
+                           p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
                        )
                    )
           )
