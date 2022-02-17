@@ -752,13 +752,13 @@ function(request) {
                            condition = "input.integration_options == 1",
                            column(width = 3,
                                   actionButtonInput("load_rds_file2",
-                                                    HTML("Load the integrated, unclustered, data")))
+                                                    HTML("Load the integrated, clustered, data")))
                        ),
                        conditionalPanel(
                            condition = "input.integration_options == 2",
                            column(width = 3,
                                   actionButtonInput("load_rds_file3",
-                                                    HTML("Load the integrated, clustered, data")))
+                                                    HTML("Load the integrated, unclustered, data")))
                        ),
                        
                        conditionalPanel (
