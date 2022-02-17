@@ -10,13 +10,20 @@ WORKDIR /app
 COPY www /app/www
 COPY R /app/R
 
+RUN apt-get update && apt-get install -y xml2 libxml2-dev libssl-dev && apt-get clean
+RUN apt-get install -y libcurl4-openssl-dev unixodbc-dev && apt-get clean
+RUN apt-get install -y gfortran
+RUN apt-get update && apt-get clean
+RUN apt-get install -y libhdf5-dev
+RUN apt-get -y install libcairo2-dev libxt-dev libfontconfig1-dev
+RUN apt-get update && apt-get clean
+
+
 # Install CRAN packages
 # biocmanager
 RUN R -e 'install.packages("BiocManager", dep = T, version = "3.12")'
 RUN R -e 'library(BiocManager)'
 # tidyverse
-RUN apt-get update && apt-get install -y xml2 libxml2-dev libssl-dev && apt-get clean
-RUN apt-get install -y libcurl4-openssl-dev unixodbc-dev && apt-get clean
 RUN R -e 'install.packages("tidyverse", dep = T)'
 RUN R -e 'library(tidyverse)'
 # seurat
@@ -34,8 +41,8 @@ RUN R -e 'library(vroom)'
 RUN R -e 'install.packages("ggplot2", dep = T)'
 RUN R -e 'library(ggplot2)'
 # svglite
-RUN apt-get update && apt-get clean
-#RUN apt-get install -y r-cran-svglite=4.0.4-1 && apt-get clean
+RUN R -e 'install.packages("svglite", dep = T)'
+RUN R -e 'library(svglite)'
 # circlize
 RUN R -e 'install.packages("circlize", dep = T)'
 RUN R -e 'library(circlize)'
@@ -63,15 +70,9 @@ RUN R -e 'library(future)'
 # ggthemes
 RUN R -e 'install.packages("ggthemes", dep = T)'
 RUN R -e 'library(ggthemes)'
-# metap (must install multtest first)
+# multtest
 RUN R -e 'BiocManager::install("multtest")'
 RUN R -e 'library(multtest)'
-RUN apt-get install -y gfortran
-RUN apt-get update && apt-get clean
-#RUN R -e 'install.packages("quantreg", dep = T)
-#RUN R -e 'library(quantreg)'
-#RUN R -e 'install.packages("metap", dep = T)'
-#RUN R -e 'library(metap)'
 # DT
 RUN R -e 'install.packages("DT", dep = T)'
 RUN R -e 'library(DT)'
@@ -79,14 +80,13 @@ RUN R -e 'library(DT)'
 RUN R -e 'install.packages("dplyr", dep = T)'
 RUN R -e 'library(dplyr)'
 # hdf5r
-RUN apt-get update && apt-get install -y libhdf5-dev && apt-get clean
 RUN R -e 'install.packages("hdf5r", dep = T)'
 RUN R -e 'library(hdf5r)'
+# metap - multtest must be installed first
+RUN R -e 'install.packages("metap", dep = T)'
+RUN R -e 'library(metap)'
 
-RUN apt-get --assume-yes install libcairo2-dev libxt-dev
-
-#RUN apt-get update && apt-get install -y r-cran-cluster r-bioc-complexheatmap && apt-get clean 
-
+# ComplexHeatmap
 RUN R -e 'BiocManager::install("ComplexHeatmap")'
 RUN R -e 'library(ComplexHeatmap)'
 # tradeseq
@@ -112,12 +112,12 @@ RUN R -e 'library(glmGamPoi)'
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
 	add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" && \
 	apt update && \
-	apt install -y docker-ce
+ 	apt install -y docker-ce
 
 # Configuring Docker
 RUN usermod -aG docker root
 
-# Get server files
+ # Get server files
 COPY global.R /app/global.R
 COPY server.R /app/server.R
 COPY ui.R /app/ui.R
@@ -132,3 +132,4 @@ RUN chmod a+rwx -R /app
 
 # Init image
 CMD ./init_app.sh
+
