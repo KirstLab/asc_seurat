@@ -72,6 +72,9 @@ Asc_seurat relies on multiple R packages. Please, visit the :ref:`references <re
 Release notes
 =============
 
+.. warning::
+   ** Please be aware that Asc-Seurat uses multiple R packages and that many of those are in continuous development. While the docker version of Asc-Seurat is stable, it may become outdated as the packages on wich it relies are updated.** :ref:`Here <packages_version>` you can find a list of the packages used by Asc-Seurat and their versions.
+
 .. tip::
    **To use an old version of Asc-Seurat, check** :ref:`here <test_tip_as_target>`.
 
