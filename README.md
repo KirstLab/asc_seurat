@@ -44,6 +44,10 @@ To install Asc-Seurat, you need to have Docker installed on your machine. Docker
 
 ## Release notes
 
+| :warning: WARNING          |
+|:---------------------------|
+| Please be aware that Asc-Seurat uses multiple R packages and that many of those are in continuous development. While the docker version of Asc-Seurat is stable, it may become outdated as the packages on wich it relies are updated. [Here](https://asc-seurat.readthedocs.io/en/latest/packages_version.html) you can find a list of the packages used by Asc-Seurat and their versions.|
+
 
 * v2.2 - **Released on February 8th, 2022**
 
