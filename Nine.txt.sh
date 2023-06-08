@@ -177,6 +177,8 @@ singularity pull docker://kirstlab/asc_seurat
 singularity pull docker://winuthayanon/asc_seurat
 sudo singularity build asc_seurat.sif asc_seurat.def
 
+docker build -t winuthayanon/asc_seurat:20230530 . -f Dockerfile_20230530
+docker push winuthayanon/asc_seurat:20230530
 docker build -t winuthayanon/asc_seurat:20230608 . -f Dockerfile_20230608
 docker push winuthayanon/asc_seurat:20230608
 # sudo singularity build asc_seurat.sif asc_seurat.def
