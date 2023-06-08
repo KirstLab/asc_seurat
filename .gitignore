@@ -11,3 +11,7 @@ docs/make.bat
 docs/Makefile
 docs/_html/
 images/
+user_work/
+var/run/
+tmp/
+*.sif

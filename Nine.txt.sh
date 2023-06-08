@@ -174,7 +174,17 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> print(device_lib.list_local_devices())
 
 singularity pull docker://kirstlab/asc_seurat
+singularity pull docker://winuthayanon/asc_seurat
 sudo singularity build asc_seurat.sif asc_seurat.def
 
 docker build -t winuthayanon/asc_seurat . -f Dockerfile
 docker push winuthayanon/asc_seurat
+
+docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
+-v /tmp:/tmp -d --name Asc_Seurat --rm -p 3838:3838 winuthayanon/asc_seurat
+
+mkdir -p user_work var/run tmp
+singularity instance start -B user_work:/app/user_work -B var/run:/var/run \
+-B tmp:/tmp asc_seurat_latest.sif asc_seurat_latest
+singularity run -B user_work:/app/user_work -B var/run:/var/run \
+-B tmp:/tmp asc_seurat_latest.sif
