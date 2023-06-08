@@ -177,14 +177,21 @@ singularity pull docker://kirstlab/asc_seurat
 singularity pull docker://winuthayanon/asc_seurat
 sudo singularity build asc_seurat.sif asc_seurat.def
 
-docker build -t winuthayanon/asc_seurat . -f Dockerfile
-docker push winuthayanon/asc_seurat
+docker build -t winuthayanon/asc_seurat:20230608 . -f Dockerfile_20230608
+docker push winuthayanon/asc_seurat:20230608
+# sudo singularity build asc_seurat.sif asc_seurat.def
+sudo singularity build --force asc_seurat.sif asc_seurat.def
+singularity inspect asc_seurat.sif
+singularity inspect -d asc_seurat.sif
+singularity inspect -r asc_seurat.sif
+singularity instance list
+singularity instance stop asc_seurat
 
 docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
 -v /tmp:/tmp -d --name Asc_Seurat --rm -p 3838:3838 winuthayanon/asc_seurat
 
 mkdir -p user_work var/run tmp
 singularity instance start -B user_work:/app/user_work -B var/run:/var/run \
--B tmp:/tmp asc_seurat_latest.sif asc_seurat_latest
+-B tmp:/tmp asc_seurat.sif asc_seurat
 singularity run -B user_work:/app/user_work -B var/run:/var/run \
--B tmp:/tmp asc_seurat_latest.sif
+-B tmp:/tmp asc_seurat.sif

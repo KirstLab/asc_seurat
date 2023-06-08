@@ -1,0 +1,102 @@
+#!/bin/bash
+##SBATCH -p r630-hpc3
+##SBATCH -w lewis4-r630-hpc3-node548
+#SBATCH -p Gpu
+#SBATCH -t 0-02:00  # time (days-hours:minutes)
+#SBATCH --ntasks-per-node=10
+#SBATCH --mem=100G
+#SBATCH --output=/home/%u/log_bac_dev-20230525.job.%j
+##SBATCH --mail-user=youremail@missouri.edu  # email address for notifications
+##SBATCH --mail-type=END,FAIL  # which type of notifications to send
+#SBATCH -J bac_dev-20230525
+
+module load singularity
+
+WORK_DIR=$(python -c 'import tempfile; print(tempfile.mkdtemp())')
+
+mkdir -p -m 700 ${WORK_DIR}/run ${WORK_DIR}/tmp ${WORK_DIR}/var/lib/rstudio-server
+
+HOME_R_DIR=${HOME}/R
+R_DIR=/storage/hpc/data/${USER}/R
+mkdir -p ${R_DIR}
+
+HOME_GIT_DIR=$HOME/git
+GIT_DIR=/storage/hpc/data/${USER}/git
+mkdir -p ${GIT_DIR}
+
+SITE_LIB=/storage/hpc/data/sw7v6/site-library
+
+LOCAL_SHARE="/storage/hpc/data/${USER}/local_share"
+mkdir -p ${LOCAL_SHARE}
+RSTUDIO_SESSION="/storage/hpc/data/${USER}/logs/rstudio_${SLURM_JOB_ID}"
+mkdir -p ${RSTUDIO_SESSION}
+
+export SINGULARITYENV_RSTUDIO_SESSION_TIMEOUT=0
+
+export SINGULARITYENV_USER=${USER}
+export SINGULARITYENV_PASSWORD=$(openssl rand -base64 20)
+
+readonly PORT=$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
+
+cat 1>&2 <<END
+
+#*** Credit: Sarayut (Nine) Winuthayanon, https://www.linkedin.com/in/winuthayanons/ ***#
+
+How to Run RStudio Server on the Slurm Cluster: 
+
+1. Execute either of the following commands in your local computer terminal:
+
+    ssh -N -L ${PORT}:${HOSTNAME}:${PORT} ${SINGULARITYENV_USER}@lewis.rnet.missouri.edu
+
+    ssh -N -L ${PORT}:${HOSTNAME}:${PORT} ${SINGULARITYENV_USER}@lewis42.rnet.missouri.edu
+
+    ssh -N -L ${PORT}:${HOSTNAME}:${PORT} ${SINGULARITYENV_USER}@lewis4-dtn.rnet.missouri.edu
+
+    ssh -N -L ${PORT}:${HOSTNAME}:${PORT} ${SINGULARITYENV_USER}@lewis4-dtn1.rnet.missouri.edu
+
+2. In your browser, visit 
+
+    http://localhost:${PORT}
+
+3. Log in with these credentials:
+
+    User: ${SINGULARITYENV_USER}
+    Password: ${SINGULARITYENV_PASSWORD}
+
+4. Check job status on login node:
+
+        sacct
+
+    # To find jobs were issued from May 2023:
+
+        sacct -S 2023-05-01
+
+To terminate the job:
+1. Exit RStudio (top-right power button)
+2. On the login node:
+
+    scancel -f ${SLURM_JOB_ID}
+
+END
+
+BAC_DEV_SIF=/storage/hpc/data/sw7v6/singularity_bac_dev/bac_dev_20230525.sif
+
+singularity exec -B ${SITE_LIB}:/usr/local/lib/R/site-library \
+                    -B ${LOCAL_SHARE}:${HOME}/.local/share \
+                    -B ${R_LIBS_USER}:${R_LIBS_USER} \
+                    -B ${RSTUDIO_SESSION}:${HOME}/.local/share/rstudio \
+                    -B ${GIT_DIR}:${HOME_GIT_DIR} \
+                    -B ${R_DIR}:${HOME_R_DIR} \
+                    -B ${WORK_DIR}/run:/run \
+                    -B ${WORK_DIR}/tmp:/tmp \
+                    -B ${WORK_DIR}/var/lib/rstudio-server:/var/lib/rstudio-server \
+                    --writable-tmpfs \
+                    --cleanenv ${BAC_DEV_SIF} \
+            rserver --www-port=${PORT} \
+                    --auth-none=0 \
+                    --auth-pam-helper-path=pam-helper \
+                    --auth-stay-signed-in-days=30 \
+                    --auth-timeout-minutes=0 \
+                    --server-user=${USER}
+
+printf 'rserver exited' 1>&2

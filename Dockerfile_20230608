@@ -1,7 +1,6 @@
 # Ubuntu latest
 # FROM kirstlab/asc_seurat:dynverse_v2.2
 FROM kirstlab/asc_seurat
-# Owner
 LABEL Maintainer="Sarayut (Nine) Winuthayanon, https://www.linkedin.com/in/winuthayanons/"
 SHELL ["/bin/bash", "-c"]
 
@@ -18,7 +17,8 @@ RUN apt-get install -y libhdf5-dev
 RUN apt-get -y install libcairo2-dev libxt-dev libfontconfig1-dev
 RUN apt-get update && apt-get clean
 
-
+RUN R -e "update.packages(oldPkgs = old.packages(), ask = FALSE)"
+RUN R -e "update.packages(ask = FALSE)"
 # Install CRAN packages
 # RUN R -e 'update.packages()'
 # RUN R -e 'install.packages("ragg", dep = T)'
@@ -112,13 +112,13 @@ RUN apt-get update && apt-get clean
 # RUN R -e 'library(glmGamPoi)'
 
 # Install Docker
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
-	add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" && \
-	apt update && \
- 	apt install -y docker-ce
+# RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
+# 	add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" && \
+# 	apt update && \
+#  	apt install -y docker-ce
 
-# Configuring Docker
-RUN usermod -aG docker root
+# # Configuring Docker
+# RUN usermod -aG docker root
 
  # Get server files
 COPY global.R /app/global.R
