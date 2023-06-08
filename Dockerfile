@@ -2,7 +2,7 @@
 FROM kirstlab/asc_seurat:dynverse_v2.2
 
 # Owner
-LABEL Wendell Jacinto Pereira <wendelljpereira@gmail.com>
+LABEL Maintainer="Sarayut (Nine) Winuthayanon, https://www.linkedin.com/in/winuthayanons/"
 SHELL ["/bin/bash", "-c"]
 
 # Set workdir
@@ -10,7 +10,7 @@ WORKDIR /app
 COPY www /app/www
 COPY R /app/R
 
-RUN apt-get update && apt-get install -y xml2 libxml2-dev libssl-dev && apt-get clean
+RUN apt-get update && apt-get -y upgrade && apt-get install -y binutils xml2 libxml2-dev libssl-dev && apt-get clean
 RUN apt-get install -y libcurl4-openssl-dev unixodbc-dev && apt-get clean
 RUN apt-get install -y gfortran
 RUN apt-get update && apt-get clean
@@ -20,6 +20,9 @@ RUN apt-get update && apt-get clean
 
 
 # Install CRAN packages
+RUN R -e 'update.packages()'
+# RUN R -e 'install.packages("ragg", dep = T)'
+# RUN R -e 'library(ragg)'
 # biocmanager
 RUN R -e 'install.packages("BiocManager", dep = T, version = "3.12")'
 RUN R -e 'library(BiocManager)'
