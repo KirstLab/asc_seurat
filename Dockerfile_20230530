@@ -17,8 +17,8 @@ RUN apt-get install -y libhdf5-dev
 RUN apt-get -y install libcairo2-dev libxt-dev libfontconfig1-dev
 RUN apt-get update && apt-get clean
 
-RUN R -e "update.packages(oldPkgs = old.packages(), ask = FALSE)"
-RUN R -e "update.packages(ask = FALSE)"
+# RUN R -e "update.packages(oldPkgs = old.packages(), ask = FALSE)"
+# RUN R -e "update.packages(ask = FALSE)"
 # Install CRAN packages
 # RUN R -e 'update.packages()'
 # RUN R -e 'install.packages("ragg", dep = T)'

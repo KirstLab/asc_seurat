@@ -27,4 +27,4 @@ if [ ! -d "www" ]; then
 fi
 
 # Open server
-# R -e "shiny::runApp('/app', host = '0.0.0.0', port = 3838, launch.browser = F)"
+R -e "shiny::runApp('/app', host = '0.0.0.0', port = 3838, launch.browser = F)"

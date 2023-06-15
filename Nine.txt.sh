@@ -197,3 +197,43 @@ singularity instance start -B user_work:/app/user_work -B var/run:/var/run \
 -B tmp:/tmp asc_seurat.sif asc_seurat
 singularity run -B user_work:/app/user_work -B var/run:/var/run \
 -B tmp:/tmp asc_seurat.sif
+
+
+docker build -t winuthayanon/asc_seurat:20230615 . -f Dockerfile_20230615
+docker push winuthayanon/asc_seurat:20230615
+docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
+-v /tmp:/tmp -d --name Asc_Seurat --rm -p 3838:3838 winuthayanon/asc_seurat:20230615
+docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
+-v /tmp:/tmp --name Asc_Seurat --rm -p 3838:3838 winuthayanon/asc_seurat:20230530
+docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
+-v /tmp:/tmp --name Asc_Seurat --rm -p 3838:3838 winuthayanon/asc_seurat:20230615
+
+docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
+-w /app/user_work \
+-it winuthayanon/asc_seurat:20230615 \
+R -e "shiny::runApp('/app', host = '0.0.0.0', port = 3838, launch.browser = FALSE)"
+
+docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
+-p 4949:4949 \
+-w /app/user_work \
+-it winuthayanon/asc_seurat:20230615 \
+R -e "shiny::runApp('/app', host = '0.0.0.0', port = 4949, launch.browser = FALSE)"
+
+docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
+-p 4949:4949 \
+-it winuthayanon/asc_seurat:20230615 \
+R -e "shiny::runApp('/app', host = '0.0.0.0', port = 4949, launch.browser = FALSE)"
+
+docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
+-it winuthayanon/asc_seurat:20230615 \
+R -e "shiny::runApp('/app', host = '0.0.0.0', port = 4848, launch.browser = FALSE)"
+
+# sudo singularity build asc_seurat.sif asc_seurat.def
+sudo singularity build --force asc_seurat.sif asc_seurat.def
+singularity inspect asc_seurat.sif
+singularity inspect -d asc_seurat.sif
+singularity inspect -r asc_seurat.sif
+singularity instance list
+singularity instance stop asc_seurat
+singularity run -B user_work:/app/user_work -B var/run:/var/run \
+-B tmp:/tmp asc_seurat.sif
