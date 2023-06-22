@@ -118,18 +118,9 @@ function(request) {
                    br(),
                    tags$hr(),
                    h2("Acknowledgments"),
-                   ## Adds the images
-                #    a(
-                #        img(src = 'University_of_Florida.png',
-                #            width = "30%",
-                #            align = "center",
-                #            style='border-right: 40px solid transparent'),
-                #        img(src = 'Universidade_de_Brasilia.png',
-                #            width = "20%",
-                #            align = "center",
-                #            style='border-right: 40px solid transparent'),
-                #    ),
-                #    tags$hr(),
+                    br(),
+                    p("The code has been adapted for execution within Singularity by", a(tags$a(href="https://www.linkedin.com/in/winuthayanons/", "Sarayut (Nine) Winuthayanon", target="_blank"))),
+                    br(),
                    p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
           ),
           

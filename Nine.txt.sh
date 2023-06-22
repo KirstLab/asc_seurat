@@ -219,14 +219,10 @@ docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.so
 -it winuthayanon/asc_seurat:20230615 \
 R -e "shiny::runApp('/app', host = '0.0.0.0', port = 4949, launch.browser = FALSE)"
 
-docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
+docker run -v "$(pwd)/nine:/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
 -p 4949:4949 \
 -it winuthayanon/asc_seurat:20230615 \
 R -e "shiny::runApp('/app', host = '0.0.0.0', port = 4949, launch.browser = FALSE)"
-
-docker run -v "$(pwd):/app/user_work" -v /var/run/docker.sock:/var/run/docker.sock \
--it winuthayanon/asc_seurat:20230615 \
-R -e "shiny::runApp('/app', host = '0.0.0.0', port = 4848, launch.browser = FALSE)"
 
 # sudo singularity build asc_seurat.sif asc_seurat.def
 sudo singularity build --force asc_seurat.sif asc_seurat.def
@@ -237,3 +233,27 @@ singularity instance list
 singularity instance stop asc_seurat
 singularity run -B user_work:/app/user_work -B var/run:/var/run \
 -B tmp:/tmp asc_seurat.sif
+
+# PORT=4848
+readonly PORT=$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
+echo ${PORT}
+SIF_FILE=asc_seurat.sif
+mkdir -p mydata
+singularity exec \
+  -B mydata:/app/user_work \
+  -B /var/run:/var/run \
+  --writable-tmpfs \
+  --cleanenv ${SIF_FILE} \
+  /app/init_app.sh && \
+  R -e "shiny::runApp('/app', host = '0.0.0.0', port = ${PORT}, launch.browser = FALSE)"
+
+readonly PORT=$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
+echo ${PORT}
+SIF_FILE=asc_seurat.sif
+mkdir -p mydata
+singularity exec \
+  -B mydata:/app/user_work \
+  -B /var/run:/var/run \
+  --writable-tmpfs \
+  --cleanenv ${SIF_FILE} \
+  /app/init_app.sh ${PORT}

@@ -21,10 +21,16 @@ if [ ! -d "RDS_files" ]; then
   mkdir RDS_files
 fi
 
-if [ ! -d "www" ]; then
-  # Create dir
-  cp -R /app/www .
-fi
+# if [ ! -d "www" ]; then
+#   # Create dir
+#   mkdir -p www
+#   cp /app/www/*.css www/
+# fi
 
 # Open server
-# R -e "shiny::runApp('/app', host = '0.0.0.0', port = 3838, launch.browser = F)"
+if [ -z "$1" ]; then
+  PORT=3838
+else
+  PORT="$1"
+fi
+R -e "shiny::runApp('/app', host = '0.0.0.0', port = ${PORT}, launch.browser = FALSE)"
