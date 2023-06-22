@@ -241,7 +241,7 @@ SIF_FILE=asc_seurat.sif
 mkdir -p mydata
 singularity exec \
   -B mydata:/app/user_work \
-  -B /var/run:/var/run \
+  -B var/run:/var/run \
   --writable-tmpfs \
   --cleanenv ${SIF_FILE} \
   /app/init_app.sh && \
@@ -250,10 +250,10 @@ singularity exec \
 readonly PORT=$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
 echo ${PORT}
 SIF_FILE=asc_seurat.sif
-mkdir -p mydata
+mkdir -p mydata var/run
 singularity exec \
   -B mydata:/app/user_work \
-  -B /var/run:/var/run \
+  -B var/run:/var/run \
   --writable-tmpfs \
   --cleanenv ${SIF_FILE} \
   /app/init_app.sh ${PORT}
