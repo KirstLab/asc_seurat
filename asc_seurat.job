@@ -51,7 +51,7 @@ To terminate the job:
 
 END
 
-SIF_FILE=asc_seurat.sif
+SIF_FILE=/storage/hpc/group/ircf/software/singularity_asc_seurat/asc_seurat.sif
 MYDATA=/storage/hpc/data/${USER}/mydata
 mkdir -p ${MYDATA}
 mkdir -p var/run
