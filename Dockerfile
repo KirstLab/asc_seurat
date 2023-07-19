@@ -14,10 +14,13 @@ RUN apt-get update --allow-releaseinfo-change && apt-get upgrade -y && apt-get c
 RUN apt-get remove -y binutils && apt-get clean
 RUN apt-get install -y xml2 libxml2-dev libssl-dev && apt-get clean
 RUN apt-get install -y libcurl4-openssl-dev unixodbc-dev && apt-get clean
-RUN apt-get install -y gfortran
 RUN apt-get update --allow-releaseinfo-change && apt-get clean
 RUN apt-get install -y libhdf5-dev
 RUN apt-get -y install libcairo2-dev libxt-dev libfontconfig1-dev
+# support libraries added tested with buld on mac, addresses tidyverse build issue, fftw3 added for "metap"
+RUN apt-get install -y build-essential
+RUN apt-get install -y libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+RUN apt-get install -y libgsl-dev
 RUN apt-get update && apt-get clean
 
 
@@ -29,6 +32,8 @@ RUN R -e 'library(BiocManager)'
 RUN R -e 'install.packages("tidyverse", dep = T)'
 RUN R -e 'library(tidyverse)'
 # seurat
+# * added gfortran overide to build-essential for newer package - tidyverse uses the older version
+RUN apt-get install -y gfortran
 RUN R -e 'install.packages("Seurat", dep = T)'
 RUN R -e 'library(Seurat)'
 RUN R -e 'install.packages("SeuratObject", dep = T)'
@@ -109,7 +114,6 @@ RUN R -e 'library(topGO)'
 # glmGamPoi
 RUN R -e 'BiocManager::install("glmGamPoi")'
 RUN R -e 'library(glmGamPoi)'
-RUN R -e 'library(tidyverse)'
 
 # Install Docker
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
