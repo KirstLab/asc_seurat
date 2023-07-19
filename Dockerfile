@@ -108,6 +108,11 @@ RUN R -e 'library(topGO)'
 RUN R -e 'BiocManager::install("glmGamPoi")'
 RUN R -e 'library(glmGamPoi)'
 
+# DESeq2
+RUN R -e 'BiocManager::install("DESeq2")'
+RUN R -e 'library(DESeq2)'
+
+
 # Install Docker
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
 	add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" && \
