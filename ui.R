@@ -1,5 +1,5 @@
-# Asc-Seurat
-# Version 2.2.1
+# SolusCell web app
+# Version 1.0
 set.seed(1407)
 
 suppressMessages( require("shiny") )
@@ -34,21 +34,23 @@ function(request) {
         ####################
         
         tags$head(
-            tags$link(rel = "stylesheet", type = "text/css", href = "asc_seurat.css")
+            tags$link(rel = "stylesheet", type = "text/css", href = "SolusCell_web_app.css")
         ),
         
         tags$head(
-            tags$style(HTML("
+            tags$style( HTML("
             p {
                 font-size:16px;
             }
-
+            
+            .nav-tabs {font-size: 20px}
+            
             .down-group {
                         border: 1px solid #ccc;
                         border-radius: 6px;
                         padding: 0px 5px;
                         margin: 5px -10px;
-                        background-color: #eadaf7;
+                        background-color: #f2f2f2;
             }
             
             .shiny-output-error-validation {
@@ -61,77 +63,24 @@ function(request) {
       
       # Sets the background color of the application
       setBackgroundColor(
-          color = c("#F7FBFF", "#d6c5e3"),
+          color = c("#F7FBFF", "#f2f9fc", "#f2fbff", "#d9f0fa", "#ccf0ff"),
           gradient = "radial",
           direction = c("top", "left")),
       
-      ########################
-      # Asc-Seurat interface #
-      ########################
+      ###############################
+      # SolusCell web app interface #
+      ###############################
       
-      titlePanel(title = "Asc-Seurat - Analytical single-cell Seurat-based web application"),
+      titlePanel( column( 12, a(
+          img(src = "SolusCell_logo.png",
+              width = "44%",
+              align = "left") ) ),
+          windowTitle="MyPage"
+      ),
+      
       br(),
       
       tabsetPanel(
-          
-          ######################
-          ## Introduction tab ##
-          ######################
-          
-          tabPanel("Introduction",
-                   
-                   h2("Introduction to Asc-Seurat"),
-                   br(),
-                   p("Asc-Seurat, pronounced \"ask Seurat\", is based on the popular R package \"Seurat\", from the Satija Lab. It includes many, but not all, features of the Seurat package."),
-                   p("It also takes advantage of \"Dynverse\", a collection of R packages that allows the execution of multiple trajectory inference models."),
-                   p("Finally, Asc-Seurat uses BioMart, through the biomaRt R package, to promote the functional annotation of genes from many species."),
-                   br(),
-                   
-                   p(
-                       "For more information, check Seurat's manual and vignettes",
-                       a(tags$a(href="https://satijalab.org/seurat/", "here,", target="_blank")),
-                       "and their publications",
-                       a(tags$a(href="https://satijalab.org/publications/", "here.", target="_blank")),
-                       "Also, check dynverse's documentation",
-                       a(tags$a(href="https://dynverse.org/", "here", target="_blank")),
-                       "and its publication",
-                       a(tags$a(href="https://doi.org/10.1038/s41587-019-0071-9", "here;", target="_blank")),
-                       "and BioMart's documentation",
-                       a(tags$a(href="https://www.ensembl.org/biomart/martview/dc4f7144c82d3d4b4c1bd8f27ca07b6c", "here,", target="_blank")),
-                       "and biomaRt's vignettes",
-                       a(tags$a(href="https://bioconductor.org/packages/release/bioc/html/biomaRt.html", "here.", target="_blank"))
-                   ),
-                   
-                   tags$hr(),
-                   h2("Tutorial and documentation"),
-                   br(),
-                   p("A step-by-step introduction of Asc-Seurat's functionalities is available at ", a(tags$a(href="https://asc-seurat.readthedocs.io/en/latest/index.html", "https://asc-seurat.readthedocs.io.", target="_blank")), ". Asc-Seurat is published on ", a(tags$a(href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-021-04472-2", "BMC Bioinformatics.", target="_blank"))),
-                   p("For questions or issues related to Asc-Seurat's functionalities, please visit", a(tags$a(href="https://github.com/KirstLab/asc_seurat", "our GitHub.", target="_blank"))),
-                   
-                   br(),
-                   
-                   p("Note that both Seurat and dynverse teams are also present on GitHub. For questions or issues related to Seurat's or dynverse's functionalities, please visit", a(tags$a(href="https://github.com/satijalab/seurat/issues", "Seurat's GitHub page", target="_blank")), "or", a(tags$a(href="https://github.com/dynverse/dyno/issues", "Dynverse's GitHub page.", target="_blank"))),
-                   tags$hr(),
-                   h2("Funding"),
-                   br(),
-                   p("Asc-Seurat was developed in the context of a project supported by the United States Department of Energy, Office of Science, Biological and Environmental Research program [DE-SC0018247]."),
-                   br(),
-                   tags$hr(),
-                   h2("Acknowledgments"),
-                   ## Adds the images
-                   a(
-                       img(src = 'University_of_Florida.png',
-                           width = "30%",
-                           align = "center",
-                           style='border-right: 40px solid transparent'),
-                       img(src = 'Universidade_de_Brasilia.png',
-                           width = "20%",
-                           align = "center",
-                           style='border-right: 40px solid transparent'),
-                   ),
-                   tags$hr(),
-                   p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
-          ),
           
           ######################################
           ###           One sample           ###
@@ -140,12 +89,7 @@ function(request) {
           tabPanel("One sample",
                    fluidRow(
                        br(),
-                       p(strong("Note that at any time, users can save a bookmark (purple button at the right bottom) that will save your parameter choices. Using the saved bookmark, it is possible to re-load all selected parameters and re-execute the analysis, to reproduce the results.")),
-                       br(),
-                       p("Choose the sample to be analyzed and the initial requirements to load the data. Note that cells that do not match the parameters will not be load."),
-                       p("These parameters are used to exclude low-quality cells and allow the data to load quickly. Users can add more restrictive parameters after visualizing the distributions in the next section."),
-                       p("Alternatively, it is possible to load a previously clustered dataset, saving some time by not running the complete analysis."),
-                       # p(strong("After selecting the parameters, click on the blue button to load the data.")),
+                       p("Choose the sample to be analyzed and the initial requirements to load the data."),
                        br(),
                        
                        column(width = 3,
@@ -153,8 +97,8 @@ function(request) {
                                   radioButtons("sample_tab1_options",
                                                "Run a new analysis or read a previously saved file?",
                                                choices = list("Run a new analysis" = 0,
-                                                              "Load file" = 1),
-                                               selected = c(0) )),
+                                                              "Load clustered data" = 1),
+                                               selected = c(1) )),
                               
                               conditionalPanel (
                                   condition = "input.sample_tab1_options == 0",
@@ -222,8 +166,7 @@ function(request) {
                            condition = "input.load_10X != 0",
                            
                            fluidRow(
-                               titlePanel("Genes targeted as mitochondrial"),
-                               p("The genes below were targeted by the parameter \"common identifier of mitochondrial genes\", set above."),
+                               titlePanel("Genes identified as mitochondrial"),
                                column(12,
                                       my_withSpinner( verbatimTextOutput("target_genes_mitho") )
                                )
@@ -233,11 +176,7 @@ function(request) {
                        fluidRow(
                            titlePanel("Screening plot to define filtering parameters"),
                            br(),
-                           p("Use this plot to define more restrictive parameters and exclude cells based on their number of expressed genes and the percentage of reads that map to the mitochondrial genome."),
-                           #   p("The parameters can be set on the right side of the plot and must be set using a higher value than the ones above. Otherwise, they will have no effect since the cells were already excluded."),
-                           #br(),
-                           p("After setting the parameters, click on \"Show/update plot of filtered data\" to visualize the data after filtering."),
-                           br(),
+                           p("Use the plot below to evaluate if defining more restrictive parameters is necessary, then select values for the boxes on the right. Next, click on \"Show/update plot of filtered data\"."),
                            br(),
                            column(width = 10,
                                   my_withSpinner( plotOutput("VlnPlot") )
@@ -245,10 +184,10 @@ function(request) {
                            column(width = 2,
                                   div(class = "option-group",
                                       numericInput("min_count",
-                                                   label = "Keep only cells that expressed at least this number of genes",
-                                                   value = 0),
+                                                   label = "Keep cells that expressed at least this number of genes",
+                                                   value = 1),
                                       numericInput("max_count",
-                                                   label = "Exclude any cell that expressed more than this number of genes (i.e. possible doublets)",
+                                                   label = "Exclude cells that expressed more than this number of genes (i.e., possible doublets)",
                                                    value = 10000)),
                                   
                                   numericInput_max_mito_perc("max_mito_perc", value = 100),
@@ -329,39 +268,48 @@ function(request) {
                        
                    ),
                    
-                   fluidRow(
-                       titlePanel("Clustering"),
+                   conditionalPanel(
+                       condition = "input.load_10X_rds == 0", # <<<<<<
                        
-                       conditionalPanel (
-                           condition = "input.sample_tab1_options == 0",
+                       fluidRow(
                            
-                           br(),
-                           p("Be aware that this parameter is central in the cluster definition. It is recommended to try different values and define the most appropriate value according to the expectations of the cell populations present in the sample."),
-                           p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), ":", em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
-                           br(),
-                           column(width = 3,
-                                  numericInput_resolution_clust("resolution_clust")
-                           ),
-                           column(width = 3,
-                                  actionButtonInput("run_clustering",
-                                                    HTML("Run the clustering analysis"))
-                           )
-                           
-                       ), # Fluid row
+                           conditionalPanel (
+                               condition = "input.sample_tab1_options == 0",
+                               titlePanel("Clustering"),
+                               
+                               br(),
+                               p("Be aware that this parameter is central in the cluster definition. It is recommended to try different values and define the most appropriate value according to the expectations of the cell populations present in the sample."),
+                               p("Quoting from", a(tags$a(href="https://satijalab.org/seurat/archive/v1.4/pbmc3k_tutorial.html", "Seurat's tutorial", target="_blank")), ":", em("\"We find that setting this parameter between 0.6-1.2 typically returns good results for single-cell datasets of around 3K cells. Optimal resolution often increases for larger datasets.\"")),
+                               br(),
+                               column(width = 3,
+                                      numericInput_resolution_clust("resolution_clust")
+                               ),
+                               column(width = 3,
+                                      actionButtonInput("run_clustering",
+                                                        HTML("Run the clustering analysis"))
+                               )
+                               
+                           ), # Fluid row
+                       ),
                    ),
-                   
                    
                    conditionalPanel(
                        condition = "input.run_clustering!= 0 || input.load_10X_rds!= 0",
                        
                        fluidRow(
                            titlePanel("Clustering plots"),
+                           
                            column(width = 6,
-                                  my_withSpinner( plotOutput("umap") )
+                                  div(id = "remove",
+                                      my_withSpinner( plotOutput("umap") )
+                                  )
                            ),
                            column(width = 6,
-                                  my_withSpinner( plotOutput("tSNE") )
+                                  div(id = "remove",
+                                      my_withSpinner( plotOutput("tSNE") )
+                                  )
                            )
+                           
                        ), # Fluid row
                        fluidRow(
                            br(),
@@ -390,10 +338,10 @@ function(request) {
                        
                        fluidRow(
                            titlePanel("Number of cells per cluster"),
-                           p("First row shows the cluster ID. The second row shows the number of cells per cluster."),
-                           column(12,
-                                  my_withSpinner( verbatimTextOutput("cluster_size") )
-                           )
+                           column(2,
+                                  div(class = "down-group", style = "font-size:150%", id = "remove",
+                                      my_withSpinner( tableOutput("cluster_size") )
+                                  ) )
                        ), # Fluid row
                        
                    ), # Ends conditional
@@ -537,7 +485,7 @@ function(request) {
                    fluidRow(
                        titlePanel("Expression of markers"),
                        br(),
-                       p("In this section, users can visualize the gene expression of selected genes (e.g., tissue markers). Start by loading a", strong("csv"), "file with at least two columns. The first column must be the gene ID, and the second is a grouping variable (e.g., the tissue name). A third column can be used to store the common name of the gene but is optional."),
+                       p("In this section, users can visualize the gene expression of selected genes. Start by loading a", strong("CSV"), "file with at least two columns. The first column must be the gene ID, and the second is a grouping variable (e.g., the cell type name or cluster number). A third column can be used to store the common name of the gene but is optional."),
                        br(),
                        column(width = 3,
                               fileInput_markers_list("markers_list"),
@@ -685,7 +633,7 @@ function(request) {
                    bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                    
                    tags$hr(),
-                   p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
+                   p(strong("SolusCell web app, version 1.0"), "- 2024.", align = "center")
                    # Ends page
           ),
           
@@ -1258,7 +1206,7 @@ function(request) {
                    bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
                    
                    tags$hr(),
-                   p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
+                   p(strong("SolusCell web app, version 1.0"), "- 2024.", align = "center")
           ), # ends tab
           
           ##############################
@@ -1740,94 +1688,6 @@ function(request) {
                    )
                    
           ),
-          
-          ################################
-          ##### Annotation - BioMart #####
-          ################################
-          
-          tabPanel("BioMart annotation",
-                   
-                   sidebarLayout(
-                       sidebarPanel(
-                           width = 3,
-                           h5("BioMart parameters"),
-                           my_withSpinner(uiOutput("dbselection"), hide_ui = T),
-                           my_withSpinner(uiOutput("datasetselection"), hide_ui = T),
-                           my_withSpinner(uiOutput("filterselection"), hide_ui = T),
-                           my_withSpinner(uiOutput("attpageselection"), hide_ui = T),
-                           my_withSpinner(uiOutput("attselection"), hide_ui = T),
-                           fileInput("genescsv", "Input genes for annotation (csv):",
-                                     multiple = FALSE, placeholder = "Please select your csv file containing the gene ids"),
-                           uiOutput("geneselection"),
-                           radioButtons("go_enrichment_analysis",
-                                        "Do you want to perform a GO enrichment analysis?",
-                                        choices = list("Yes" = 1,
-                                                       "No" = 0),
-                                        selected = 0),
-                           conditionalPanel(
-                               condition = "input.go_enrichment_analysis == 1",
-                               h5("GO enrichment parameters"),
-                               fileInput("universecsv", "Input gene universe file in csv:",
-                                         multiple = FALSE, placeholder = "Please select your csv file containing the gene universe ids")
-                           )
-                       ),
-                       
-                       ###########################################
-                       ### Main panel set up (usually outputs) ###
-                       ###########################################
-                       mainPanel(
-                           width = 9,
-                           h3("About"),
-                           markdown("This annotation module is based on the [biomaRt R package](https://www.bioconductor.org/packages/devel/bioc/vignettes/biomaRt/inst/doc/accessing_ensembl.html) that is tailored to access the data available in Ensembl, or Phytozome, rapidly. The package needs an active internet connection. Users can face delays while loading the complete list of parameters in the sidebar and sometimes not get annotation results due to connection problems to the biomaRt server."),
-                           markdown("A basic understanding of how BioMart queries are built is required to select the filters and attributes needed. Visit biomaRt’s [vignettes](https://www.bioconductor.org/packages/devel/bioc/vignettes/biomaRt/inst/doc/accessing_ensembl.html) for an overview."),
-                           markdown("Please make sure that your query species is available in the database and that its dataset is appropriately selected in the dataset selection menu that is available in the sidebar.."),
-                           my_withSpinner(uiOutput("biomartresultsheader"), hide_ui = T),
-                           my_withSpinner(uiOutput("triggerbutton"), hide_ui = T),
-                           HTML(paste("<br/>")),
-                           my_withSpinner(DTOutput("biomartresults"), hide_ui = T),
-                           conditionalPanel(
-                               condition = "input.go_enrichment_analysis == 1",
-                               h4("GO enrichment analysis:"),
-                               my_withSpinner(uiOutput("gobutton"), hide_ui = T),
-                               HTML(paste("<br/>")),
-                               my_withSpinner(DTOutput("goresults"), hide_ui = T),
-                               HTML(paste("<br/>")),
-                               my_withSpinner(plotOutput("goplot"), hide_ui = T),
-                               HTML(paste("<br/>")),
-                               conditionalPanel(
-                                   condition = "output.plotbuilt", # Appears after plot is built
-                                   fluidRow(
-                                       column(3,
-                                              div(class = "down-group",
-                                                  selectInput("goplottest",
-                                                              "Statistical test to plot",
-                                                              choices=list("Kolmogorov-Smirnov"  = "KS",
-                                                                           "Fisher"              = "weightFisher"),
-                                                              selected="Kolmogorov-Smirnov",
-                                                              multiple=FALSE,
-                                                              selectize=TRUE),
-                                                  numericInput("gontop", "Plot (N) top GOs per category", 5, min = 1, step = 1)
-                                              )),
-                                       column(3,
-                                              numericInput_plot_height("goplotheight", value=10),
-                                              numericInput_plot_width("goplotwidth", value=10)),
-                                       column(3,
-                                              selectInput_plot_res("goplotdpi"),
-                                              selectInput_plot_format("goplotdevice")),
-                                       downloadButton("goplot_down", HTML("Download Plot"))
-                                   )
-                               ),
-                               HTML(paste("<br/>"))
-                               
-                           ),
-                           
-                           bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
-                           
-                           tags$hr(),
-                           p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
-                       )
-                   )
-          )
           
       ), ## Closing the ui
       width = 12)

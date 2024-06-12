@@ -70,7 +70,7 @@ numericInput_max_mito_perc <- function(id, value = 2) {
     
     div(class = "option-group",
         numericInput(id,
-                     label = "Exclude any cell with more than this percentage of transcripts belonging to the mitochondrial genes",
+                     label = "Exclude cells with more than this percentage of transcripts belonging to mitochondrial genes",
                      value = value)
     )
     
@@ -277,6 +277,6 @@ input_project_name <-  function(id){
     div(class = "option-group",
         textInput(id,
                   label = "Project name",
-                  value = ""))
+                  value = "my_project"))
     
 }

@@ -1,5 +1,5 @@
-# Asc-Seurat
-# Version 2.2.1
+# SolusCell web app
+# Version 1.0
 set.seed(1407)
 options(shiny.sanitize.errors = FALSE)
 options(max.print=100)
@@ -35,11 +35,6 @@ suppressMessages( require(multtest) )
 suppressMessages( require(biomaRt) )
 suppressMessages( require(topGO) )
 
-# dynverse packages
-suppressMessages( require(dynplot) )
-suppressMessages( require(dynwrap) )
-suppressMessages( require(dynfeature) )
-
 ## New packages in version 2.1
 suppressMessages( require(glmGamPoi) ) # Bioconductor
 ##
@@ -72,14 +67,6 @@ if (dir.exists('/app/user_work')) {
     source("R/integration_SCTransform.R") 
 }
 
-###########################
-### Load phytozome mart ###
-###########################
-phytozome_mart <- new("Mart",
-                      biomart = "phytozome_mart",
-                      vschema = "zome_mart",
-                      host    = "https://phytozome.jgi.doe.gov:443/biomart/martservice")
-
 function(input, output, session) {
     
     if (dir.exists('/app/user_work')) {
@@ -89,7 +76,6 @@ function(input, output, session) {
     #####################################
     ######   Tab 1 - Clustering    ######
     #####################################
-    
     output$select_sample_tab1 = renderUI({
         
         dir_list <- list.dirs('./data', recursive=FALSE)
@@ -117,6 +103,16 @@ function(input, output, session) {
                 options = list(`actions-box` = TRUE)
             ))
         
+    })
+    
+    is_load_10X_rds_clicked <- reactiveVal(FALSE)
+    observeEvent(input$load_10X_rds, {
+        is_load_10X_rds_clicked(TRUE)
+    })
+    
+    is_run_clustering_clicked <- reactiveVal(FALSE)
+    observeEvent(input$run_clustering, {
+        is_run_clustering_clicked(TRUE)
     })
     
     single_cell_data_reac <- eventReactive( input$load_10X, {
@@ -395,7 +391,7 @@ function(input, output, session) {
         
     })
     
-    observeEvent(c(input$run_pca, input$rerun_after_filtering), {
+    observeEvent(c(input$rerun_after_filtering), {
         
         output$n_of_PCAs <- renderPlot({
             
@@ -404,6 +400,21 @@ function(input, output, session) {
             Seurat::ElbowPlot(data_sc, ndims = 50, reduction = "pca")
             
         })
+        
+    })
+    
+    # ## This remove the plots and reset the PCA value when the user select or exclude clusters. The goal is to make the user evaluate the parameters before executing
+    is_remove_plots_clicked <- reactiveVal(FALSE)
+    
+    observeEvent(input$rerun_after_filtering, {
+        is_remove_plots_clicked(TRUE)
+    })
+    
+    observeEvent(input$rerun_after_filtering, {
+        
+        if ( is_remove_plots_clicked() ) {
+            updateNumericInput(session, "n_of_PCs", value = NA) ## <<<<
+        }
         
     })
     
@@ -491,15 +502,25 @@ function(input, output, session) {
         
     })
     
+    # set reactive values for data, initialize, and plot type
+    rv = reactiveValues(type1 = NULL, type2 = NULL, PCs = NULL)
+    
+    # set plot type at the time "go" was clicked and data
+    observeEvent(input$run_clustering, {
+        rv$type2 = "umap"
+        rv$type3 = "tsne"
+        rv$PCs = input$n_of_PCs 
+    })
+    
     single_cell_data_reso_umap <- eventReactive(  list(input$run_clustering, input$load_10X_rds), {
         
-        if ( input$sample_tab1_options == 1) { # Load file
+        if ( input$sample_tab1_options == 1 & is_load_10X_rds_clicked() ) { # Load file
             
             showNotification("Loading the data",
                              id = "m9",
                              duration = NULL)
             
-            sc_data <- readRDS( paste0("./RDS_files/", req(input$select_sample_tab1_rds)) )
+            sc_data <- readRDS( paste0("./RDS_files/", req(input$select_sample_tab1_rds) ) )
             
             validate(need("seurat_clusters" %in% colnames(sc_data@meta.data),
                           "Clustering was not detected in the rds file", ""))
@@ -508,56 +529,78 @@ function(input, output, session) {
             
         } else if (input$sample_tab1_options == 0 ) { # new analysis
             
-            shinyFeedback::feedbackWarning("n_of_PCs", is.na(input$n_of_PCs), "Required value")
-            shinyFeedback::feedbackWarning("resolution_clust", is.na(input$resolution_clust), "Required value")
-            
-            req(input$n_of_PCs)
-            req(input$resolution_clust)
-            
-            showNotification("Running the clustering step",
-                             duration = NULL,
-                             id = "m6")
-            
-            data_sc <- req( single_cell_data_pca() )
-            
-            data_sc <- Seurat::FindNeighbors(data_sc, dims = 1:input$n_of_PCs)
-            
-            data_sc <- Seurat::FindClusters(data_sc, resolution = input$resolution_clust)
-            
-            sc_data <- Seurat::RunUMAP(data_sc, dims = 1:input$n_of_PCs)
-            sc_data <- Seurat::RunTSNE(sc_data, dims = 1:input$n_of_PCs)
-            
+            if (is.na(input$n_of_PCs) || input$n_of_PCs != rv$PCs || is.null(rv$PCs)) {
+                NULL
+            }  else {
+                
+                shinyFeedback::feedbackWarning("n_of_PCs", is.na(input$n_of_PCs), "Required value")
+                shinyFeedback::feedbackWarning("resolution_clust", is.na(input$resolution_clust), "Required value")
+                
+                req(input$n_of_PCs)
+                req(input$resolution_clust)
+                
+                showNotification("Running the clustering step",
+                                 duration = NULL,
+                                 id = "m6")
+                
+                data_sc <- req( single_cell_data_pca() )
+                
+                data_sc <- Seurat::FindNeighbors(data_sc, dims = 1:isolate(input$n_of_PCs) )
+                
+                data_sc <- Seurat::FindClusters(data_sc, resolution = input$resolution_clust)
+                
+                sc_data <- Seurat::RunUMAP(data_sc, dims = 1:isolate(input$n_of_PCs))
+                sc_data <- Seurat::RunTSNE(sc_data, dims = 1:isolate(input$n_of_PCs))
+                
+            }
         }
         sc_data
     })
     
+    
+    
     observeEvent( list(input$run_clustering, input$load_10X_rds), {
         
-        output$tSNE <- renderPlot({
+        if ( is_load_10X_rds_clicked() | is_run_clustering_clicked() ) {
             
-            Seurat::DimPlot(req( single_cell_data_reso_umap() ), reduction = "tsne", label = T, pt.size = .1)
+            output$tSNE <- renderPlot({
+                input$run_clustering
+
+                if (is.na(input$n_of_PCs) || input$n_of_PCs != rv$PCs || is.null(rv$PCs)) {
+                    NULL
+                }  else {
+                
+                Seurat::DimPlot( req( single_cell_data_reso_umap() ), reduction = "tsne", label = T, pt.size = .1)
+                
+                }
+            })
             
-        })
-        
-        output$umap <- renderPlot({
+            output$umap <- renderPlot({
+                input$run_clustering
+                if (is.na(input$n_of_PCs) || input$n_of_PCs != rv$PCs || is.null(rv$PCs)) {
+                    NULL
+                }  else {
+                Seurat::DimPlot(req( single_cell_data_reso_umap()), reduction = "umap", label = T, pt.size = .1)
+                }
+            })
             
-            Seurat::DimPlot(req( single_cell_data_reso_umap()), reduction = "umap", label = T, pt.size = .1)
-            
-        })
-        
-        output$cluster_size <-  renderPrint({
-            
-            sing_cell_data <- req( single_cell_data_reso_umap() )
-            
-            sc_meta <- as.data.frame(sing_cell_data[[]])
-            sc_meta$cellcluster <- base::rownames(sc_meta)
-            sc_meta <- sc_meta[, c("cellcluster", "seurat_clusters")]
-            
-            on.exit(removeNotification(id = "m6"), add = TRUE)
-            
-            base::table(sc_meta$seurat_clusters)
-        })
-        
+            output$cluster_size <-  renderTable({
+                
+                sing_cell_data <- req( single_cell_data_reso_umap() )
+                
+                sc_meta <- as.data.frame(sing_cell_data[[]])
+                sc_meta$cellcluster <- base::rownames(sc_meta)
+                sc_meta <- sc_meta[, c("cellcluster", "seurat_clusters")]
+                
+                on.exit(removeNotification(id = "m6"), add = TRUE)
+                
+                table_n <- as.data.frame(base::table(sc_meta$seurat_clusters))
+                table_n %>%
+                    dplyr::rename(Cluster = "Var1",
+                                  `N. of cells` = "Freq")
+                
+            })
+        }
     })
     
     output$p3_down <- downloadHandler(
@@ -872,9 +915,10 @@ function(input, output, session) {
     
     sc_data_av_react <- eventReactive(input$run_heatmap, {
         
-        sc_data_av <- Seurat::AverageExpression( req( single_cell_data_reso_umap() ),
-                                                 assays = "RNA",
-                                                 slot = input$slot_selection_heatmap)
+        sc_data_av <- Seurat::AggregateExpression( req( single_cell_data_reso_umap() ),
+                                                   assays = "RNA"#,
+                                                   #layer = input$slot_selection_heatmap
+        )
         
         sc_data_av <- sc_data_av[[1]]
         
@@ -922,6 +966,7 @@ function(input, output, session) {
             
             req(heat_map_prep())
             heat_map_prep <- heat_map_prep()
+            heat_map_prep <- as(heat_map_prep, "sparseMatrix") 
             
             ComplexHeatmap::Heatmap(heat_map_prep, border = TRUE,
                                     rect_gp = gpar(col = "white", lwd = 2),
@@ -965,7 +1010,10 @@ function(input, output, session) {
                                  width <- as.numeric( req( input$p4_width) )
                                  res <- as.numeric(input$p4_res)
                                  
-                                 p <- ComplexHeatmap::Heatmap(req( heat_map_prep() ), border = TRUE,
+                                 heat_map_prep <- req( heat_map_prep() )
+                                 heat_map_prep <- as(heat_map_prep, "sparseMatrix")
+                                 
+                                 p <- ComplexHeatmap::Heatmap(heat_map_prep, border = TRUE,
                                                               rect_gp = gpar(col = "white", lwd = 2),
                                                               column_title = "Clusters",
                                                               column_title_side = "bottom",
@@ -1099,7 +1147,7 @@ function(input, output, session) {
                     suppressMessages( Seurat::FeaturePlot(sc_data,
                                                           cols = c("lightgrey", "red"),
                                                           features = features[my_i],
-                                                          slot = input$slot_selection_feature_plot,
+                                                          layer = input$slot_selection_feature_plot,
                                                           reduction = "umap") +
                                           scale_colour_gradient2(limits=c(minimal, maximal),
                                                                  midpoint = maximal / 2,
@@ -1120,7 +1168,7 @@ function(input, output, session) {
                     suppressMessages( Seurat::FeaturePlot(sc_data,
                                                           cols = c("lightgrey", "red"),
                                                           features = features[my_i],
-                                                          slot = input$slot_selection_feature_plot,
+                                                          layer = input$slot_selection_feature_plot,
                                                           reduction = "umap") +
                                           scale_colour_gradient2(limits=c(minimal, maximal),
                                                                  midpoint = maximal / 2,
@@ -1143,7 +1191,7 @@ function(input, output, session) {
                     
                     Seurat::VlnPlot(sc_data,
                                     features = features[my_i],
-                                    slot = input$slot_selection_feature_plot)
+                                    layer = input$slot_selection_feature_plot)
                     
                 })
                 
@@ -1227,7 +1275,7 @@ function(input, output, session) {
                              p <- suppressMessages(Seurat::FeaturePlot(sc_data,
                                                                        cols = c("lightgrey", "red"),
                                                                        features = genes[i],
-                                                                       slot = input$slot_selection_feature_plot,
+                                                                       layer = input$slot_selection_feature_plot,
                                                                        reduction = "umap") +
                                                        scale_colour_gradient2(limits=c(minimal, maximal),
                                                                               midpoint = maximal / 2,
@@ -1249,7 +1297,7 @@ function(input, output, session) {
                              
                              p <- Seurat::VlnPlot(sc_data,
                                                   features = genes[i],
-                                                  slot = input$slot_selection_feature_plot)
+                                                  layer = input$slot_selection_feature_plot)
                              
                              ggplot2::ggsave(file,
                                              p,
@@ -1290,6 +1338,7 @@ function(input, output, session) {
                          id = "")
         
     })
+    
     
     #####################################
     ### Tab 2 - Integration pipeline ####
@@ -1753,8 +1802,6 @@ function(input, output, session) {
         
         sc_data
     })
-    
-    ########################################################
     
     observeEvent(c(input$run_pca_tab2_1,
                    input$run_pca_tab2_2,
@@ -2351,9 +2398,10 @@ function(input, output, session) {
     
     sc_data_av_react_tab2 <- eventReactive(input$run_heatmap_tab2, {
         
-        sc_data_av_tab2  <- Seurat::AverageExpression(req( single_cell_data_clustered_to_DE_vis() ),
-                                                      assays = "RNA",
-                                                      slot = input$slot_selection_heatmap_tab2)
+        sc_data_av_tab2  <- Seurat::AggregateExpression(req( single_cell_data_clustered_to_DE_vis() ),
+                                                        assays = "RNA"#,
+                                                        #layer = input$slot_selection_heatmap_tab2
+        )
         
         sc_data_av_tab2 <- sc_data_av_tab2[[1]]
         
@@ -2400,6 +2448,8 @@ function(input, output, session) {
         output$heat_map_tab2 <- renderPlot({
             
             heat_map_prep_tab2 <- req( heat_map_prep_tab2() )
+            
+            heat_map_prep_tab2 <- as(heat_map_prep_tab2, "sparseMatrix")
             
             ComplexHeatmap::Heatmap(heat_map_prep_tab2, border = TRUE,
                                     rect_gp = gpar(col = "white", lwd = 2),
@@ -2462,7 +2512,7 @@ function(input, output, session) {
                                  res <- as.numeric(input$p8_res)
                                  
                                  heat_map_prep_tab2 <- req( heat_map_prep_tab2() )
-                                 
+                                 heat_map_prep_tab2 <- as(heat_map_prep_tab2, "sparseMatrix")
                                  p <- ComplexHeatmap::Heatmap(heat_map_prep_tab2, border = TRUE,
                                                               rect_gp = gpar(col = "white", lwd = 2),
                                                               column_title = "Clusters",
@@ -2678,7 +2728,7 @@ function(input, output, session) {
                              
                              p <- suppressMessages(Seurat::FeaturePlot(sc_data,
                                                                        features = genes[i],
-                                                                       slot = input$slot_selection_feature_plot_tab2,
+                                                                       layer = input$slot_selection_feature_plot_tab2,
                                                                        reduction = "umap") +
                                                        scale_colour_gradient2(limits=c(minimal, maximal),
                                                                               midpoint = maximal / 2,
@@ -2700,7 +2750,7 @@ function(input, output, session) {
                              
                              p <- Seurat::VlnPlot(sc_data,
                                                   features = genes[i],
-                                                  slot = req(input$slot_selection_feature_plot_tab2) )
+                                                  layer = req(input$slot_selection_feature_plot_tab2) )
                              
                              ggplot2::ggsave(file,
                                              p,
@@ -2760,7 +2810,7 @@ function(input, output, session) {
                                                    features = genes[i],
                                                    split.by = "treat",
                                                    assay = "RNA",
-                                                   slot = req(input$slot_selection_feature_plot_tab2) )
+                                                   layer = req(input$slot_selection_feature_plot_tab2) )
                              
                              ggplot2::ggsave(file,
                                              p2,
@@ -3476,10 +3526,6 @@ function(input, output, session) {
         features
     })
     
-    ##################################################
-    ### Expression plots - Using markers as input ####
-    ##################################################
-    
     observeEvent( c(input$dynverse_def_imp_genes, input$run_heatmap_tab3), {
         
         # This calculate the height of the plot based on the n of genes
@@ -3888,10 +3934,6 @@ function(input, output, session) {
                          id = "")
     })
     
-    #################################################################
-    ### Expression plots - Using dynverse most relevant features ####
-    #################################################################
-    
     observeEvent(c(input$run_heatmap_tab3_dynverse, input$dynverse_def_imp_genes), {
         
         # This calculate the height of the plot based on the n of genes
@@ -4289,569 +4331,569 @@ function(input, output, session) {
         }
     )
     
-    ############################
-    ### Annotation - BioMart ###
-    ############################
-    
-    ##############################
-    ### Load gene ids from csv ###
-    ##############################
-    genes_list <- reactive({
-        req(input$genescsv) # Wait for file
-        as.list(read.csv(input$genescsv$datapath, stringsAsFactors = FALSE)[,1])
-    })
-    
-    #########################################
-    ### Create a database selection input ###
-    #########################################
-    output$dbselection <- renderUI({
-        shinyWidgets::pickerInput("dbselection",
-                                  "Select BioMart db:",
-                                  choices  = c('', 'PHYTOZOME', 'plants_mart', 'ENSEMBL_MART_ENSEMBL', 'ENSEMBL_MART_MOUSE',
-                                               'ENSEMBL_MART_SNP', 'ENSEMBL_MART_FUNCGEN'),
-                                  multiple = FALSE,
-                                  options  = pickerOptions(actionsBox = TRUE))
-    })
-    
-    #########################################
-    ### Create the selected mart variable ###
-    #########################################
-    selectedMart <- reactive({
-        req(input$dbselection != '') # wait for a database to be selected
-        
-        # check if database is phytozome or ensembl
-        # they have different hosts
-        if (as.character(req(input$dbselection) == 'PHYTOZOME')) {
-            phytozome_mart
-        } else if (as.character(req(input$dbselection) == 'plants_mart')) {
-            
-            useMart(as.character(req(input$dbselection)), host = "plants.ensembl.org")
-        } else {
-            
-            useMart(as.character(req(input$dbselection)), host = "www.ensembl.org")
-        }
-    })
-    
-    #######################################
-    ### Show Biomart available datasets ###
-    ### (for the selected database)     ###
-    #######################################
-    
-    ######################################
-    ### Get available biomaRt datasets ###
-    ######################################
-    biomartdatasets <- reactive({
-        req(input$dbselection != '') # wait for a database to be selected
-        withProgress(
-            message = "Getting available datasets in the database.",
-            value   = 0.5,
-            {
-                retry(listDatasets(selectedMart())$dataset) # try connection 5 times
-            }
-        )
-    })
-    
-    ########################################
-    ### Create a dataset selection input ###
-    ########################################
-    output$datasetselection <- renderUI({
-        req(input$dbselection, biomartdatasets()) # wait for db and dataset to be selected
-        shinyWidgets::pickerInput("datasetselection",
-                                  "Select BioMart dataset:",
-                                  choices  = c('', biomartdatasets()),
-                                  multiple = FALSE,
-                                  options  = pickerOptions(actionsBox = TRUE))
-    })
-    
-    #####################################
-    ### Get available biomaRt filters ###
-    #####################################
-    datasetfilters <- reactive({
-        if (input$datasetselection != '') {
-            # This if statement makes the server wait for a dataset
-            # to be chosen in order to search for available filters.
-            withProgress(
-                message = "Getting available filters in the selected dataset.",
-                value   = 0.5,
-                {
-                    retry(
-                        listFilters(useDataset(as.character(input$datasetselection), mart = selectedMart()))$name
-                    ) # try connection 5 times
-                }
-            )
-        } else {
-            c('')
-        }
-    })
-    
-    #######################################
-    ### Create a filter selection input ###
-    #######################################
-    output$filterselection <- renderUI({
-        req(input$datasetselection != '', datasetfilters()) # wait for db and dataset to be selected
-        
-        # check if database is phytozome or ensembl
-        # they have different filters
-        if (as.character(input$dbselection == 'PHYTOZOME'))  {
-            dt_filter <- "gene_name_filter"
-        } else {
-            dt_filter <- "ensembl_gene_id"
-        }
-        dt_filter
-        
-        shinyWidgets::pickerInput("filterselection",
-                                  "Select a BioMart gene filter:",
-                                  choices  = c('', datasetfilters()),
-                                  multiple = FALSE,
-                                  selected = dt_filter,
-                                  options  = pickerOptions(actionsBox = TRUE))
-    })
-    
-    ##############################################
-    ### Get available biomaRt attributes pages ###
-    ##############################################
-    attpages <- reactive({
-        req(input$datasetselection != '') # wait for a dataset to be selected
-        withProgress(
-            message = "Getting available attribute pages in the selected dataset.",
-            value   = 0.5,
-            {
-                retry(
-                    attributePages(useDataset(as.character(input$datasetselection), mart = selectedMart()))
-                ) # try connection 5 times
-            }
-        )
-    })
-    
-    #################################################
-    ### Create an ui to select available attPages ###
-    #################################################
-    output$attpageselection <- renderUI({
-        req(input$datasetselection, attpages()) # wait for dataset to be selected
-        shinyWidgets::pickerInput("attpageselection", "Select BioMart attributes Page:",
-                                  choices  = attpages(),
-                                  multiple = FALSE,
-                                  options  = pickerOptions(actionsBox = TRUE))
-    })
-    
-    ########################################
-    ### Get available biomaRt attributes ###
-    ########################################
-    biomartatts <- reactive({
-        req(input$datasetselection != '', input$attpageselection) # wait for a dataset to be selected
-        withProgress(
-            message = "Getting available attributes in the selected attribute page.",
-            value   = 0.5,
-            {
-                retry(
-                    as.list(
-                        biomaRt::listAttributes(
-                            mart = useDataset(as.character(input$datasetselection), mart = selectedMart()),
-                            page = as.character(input$attpageselection)) %>%
-                            unique()
-                    )
-                ) # try connection 5 times
-            }
-        )
-    })
-    
-    ############################################
-    ### Create an attributes selection input ###
-    ############################################
-    output$attselection <- renderUI({
-        req(biomartatts()) # wait for list of available attributes
-        
-        # check if database is phytozome or ensembl
-        # they have different attributes
-        if (as.character(input$dbselection == 'PHYTOZOME'))  {
-            att_list <- c("gene_name_filter","gene_chrom_start","gene_chrom_end","gene_description")
-        } else {
-            att_list <- c("ensembl_gene_id","start_position","end_position","description")
-        }
-        
-        # render shinyWidgets::pickerInput
-        shinyWidgets::pickerInput("attselection",
-                                  "Select dataset attributes:",
-                                  choices  = biomartatts(),  multiple = TRUE,
-                                  selected = att_list,
-                                  options  = pickerOptions(actionsBox = TRUE))
-    })
-    
-    ########################################
-    ### Select desired genes to annotate ###
-    ########################################
-    output$geneselection <- renderUI({
-        req(genes_list()) # wait for genes
-        shinyWidgets::pickerInput("geneselection",
-                                  "Select genes to annotate:",
-                                  choices  = genes_list(),
-                                  multiple = TRUE,
-                                  selected = genes_list(),
-                                  options  = pickerOptions(actionsBox = TRUE))
-    })
-    
-    ####################################
-    ### Create button to trigger run ###
-    ####################################
-    output$triggerbutton <- renderUI({
-        req(input$attselection, input$geneselection != '') # wait for complete selection
-        actionButton("annotate", "Annotate selected genes!")
-    })
-    
-    #############################
-    ### BioMart output header ###
-    #############################
-    output$biomartresultsheader <- renderUI({
-        req(input$attselection, input$geneselection != '') # wait for complete selection
-        h4("BioMart results:")
-    })
-    
-    ######################################################
-    ### Create reactive data.frame to render datatable ###
-    ######################################################
-    annotation_biomart <- eventReactive(input$annotate, {
-        
-        withProgress(
-            message = "Accessing biomart and annotating selected genes.",
-            value   = 0.5,
-            {
-                retry(
-                    biomaRt::getBM(
-                        attributes = as.character(req(input$attselection)),
-                        filters    = as.character(input$filterselection),
-                        values     = as.character(req(input$geneselection)),
-                        mart       = useDataset(as.character(input$datasetselection), mart = selectedMart()),
-                        useCache   = FALSE
-                    )
-                ) # try connection 5 times
-            }
-        )
-    })
-    
-    ############################
-    ### BioMart output table ###
-    ############################
-    output$biomartresults <- renderDT(server = FALSE, {
-        req(annotation_biomart()) # Input requirement
-        
-        # Load annotation
-        anot_df <- annotation_biomart()
-        
-        # Render DT
-        datatable(anot_df,
-                  rownames = F,
-                  selection = 'none',
-                  filter = 'none',
-                  extensions = 'Buttons',
-                  options = list(pageLength = 5,
-                                 lengthMenu = c(5, 10, 15, 20, 50),
-                                 scrollX = "100%",
-                                 autoWidth = FALSE,
-                                 fixedHeader = TRUE,
-                                 searching= FALSE,
-                                 dom = 'Blfrtip',
-                                 buttons = c('copy', 'csv', 'excel')))
-    })
-    
-    #####################################################
-    ### Grab gene universe for GO enrichment analysis ###
-    #####################################################
-    gene_universe <- reactive({
-        req(input$universecsv) # wait for file
-        as.list(read.csv(input$universecsv$datapath, stringsAsFactors = FALSE)[,1])
-    })
-    
-    ####################################
-    ### Create button to trigger run ###
-    ####################################
-    output$gobutton <- renderUI({
-        req(gene_universe(), input$geneselection, input$filterselection) # wait for genes
-        att_has_id(as.vector(genes_list()), as.vector(gene_universe()))
-        actionButton("goenrich", "Run GO enrichment analysis!")
-    })
-    
-    ##########################################################################
-    ### Define right biomaRt attribute that correctly matches the gene ids ###
-    ##########################################################################
-    attselectionGO <- reactive({
-        req(biomartatts()) # wait for attributes
-        if (as.character(input$dbselection == 'PHYTOZOME'))  {
-            att <- "gene_name1"
-        } else {
-            att <- "ensembl_gene_id"
-        }
-        att
-    })
-    
-    #######################################
-    ### Get GO information for universe ###
-    #######################################
-    goInfo <- eventReactive(input$goenrich, {
-        req(gene_universe(), attselectionGO()) # wait for genes
-        withProgress(
-            message = "Retrieving GO information for the given gene universe.",
-            value   = 0.5,
-            {
-                retry(
-                    biomaRt::getBM(
-                        attributes = c(as.character(attselectionGO()), "go_id"),
-                        filters    = as.character(input$filterselection),
-                        values     = as.character(req(gene_universe())),
-                        mart       = useDataset(as.character(input$datasetselection), mart = selectedMart()),
-                        useCache   = FALSE
-                    )
-                ) # try connection 5 times
-            }
-        )
-        
-    })
-    
-    #########################################
-    ### Get GO topGO package for universe ###
-    #########################################
-    topgo_universe <- reactive({
-        
-        req(goInfo()) # wait for data
-        
-        # Get GO information (together with gene ids/names)
-        uni_GOs <-
-            goInfo()
-        
-        # Write in temporary file
-        write.table(
-            uni_GOs,
-            file = "/tmp/tmp_go_universe.txt",
-            sep  = "\t",
-            quote = FALSE,
-            append = FALSE,
-            row.names = FALSE,
-            col.names = FALSE
-        )
-        
-        # Load temporary file for topGO
-        readMappings(file = "/tmp/tmp_go_universe.txt") # reads a named list
-        
-    })
-    
-    ##############################
-    ### GO enrichment analysis ###
-    ##############################
-    enrichedGO <- reactive({
-        req(topgo_universe(), input$geneselection != '') # Input requirement
-        
-        # check if identification is main ID
-        if (as.character(input$filterselection) != as.character(attselectionGO())) {
-            
-            # target genes
-            withProgress(
-                message = "Retrieving GO information for the selected target genes.",
-                value   = 0.5,
-                {
-                    tg_genes <- retry(
-                        as.list(
-                            biomaRt::getBM(
-                                attributes = attselectionGO(),
-                                filters    = as.character(input$filterselection),
-                                values     = as.character(input$geneselection),
-                                mart       = useDataset(as.character(input$datasetselection), mart = selectedMart()),
-                                useCache   = FALSE
-                            )[,1])
-                    ) # try connection 5 times
-                }
-            )
-            
-            # universe genes
-            uni_genes <- as.list(goInfo()[,1])
-            
-        } else {
-            tg_genes  <- input$geneselection
-            uni_genes <- gene_universe()
-        }
-        
-        # Load target gene ids
-        target_genes <- as.character(tg_genes)
-        geneList <- factor(as.integer(uni_genes %in% target_genes))
-        names(geneList) <- uni_genes
-        
-        # Execute topGO
-        allRes <- data.frame()
-        withProgress(
-            message = "Performing GO enrichment analysis! This may take a while.",
-            value   = 0.5,
-            {
-                for (GOcategory in c('MF', 'CC', 'BP')) {
-                    res <- try(
-                        runTopGO(GOcategory, geneList, topgo_universe()),
-                        silent = TRUE
-                    )
-                    if (class(res) != 'try-error') {
-                        allRes <- rbind(allRes, res)
-                    }
-                }
-            }
-        )
-        
-        # fix numeric
-        allRes$KS <- as.numeric(allRes$KS)
-        allRes$weightFisher <- as.numeric(allRes$weightFisher)
-        
-        # show table sorted
-        allRes
-    })
-    
-    ##################################
-    ### Write enriched GO as table ###
-    ##################################
-    output$goresults <- renderDT(server = FALSE, {
-        
-        # Render DT
-        datatable(enrichedGO() %>% arrange(!!sym(as.character(input$goplottest))),
-                  rownames = F,
-                  selection = 'none',
-                  filter = 'none',
-                  extensions = 'Buttons',
-                  options = list(pageLength = 5,
-                                 lengthMenu = c(5, 10, 15, 20, 50),
-                                 scrollX = "100%",
-                                 fixedHeader = TRUE,
-                                 autoWidth = FALSE,
-                                 searching= FALSE,
-                                 dom = 'Blfrtip',
-                                 buttons = c('copy', 'csv', 'excel')))
-    })
-    
-    #####################################
-    ### Generate plot of enriched GOs ###
-    #####################################
-    goplot <- reactiveValues(built = NULL)
-    enrichedGOplot <- reactive({
-        req(enrichedGO()) # require GO enrichment to finish
-        
-        # Get the number of top GOs user wants
-        if (isTruthy(input$gontop)) {
-            ntop <- as.numeric(input$gontop)
-        } else {
-            ntop <- 5
-        }
-        
-        # get data
-        ggdata <- enrichedGO()
-        
-        # fix numeric
-        ggdata$KS <- as.numeric(ggdata$KS)
-        ggdata$weightFisher <- as.numeric(ggdata$weightFisher)
-        
-        # Filter categories
-        cat_MF <- ggdata %>% filter(Macro == "Molecular Function")
-        cat_BP <- ggdata %>% filter(Macro == "Biological Process")
-        cat_CC <- ggdata %>% filter(Macro == "Cellular Component")
-        
-        # order data by KS
-        cat_MF <- cat_MF %>% arrange(!!sym(as.character(input$goplottest)))
-        cat_BP <- cat_BP %>% arrange(!!sym(as.character(input$goplottest)))
-        cat_CC <- cat_CC %>% arrange(!!sym(as.character(input$goplottest)))
-        
-        # filter ntop
-        cat_MF <- cat_MF[1:ntop,]
-        cat_BP <- cat_BP[1:ntop,]
-        cat_CC <- cat_CC[1:ntop,]
-        
-        # concat
-        ggdata <- na.omit(rbind(cat_MF, cat_BP, cat_CC))
-        
-        # fix order of terms
-        ggdata$Term <- factor(ggdata$Term, levels = rev(ggdata$Term))
-        
-        # generate plot
-        gg1 <- plotTopGO(ggdata, as.character(input$goplottest))
-        
-        # change state
-        goplot$built <- TRUE
-        
-        # call plot
-        gg1
-    })
-    
-    #############################################
-    ### Create buttons for plot customization ###
-    #############################################
-    # Hide customization buttons until plot is built
-    output$plotbuilt <- reactive({
-        return(!is.null(goplot$built))
-    })
-    outputOptions(output, 'plotbuilt', suspendWhenHidden= FALSE)
-    
-    ##############################
-    ### Show enriched GOs plot ###
-    ##############################
-    output$goplot <- renderPlot({
-        req(enrichedGOplot())
-        enrichedGOplot()
-    })
-    
-    ################################
-    ### Download button for plot ###
-    ################################
-    output$goplot_down <- downloadHandler(
-        filename = function() { paste('enrichedGOplot', as.character(input$goplotdevice), sep='.') },
-        content = function(file) {
-            
-            withProgress(message = "Please wait, preparing the data for download.",
-                         value = 0.5, {
-                             
-                             # Get the number of top GOs user wants
-                             if (isTruthy(input$gontop)) {
-                                 ntop <- as.numeric(input$gontop)
-                             } else {
-                                 ntop <- 5
-                             }
-                             
-                             # get data
-                             ggdata <- enrichedGO()
-                             
-                             # fix numeric
-                             ggdata$KS <- as.numeric(ggdata$KS)
-                             ggdata$weightFisher <- as.numeric(ggdata$weightFisher)
-                             
-                             # Filter categories
-                             cat_MF <- ggdata %>% filter(Macro == "Molecular Function")
-                             cat_BP <- ggdata %>% filter(Macro == "Biological Process")
-                             cat_CC <- ggdata %>% filter(Macro == "Cellular Component")
-                             
-                             # order data by KS
-                             cat_MF <- cat_MF %>% arrange(!!sym(as.character(input$goplottest)))
-                             cat_BP <- cat_BP %>% arrange(!!sym(as.character(input$goplottest)))
-                             cat_CC <- cat_CC %>% arrange(!!sym(as.character(input$goplottest)))
-                             
-                             # filter ntop
-                             cat_MF <- cat_MF[1:ntop,]
-                             cat_BP <- cat_BP[1:ntop,]
-                             cat_CC <- cat_CC[1:ntop,]
-                             
-                             # concat
-                             ggdata <- na.omit(rbind(cat_MF, cat_BP, cat_CC))
-                             
-                             # fix order of terms
-                             ggdata$Term <- factor(ggdata$Term, levels = rev(ggdata$Term))
-                             
-                             # generate plot
-                             gg1 <- plotTopGO(ggdata, as.character(input$goplottest))
-                             
-                             ggplot2::ggsave(
-                                 file,
-                                 plot   = gg1,
-                                 device = as.character(input$goplotdevice),
-                                 width  = as.numeric(input$goplotwidth),
-                                 height = as.numeric(input$goplotheight),
-                                 dpi    = as.numeric(input$goplotdpi),
-                                 units  = 'cm',
-                                 bg = "#FFFFFF"
-                             )
-                             
-                         })
-        }
-        
-    )
+    # ############################
+    # ### Annotation - BioMart ###
+    # ############################
+    # 
+    # ##############################
+    # ### Load gene ids from csv ###
+    # ##############################
+    # genes_list <- reactive({
+    #     req(input$genescsv) # Wait for file
+    #     as.list(read.csv(input$genescsv$datapath, stringsAsFactors = FALSE)[,1])
+    # })
+    # 
+    # #########################################
+    # ### Create a database selection input ###
+    # #########################################
+    # output$dbselection <- renderUI({
+    #     shinyWidgets::pickerInput("dbselection",
+    #                               "Select BioMart db:",
+    #                               choices  = c('', 'PHYTOZOME', 'plants_mart', 'ENSEMBL_MART_ENSEMBL', 'ENSEMBL_MART_MOUSE',
+    #                                            'ENSEMBL_MART_SNP', 'ENSEMBL_MART_FUNCGEN'),
+    #                               multiple = FALSE,
+    #                               options  = pickerOptions(actionsBox = TRUE))
+    # })
+    # 
+    # #########################################
+    # ### Create the selected mart variable ###
+    # #########################################
+    # selectedMart <- reactive({
+    #     req(input$dbselection != '') # wait for a database to be selected
+    #     
+    #     # check if database is phytozome or ensembl
+    #     # they have different hosts
+    #     if (as.character(req(input$dbselection) == 'PHYTOZOME')) {
+    #         phytozome_mart
+    #     } else if (as.character(req(input$dbselection) == 'plants_mart')) {
+    #         
+    #         useMart(as.character(req(input$dbselection)), host = "plants.ensembl.org")
+    #     } else {
+    #         
+    #         useMart(as.character(req(input$dbselection)), host = "www.ensembl.org")
+    #     }
+    # })
+    # 
+    # #######################################
+    # ### Show Biomart available datasets ###
+    # ### (for the selected database)     ###
+    # #######################################
+    # 
+    # ######################################
+    # ### Get available biomaRt datasets ###
+    # ######################################
+    # biomartdatasets <- reactive({
+    #     req(input$dbselection != '') # wait for a database to be selected
+    #     withProgress(
+    #         message = "Getting available datasets in the database.",
+    #         value   = 0.5,
+    #         {
+    #             retry(listDatasets(selectedMart())$dataset) # try connection 5 times
+    #         }
+    #     )
+    # })
+    # 
+    # ########################################
+    # ### Create a dataset selection input ###
+    # ########################################
+    # output$datasetselection <- renderUI({
+    #     req(input$dbselection, biomartdatasets()) # wait for db and dataset to be selected
+    #     shinyWidgets::pickerInput("datasetselection",
+    #                               "Select BioMart dataset:",
+    #                               choices  = c('', biomartdatasets()),
+    #                               multiple = FALSE,
+    #                               options  = pickerOptions(actionsBox = TRUE))
+    # })
+    # 
+    # #####################################
+    # ### Get available biomaRt filters ###
+    # #####################################
+    # datasetfilters <- reactive({
+    #     if (input$datasetselection != '') {
+    #         # This if statement makes the server wait for a dataset
+    #         # to be chosen in order to search for available filters.
+    #         withProgress(
+    #             message = "Getting available filters in the selected dataset.",
+    #             value   = 0.5,
+    #             {
+    #                 retry(
+    #                     listFilters(useDataset(as.character(input$datasetselection), mart = selectedMart()))$name
+    #                 ) # try connection 5 times
+    #             }
+    #         )
+    #     } else {
+    #         c('')
+    #     }
+    # })
+    # 
+    # #######################################
+    # ### Create a filter selection input ###
+    # #######################################
+    # output$filterselection <- renderUI({
+    #     req(input$datasetselection != '', datasetfilters()) # wait for db and dataset to be selected
+    #     
+    #     # check if database is phytozome or ensembl
+    #     # they have different filters
+    #     if (as.character(input$dbselection == 'PHYTOZOME'))  {
+    #         dt_filter <- "gene_name_filter"
+    #     } else {
+    #         dt_filter <- "ensembl_gene_id"
+    #     }
+    #     dt_filter
+    #     
+    #     shinyWidgets::pickerInput("filterselection",
+    #                               "Select a BioMart gene filter:",
+    #                               choices  = c('', datasetfilters()),
+    #                               multiple = FALSE,
+    #                               selected = dt_filter,
+    #                               options  = pickerOptions(actionsBox = TRUE))
+    # })
+    # 
+    # ##############################################
+    # ### Get available biomaRt attributes pages ###
+    # ##############################################
+    # attpages <- reactive({
+    #     req(input$datasetselection != '') # wait for a dataset to be selected
+    #     withProgress(
+    #         message = "Getting available attribute pages in the selected dataset.",
+    #         value   = 0.5,
+    #         {
+    #             retry(
+    #                 attributePages(useDataset(as.character(input$datasetselection), mart = selectedMart()))
+    #             ) # try connection 5 times
+    #         }
+    #     )
+    # })
+    # 
+    # #################################################
+    # ### Create an ui to select available attPages ###
+    # #################################################
+    # output$attpageselection <- renderUI({
+    #     req(input$datasetselection, attpages()) # wait for dataset to be selected
+    #     shinyWidgets::pickerInput("attpageselection", "Select BioMart attributes Page:",
+    #                               choices  = attpages(),
+    #                               multiple = FALSE,
+    #                               options  = pickerOptions(actionsBox = TRUE))
+    # })
+    # 
+    # ########################################
+    # ### Get available biomaRt attributes ###
+    # ########################################
+    # biomartatts <- reactive({
+    #     req(input$datasetselection != '', input$attpageselection) # wait for a dataset to be selected
+    #     withProgress(
+    #         message = "Getting available attributes in the selected attribute page.",
+    #         value   = 0.5,
+    #         {
+    #             retry(
+    #                 as.list(
+    #                     biomaRt::listAttributes(
+    #                         mart = useDataset(as.character(input$datasetselection), mart = selectedMart()),
+    #                         page = as.character(input$attpageselection)) %>%
+    #                         unique()
+    #                 )
+    #             ) # try connection 5 times
+    #         }
+    #     )
+    # })
+    # 
+    # ############################################
+    # ### Create an attributes selection input ###
+    # ############################################
+    # output$attselection <- renderUI({
+    #     req(biomartatts()) # wait for list of available attributes
+    #     
+    #     # check if database is phytozome or ensembl
+    #     # they have different attributes
+    #     if (as.character(input$dbselection == 'PHYTOZOME'))  {
+    #         att_list <- c("gene_name_filter","gene_chrom_start","gene_chrom_end","gene_description")
+    #     } else {
+    #         att_list <- c("ensembl_gene_id","start_position","end_position","description")
+    #     }
+    #     
+    #     # render shinyWidgets::pickerInput
+    #     shinyWidgets::pickerInput("attselection",
+    #                               "Select dataset attributes:",
+    #                               choices  = biomartatts(),  multiple = TRUE,
+    #                               selected = att_list,
+    #                               options  = pickerOptions(actionsBox = TRUE))
+    # })
+    # 
+    # ########################################
+    # ### Select desired genes to annotate ###
+    # ########################################
+    # output$geneselection <- renderUI({
+    #     req(genes_list()) # wait for genes
+    #     shinyWidgets::pickerInput("geneselection",
+    #                               "Select genes to annotate:",
+    #                               choices  = genes_list(),
+    #                               multiple = TRUE,
+    #                               selected = genes_list(),
+    #                               options  = pickerOptions(actionsBox = TRUE))
+    # })
+    # 
+    # ####################################
+    # ### Create button to trigger run ###
+    # ####################################
+    # output$triggerbutton <- renderUI({
+    #     req(input$attselection, input$geneselection != '') # wait for complete selection
+    #     actionButton("annotate", "Annotate selected genes!")
+    # })
+    # 
+    # #############################
+    # ### BioMart output header ###
+    # #############################
+    # output$biomartresultsheader <- renderUI({
+    #     req(input$attselection, input$geneselection != '') # wait for complete selection
+    #     h4("BioMart results:")
+    # })
+    # 
+    # ######################################################
+    # ### Create reactive data.frame to render datatable ###
+    # ######################################################
+    # annotation_biomart <- eventReactive(input$annotate, {
+    #     
+    #     withProgress(
+    #         message = "Accessing biomart and annotating selected genes.",
+    #         value   = 0.5,
+    #         {
+    #             retry(
+    #                 biomaRt::getBM(
+    #                     attributes = as.character(req(input$attselection)),
+    #                     filters    = as.character(input$filterselection),
+    #                     values     = as.character(req(input$geneselection)),
+    #                     mart       = useDataset(as.character(input$datasetselection), mart = selectedMart()),
+    #                     useCache   = FALSE
+    #                 )
+    #             ) # try connection 5 times
+    #         }
+    #     )
+    # })
+    # 
+    # ############################
+    # ### BioMart output table ###
+    # ############################
+    # output$biomartresults <- renderDT(server = FALSE, {
+    #     req(annotation_biomart()) # Input requirement
+    #     
+    #     # Load annotation
+    #     anot_df <- annotation_biomart()
+    #     
+    #     # Render DT
+    #     datatable(anot_df,
+    #               rownames = F,
+    #               selection = 'none',
+    #               filter = 'none',
+    #               extensions = 'Buttons',
+    #               options = list(pageLength = 5,
+    #                              lengthMenu = c(5, 10, 15, 20, 50),
+    #                              scrollX = "100%",
+    #                              autoWidth = FALSE,
+    #                              fixedHeader = TRUE,
+    #                              searching= FALSE,
+    #                              dom = 'Blfrtip',
+    #                              buttons = c('copy', 'csv', 'excel')))
+    # })
+    # 
+    # #####################################################
+    # ### Grab gene universe for GO enrichment analysis ###
+    # #####################################################
+    # gene_universe <- reactive({
+    #     req(input$universecsv) # wait for file
+    #     as.list(read.csv(input$universecsv$datapath, stringsAsFactors = FALSE)[,1])
+    # })
+    # 
+    # ####################################
+    # ### Create button to trigger run ###
+    # ####################################
+    # output$gobutton <- renderUI({
+    #     req(gene_universe(), input$geneselection, input$filterselection) # wait for genes
+    #     att_has_id(as.vector(genes_list()), as.vector(gene_universe()))
+    #     actionButton("goenrich", "Run GO enrichment analysis!")
+    # })
+    # 
+    # ##########################################################################
+    # ### Define right biomaRt attribute that correctly matches the gene ids ###
+    # ##########################################################################
+    # attselectionGO <- reactive({
+    #     req(biomartatts()) # wait for attributes
+    #     if (as.character(input$dbselection == 'PHYTOZOME'))  {
+    #         att <- "gene_name1"
+    #     } else {
+    #         att <- "ensembl_gene_id"
+    #     }
+    #     att
+    # })
+    # 
+    # #######################################
+    # ### Get GO information for universe ###
+    # #######################################
+    # goInfo <- eventReactive(input$goenrich, {
+    #     req(gene_universe(), attselectionGO()) # wait for genes
+    #     withProgress(
+    #         message = "Retrieving GO information for the given gene universe.",
+    #         value   = 0.5,
+    #         {
+    #             retry(
+    #                 biomaRt::getBM(
+    #                     attributes = c(as.character(attselectionGO()), "go_id"),
+    #                     filters    = as.character(input$filterselection),
+    #                     values     = as.character(req(gene_universe())),
+    #                     mart       = useDataset(as.character(input$datasetselection), mart = selectedMart()),
+    #                     useCache   = FALSE
+    #                 )
+    #             ) # try connection 5 times
+    #         }
+    #     )
+    #     
+    # })
+    # 
+    # #########################################
+    # ### Get GO topGO package for universe ###
+    # #########################################
+    # topgo_universe <- reactive({
+    #     
+    #     req(goInfo()) # wait for data
+    #     
+    #     # Get GO information (together with gene ids/names)
+    #     uni_GOs <-
+    #         goInfo()
+    #     
+    #     # Write in temporary file
+    #     write.table(
+    #         uni_GOs,
+    #         file = "/tmp/tmp_go_universe.txt",
+    #         sep  = "\t",
+    #         quote = FALSE,
+    #         append = FALSE,
+    #         row.names = FALSE,
+    #         col.names = FALSE
+    #     )
+    #     
+    #     # Load temporary file for topGO
+    #     readMappings(file = "/tmp/tmp_go_universe.txt") # reads a named list
+    #     
+    # })
+    # 
+    # ##############################
+    # ### GO enrichment analysis ###
+    # ##############################
+    # enrichedGO <- reactive({
+    #     req(topgo_universe(), input$geneselection != '') # Input requirement
+    #     
+    #     # check if identification is main ID
+    #     if (as.character(input$filterselection) != as.character(attselectionGO())) {
+    #         
+    #         # target genes
+    #         withProgress(
+    #             message = "Retrieving GO information for the selected target genes.",
+    #             value   = 0.5,
+    #             {
+    #                 tg_genes <- retry(
+    #                     as.list(
+    #                         biomaRt::getBM(
+    #                             attributes = attselectionGO(),
+    #                             filters    = as.character(input$filterselection),
+    #                             values     = as.character(input$geneselection),
+    #                             mart       = useDataset(as.character(input$datasetselection), mart = selectedMart()),
+    #                             useCache   = FALSE
+    #                         )[,1])
+    #                 ) # try connection 5 times
+    #             }
+    #         )
+    #         
+    #         # universe genes
+    #         uni_genes <- as.list(goInfo()[,1])
+    #         
+    #     } else {
+    #         tg_genes  <- input$geneselection
+    #         uni_genes <- gene_universe()
+    #     }
+    #     
+    #     # Load target gene ids
+    #     target_genes <- as.character(tg_genes)
+    #     geneList <- factor(as.integer(uni_genes %in% target_genes))
+    #     names(geneList) <- uni_genes
+    #     
+    #     # Execute topGO
+    #     allRes <- data.frame()
+    #     withProgress(
+    #         message = "Performing GO enrichment analysis! This may take a while.",
+    #         value   = 0.5,
+    #         {
+    #             for (GOcategory in c('MF', 'CC', 'BP')) {
+    #                 res <- try(
+    #                     runTopGO(GOcategory, geneList, topgo_universe()),
+    #                     silent = TRUE
+    #                 )
+    #                 if (class(res) != 'try-error') {
+    #                     allRes <- rbind(allRes, res)
+    #                 }
+    #             }
+    #         }
+    #     )
+    #     
+    #     # fix numeric
+    #     allRes$KS <- as.numeric(allRes$KS)
+    #     allRes$weightFisher <- as.numeric(allRes$weightFisher)
+    #     
+    #     # show table sorted
+    #     allRes
+    # })
+    # 
+    # ##################################
+    # ### Write enriched GO as table ###
+    # ##################################
+    # output$goresults <- renderDT(server = FALSE, {
+    #     
+    #     # Render DT
+    #     datatable(enrichedGO() %>% arrange(!!sym(as.character(input$goplottest))),
+    #               rownames = F,
+    #               selection = 'none',
+    #               filter = 'none',
+    #               extensions = 'Buttons',
+    #               options = list(pageLength = 5,
+    #                              lengthMenu = c(5, 10, 15, 20, 50),
+    #                              scrollX = "100%",
+    #                              fixedHeader = TRUE,
+    #                              autoWidth = FALSE,
+    #                              searching= FALSE,
+    #                              dom = 'Blfrtip',
+    #                              buttons = c('copy', 'csv', 'excel')))
+    # })
+    # 
+    # #####################################
+    # ### Generate plot of enriched GOs ###
+    # #####################################
+    # goplot <- reactiveValues(built = NULL)
+    # enrichedGOplot <- reactive({
+    #     req(enrichedGO()) # require GO enrichment to finish
+    #     
+    #     # Get the number of top GOs user wants
+    #     if (isTruthy(input$gontop)) {
+    #         ntop <- as.numeric(input$gontop)
+    #     } else {
+    #         ntop <- 5
+    #     }
+    #     
+    #     # get data
+    #     ggdata <- enrichedGO()
+    #     
+    #     # fix numeric
+    #     ggdata$KS <- as.numeric(ggdata$KS)
+    #     ggdata$weightFisher <- as.numeric(ggdata$weightFisher)
+    #     
+    #     # Filter categories
+    #     cat_MF <- ggdata %>% filter(Macro == "Molecular Function")
+    #     cat_BP <- ggdata %>% filter(Macro == "Biological Process")
+    #     cat_CC <- ggdata %>% filter(Macro == "Cellular Component")
+    #     
+    #     # order data by KS
+    #     cat_MF <- cat_MF %>% arrange(!!sym(as.character(input$goplottest)))
+    #     cat_BP <- cat_BP %>% arrange(!!sym(as.character(input$goplottest)))
+    #     cat_CC <- cat_CC %>% arrange(!!sym(as.character(input$goplottest)))
+    #     
+    #     # filter ntop
+    #     cat_MF <- cat_MF[1:ntop,]
+    #     cat_BP <- cat_BP[1:ntop,]
+    #     cat_CC <- cat_CC[1:ntop,]
+    #     
+    #     # concat
+    #     ggdata <- na.omit(rbind(cat_MF, cat_BP, cat_CC))
+    #     
+    #     # fix order of terms
+    #     ggdata$Term <- factor(ggdata$Term, levels = rev(ggdata$Term))
+    #     
+    #     # generate plot
+    #     gg1 <- plotTopGO(ggdata, as.character(input$goplottest))
+    #     
+    #     # change state
+    #     goplot$built <- TRUE
+    #     
+    #     # call plot
+    #     gg1
+    # })
+    # 
+    # #############################################
+    # ### Create buttons for plot customization ###
+    # #############################################
+    # # Hide customization buttons until plot is built
+    # output$plotbuilt <- reactive({
+    #     return(!is.null(goplot$built))
+    # })
+    # outputOptions(output, 'plotbuilt', suspendWhenHidden= FALSE)
+    # 
+    # ##############################
+    # ### Show enriched GOs plot ###
+    # ##############################
+    # output$goplot <- renderPlot({
+    #     req(enrichedGOplot())
+    #     enrichedGOplot()
+    # })
+    # 
+    # ################################
+    # ### Download button for plot ###
+    # ################################
+    # output$goplot_down <- downloadHandler(
+    #     filename = function() { paste('enrichedGOplot', as.character(input$goplotdevice), sep='.') },
+    #     content = function(file) {
+    #         
+    #         withProgress(message = "Please wait, preparing the data for download.",
+    #                      value = 0.5, {
+    #                          
+    #                          # Get the number of top GOs user wants
+    #                          if (isTruthy(input$gontop)) {
+    #                              ntop <- as.numeric(input$gontop)
+    #                          } else {
+    #                              ntop <- 5
+    #                          }
+    #                          
+    #                          # get data
+    #                          ggdata <- enrichedGO()
+    #                          
+    #                          # fix numeric
+    #                          ggdata$KS <- as.numeric(ggdata$KS)
+    #                          ggdata$weightFisher <- as.numeric(ggdata$weightFisher)
+    #                          
+    #                          # Filter categories
+    #                          cat_MF <- ggdata %>% filter(Macro == "Molecular Function")
+    #                          cat_BP <- ggdata %>% filter(Macro == "Biological Process")
+    #                          cat_CC <- ggdata %>% filter(Macro == "Cellular Component")
+    #                          
+    #                          # order data by KS
+    #                          cat_MF <- cat_MF %>% arrange(!!sym(as.character(input$goplottest)))
+    #                          cat_BP <- cat_BP %>% arrange(!!sym(as.character(input$goplottest)))
+    #                          cat_CC <- cat_CC %>% arrange(!!sym(as.character(input$goplottest)))
+    #                          
+    #                          # filter ntop
+    #                          cat_MF <- cat_MF[1:ntop,]
+    #                          cat_BP <- cat_BP[1:ntop,]
+    #                          cat_CC <- cat_CC[1:ntop,]
+    #                          
+    #                          # concat
+    #                          ggdata <- na.omit(rbind(cat_MF, cat_BP, cat_CC))
+    #                          
+    #                          # fix order of terms
+    #                          ggdata$Term <- factor(ggdata$Term, levels = rev(ggdata$Term))
+    #                          
+    #                          # generate plot
+    #                          gg1 <- plotTopGO(ggdata, as.character(input$goplottest))
+    #                          
+    #                          ggplot2::ggsave(
+    #                              file,
+    #                              plot   = gg1,
+    #                              device = as.character(input$goplotdevice),
+    #                              width  = as.numeric(input$goplotwidth),
+    #                              height = as.numeric(input$goplotheight),
+    #                              dpi    = as.numeric(input$goplotdpi),
+    #                              units  = 'cm',
+    #                              bg = "#FFFFFF"
+    #                          )
+    #                          
+    #                      })
+    #     }
+    #     
+    # )
     
     
     #####################

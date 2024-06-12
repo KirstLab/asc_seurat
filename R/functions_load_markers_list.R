@@ -63,7 +63,7 @@ pickerInput_markers_group <- function(id,
     div(class = "option-group",
         shinyWidgets::pickerInput(
             inputId = id,
-            label = "Select the group of markers to test",
+            label = "Select the group of genes view (column 2 of CSV)",
             choices = sort( as.character(groups_names) ),
             multiple = TRUE,
             options = list(`actions-box` = TRUE),
