@@ -124,7 +124,7 @@ actionButtonInput <- function(id, label = label) {
     
     actionButton(id,
                  label = label,
-                 style="background-color: #d6fffe",
+                # style="background-color: #d6fffe",
                  class = "btn-block")
     
 }
