@@ -12,3 +12,7 @@ docs/Makefile
 docs/_html/
 images/
 *.docx
+www/*/*.svg
+www/*/*.ttf
+www/*/*.woff
+www/*/*.woff2
