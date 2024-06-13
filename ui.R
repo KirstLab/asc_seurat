@@ -1209,470 +1209,470 @@ function(request) {
                    p(strong("SolusCell web app, version 1.0"), "- 2024.", align = "center")
           ), # ends tab
           
-          ##############################
-          #### trajectory inference ####
-          tabPanel("Trajectory inference",
-                   br(),
-                   p(strong("Note that at any time, you can save a bookmark (purple button at the right bottom) that will save your parameter choices. Using the saved bookmark, it is possible to re-load all selected parameters and re-execute the analysis, to reproduce the results.")),
-                   
-                   fluidRow(
-                       titlePanel("Trajectory inference analysis"),
-                       
-                       p("For the trajectory inference analyses, users need to use data containing the cluster information obtained in the other tabs of Asc-Seurat. The file must be an RDS file located in the", code("RDS_files/"),"that can be generated using the previous tabs of Asc-Seurat."),
-                       br(),
-                       p("For this analysis, it is possible to indicate what cluster is expected to be at the beginning and/or end of the trajectory. Depending on the selected model, some of this information might be required."),
-                       br(),
-                       #    p("To start the analysis, select the file containing the data and click on", code("Run trajectory inference model"), "button."),
-                       column(width = 3,
-                              
-                              my_withSpinner( uiOutput("load_integrated_ui_tab3") ),
-                              div(class = "option-group",
-                                  radioButtons("ti_select_models",
-                                               "Do you want to run slingshot or another dynverse model?",
-                                               choices = list("Slingshot" = 0,
-                                                              "Dynverse model (relies on docker)" = 1
-                                               ),
-                                               selected = c(0)
-                                  ))
-                       ),
-                       column(width = 3,
-                              div(class = "option-group",
-                                  radioButtons("ti_sample_number",
-                                               "Are you using more than one (integrated) sample ?",
-                                               choices = list("Yes" = 1,
-                                                              "No" = 0),
-                                               selected = c(0)
-                                  ),
-                              )
-                       ),
-                       
-                       column(width = 3,
-                              div(class = "option-group",
-                                  radioButtons("set_init_clust",
-                                               "Do you want to set an initial and/or ending cluster?",
-                                               choices = list("Yes" = 1,
-                                                              "No" = 0),
-                                               selected = c(0)
-                                  ))),
-                       
-                       conditionalPanel (
-                           condition = "input.set_init_clust == 1",
-                           column(width = 2,
-                                  div(class = "option-group",
-                                      numericInput("traj_init_clusters",
-                                                   label = "Set the initial cluster",
-                                                   value = "")
-                                  )),
-                           column(width = 2,
-                                  div(class = "option-group",
-                                      numericInput("traj_end_clusters",
-                                                   label = "Set the ending cluster",
-                                                   value = ""))),
-                       ),
-                       
-                       conditionalPanel (
-                           condition = "input.ti_select_models == 1",
-                           
-                           column(width = 3,
-                                  my_withSpinner( uiOutput("ti_methods_list_ui") )),
-                           
-                           
-                       ),
-                       column(width = 3,
-                              actionButtonInput("run_ti_model",
-                                                HTML("Run trajectory inference model"))),
-                       
-                   ), # end fluidRow
-                   
-                   conditionalPanel (
-                       condition = "input.run_ti_model != 0",
-                       fluidRow(
-                           
-                           titlePanel("Visualization of the inferred trajectory"),
-                           
-                           column(width = 4,
-                                  my_withSpinner( plotOutput("ti_order")) ),
-                           
-                           column(width = 3,
-                                  my_withSpinner( plotOutput("ti_traject")) ),
-                           
-                           column(width = 3,
-                                  my_withSpinner( plotOutput("ti_graph")) ),
-                           
-                           conditionalPanel (
-                               condition = "input.ti_sample_number == 1",
-                               column(width = 2,
-                                      div(class = "option-group",
-                                          radioButtons("ti_graphs_color_choice",
-                                                       "Color plots by",
-                                                       choices = list("Clusters" = 1,
-                                                                      "Samples" = 0),
-                                                       selected = c(1)
-                                          ))),
-                           ), #ends conditional
-                           
-                       ), # end fluidRow
-                       
-                       fluidRow(
-                           br(),
-                           # download plot
-                           column(width = 3,
-                                  div(class = "down-group",
-                                      radioButtons("p9_down_opt",
-                                                   "Select the plot to download",
-                                                   choices = list("Dimension reduction" = 0,
-                                                                  "Dendrogram" = 1,
-                                                                  "Graph"= 2),
-                                                   selected = 0))),
-                           column(2,
-                                  numericInput_plot_height("p9_height", value=10),
-                                  numericInput_plot_width("p9_width", value=12)),
-                           column(2,
-                                  selectInput_plot_res("p9_res"),
-                                  selectInput_plot_format("p9_format")),
-                           column(2,
-                                  downloadButton("p9_down", HTML("Download Plot"))),
-                       ), # Fluid row
-                   ), #ends conditional
-                   
-                   br(),
-                   br(),
-                   conditionalPanel (
-                       condition = "input.run_ti_model != 0",
-                       
-                       conditionalPanel (
-                           condition = "input.ti_select_models == 0",
-                           
-                           p("More than one lineage of cells can be present in the inferred trajectory. IIf that is the case, the order of the clusters representing the development pathway of each lineage will be shown below. Clusters that appear in multiple rows represent segments of the trajectory that are shared among lineages."),
-                           
-                           fluidRow(
-                               column(12,
-                                      my_withSpinner( verbatimTextOutput("lineages") ))
-                           ),
-                       ),
-                   ),
-                   br(),
-                   fluidRow(
-                       
-                       titlePanel("Gene expression in the trajectory"),
-                       
-                       p("In this section, it is possible to observe the expression of genes in the cells that are part of each lineage/trajectory. You can either provide a list of genes of interest or use the package dynfeature to search for genes that are \"important\" in explaining the trajectory."),
-                       br(),
-                       p("These genes can be identified in three different ways. 1) Global overview: genes that are important to define the whole trajectory; 2) Lineage/branch: genes that are important to define a branch interest; 3) Genes that are important to define the bifurcation points (points where the trajectory splits into different branches)"),
-                       br(),
-                       p(strong("Note."), "Dynfeature does not calculate a p-value for the tested genes. Instead, it defines an \"importance value\" that can be used to rank the genes by their relevance."),
-                       br(),
-                       column(width = 3,
-                              div(class = "option-group",
-                                  radioButtons("ti_expre_opt",
-                                               "Select the type of analysis:",
-                                               choices = list("Visualization of a list of genes" = 0,
-                                                              "Identification of important genes using Dynfeature" = 1
-                                               ),
-                                               selected = c(0)
-                                  ))),
-                   ), # ends fluidRow
-                   
-                   ##################################################
-                   ### Expression plots - Using markers as input ####
-                   ##################################################
-                   
-                   conditionalPanel(
-                       condition = "input.ti_expre_opt == 0",
-                       
-                       fluidRow(
-                           titlePanel("Expression of markers"),
-                           br(),
-                           column(width = 3,
-                                  fileInput_markers_list("markers_list_tab3"),
-                                  div(class = "option-group",
-                                      selectInput("markers_list_header_opt_tab3",
-                                                  "Does your file have a header?",
-                                                  choices = c("", "Yes", "No"),
-                                                  multiple = FALSE,
-                                                  selectize = TRUE,
-                                                  selected = NULL)),
-                                  div(class = "option-group",
-                                      actionButtonInput("load_markers_tab3",
-                                                        HTML("Load markers")))),
-                           column(width = 2,
-                                  conditionalPanel(
-                                      condition = "input.load_markers_tab3 > 0",
-                                      my_withSpinner( uiOutput('marker_group_selec_tab3') ),
-                                      define_if_use_all_genes_or_select("filter_genes_q_tab3"),
-                                      
-                                      conditionalPanel(
-                                          condition = "input.filter_genes_q_tab3 == 0",
-                                          define_what_id_to_use("genes_ids_tab3")
-                                      ))),
-                           conditionalPanel(
-                               condition = "input.filter_genes_q_tab3 == 0",
-                               
-                               column(width = 3,
-                                      my_withSpinner( uiOutput('marker_genes_selec_tab3') )
-                               )),
-                           column(width = 2,
-                                  conditionalPanel(
-                                      condition = "input.load_markers_tab3 > 0",
-                                      radioButtons_slot_selection_heatmap("slot_selection_heatmap_tab3"))),
-                           column(width = 2,
-                                  conditionalPanel(
-                                      condition = "input.load_markers_tab3 > 0",
-                                      actionButtonInput("run_heatmap_tab3",
-                                                        HTML("Show heatmap"))))
-                       ), # Fluid row
-                       
-                   ), #ends conditional
-                   
-                   conditionalPanel(
-                       
-                       condition = "input.run_heatmap_tab3 > 0 & input.ti_expre_opt == 0",
-                       fluidRow(
-                           br(),
-                           
-                           titlePanel("Heatmap of the trajectory"),
-                           br(),
-                           column(width = 10,
-                                  my_withSpinner( uiOutput("heat_map_ui_tab3") )),
-                           column(2,
-                                  numericInput_plot_height("p10_height", value=15),
-                                  numericInput_plot_width("p10_width", value=25),
-                                  selectInput_plot_res("p10_res"),
-                                  selectInput_plot_format("p10_format"),
-                                  downloadButton("p10_down", HTML("Download Plot"))),
-                       ),
-                       fluidRow(
-                           titlePanel("Visualization of gene expression of each cell in the trajectory"),
-                           br(),
-                           column(width = 3,
-                                  my_withSpinner( uiOutput("marker_to_feature_plot_tab3") )),
-                           column(width = 3,
-                                  actionButtonInput("run_feature_plot_tab3",
-                                                    HTML("Show the expression of genes at the cell level")))
-                           
-                       )
-                   ),# Ends conditional
-                   
-                   conditionalPanel (
-                       condition = "input.run_feature_plot_tab3 > 0 & input.ti_expre_opt == 0",
-                       fluidRow(
-                           titlePanel("Feature plots"),
-                           
-                           column(width = 4,
-                                  my_withSpinner( uiOutput("ti_order_express")) ),
-                           column(width = 4,
-                                  my_withSpinner( uiOutput("ti_traject_express",
-                                                           height = "300px")) ),
-                           column(width = 4,
-                                  my_withSpinner( uiOutput("ti_graph_express",
-                                                           height = "300px")) )
-                       ), # Ends Fluid row
-                       
-                   ), # Ends conditional
-                   
-                   #################################################################
-                   ### Expression plots - Using dynverse most relevant features ####
-                   #################################################################
-                   
-                   conditionalPanel(
-                       condition = "input.ti_expre_opt == 1",
-                       
-                       fluidRow (
-                           titlePanel("Expression of markers"),
-                           br(),
-                           p("For each of the below analyses, it is possible to save the list of all expressed genes with their \"importance\" values. It is also possible to save the list of the top N genes."),
-                           br(),
-                           p("For the branch/linage analysis, you can provide the beginning (from) and end (to) of the branch/linage of interest. You can also select only one, either from or to, as long as the other box is blank."),
-                           br(),
-                           p("For the bifurcation analysis, you can provide the cluster number where a branching happened to select the genes more relevant to this point. If left in blank, the analysis will identify the \"importance\" values for each branching point."),
-                           br(),
-                           
-                           column(width = 3,
-                                  div(class = "option-group",
-                                      radioButtons("dynverse_opt",
-                                                   "Select the analysis to perform",
-                                                   choices = list("global overview of the most predictive genes" = 0,
-                                                                  "Lineage/branch markers" = 1,
-                                                                  "Genes important at bifurcation points" = 2),
-                                                   selected = c(0) ),
-                                      numericInput("dynverse_n_genes",
-                                                   label = "Set the number of genes to be used in the heatmap (top relevant genes)",
-                                                   value = 50) )),
-                           
-                           conditionalPanel ("input.dynverse_opt == 1",
-                                             column(width = 2,
-                                                    
-                                                    my_withSpinner( uiOutput("dynverse_branch_from_ui") ),
-                                                    my_withSpinner( uiOutput("dynverse_branch_to_ui") )),
-                                             
-                           ), # ends conditional
-                           
-                           conditionalPanel ("input.dynverse_opt == 2",
-                                             column(width = 2,
-                                                    div(class = "option-group",
-                                                        numericInput("branching_milestone",
-                                                                     label = "Select the branching point",
-                                                                     value = NULL))),
-                           ), # ends conditional
-                           column(width = 4,
-                                  actionButtonInput("dynverse_def_imp_genes",
-                                                    HTML("Defines the most important genes")),
-                                  
-                                  conditionalPanel("input.dynverse_def_imp_genes > 0",
-                                                   #column(width = 4,
-                                                   downloadButton("download_dynverse_genes",
-                                                                  HTML("Download the list of all important <br> genes in all branches <br> and their \"importance\" score."))
-                                  )
-                           ),
-                       ), # Fluid row
-                       
-                   ), #ends conditional
-                   
-                   #heat map
-                   conditionalPanel(
-                       
-                       condition = "input.dynverse_def_imp_genes > 0 & input.ti_expre_opt == 1",
-                       fluidRow(
-                           br(),
-                           
-                           titlePanel("Heatmap of the trajectory"),
-                           
-                           br(),
-                           column(width = 10,
-                                  my_withSpinner( uiOutput("heat_map_ui_tab3_dynv") )),
-                           column(2,
-                                  actionButtonInput("run_heatmap_tab3_dynverse",
-                                                    HTML("Update heatmap")),
-                                  numericInput_plot_height("p11_height", value=15),
-                                  numericInput_plot_width("p11_width", value=25),
-                                  selectInput_plot_res("p11_res"),
-                                  selectInput_plot_format("p11_format"),
-                                  downloadButton("p11_down", HTML("Download Plot")),
-                                  downloadButton("download_dynverse_genes_filt",
-                                                 HTML("Download the fittered list <br> of genes and their <br> \"importance\" score."))
-                           ),
-                       ), # end row
-                       fluidRow(
-                           titlePanel("Additional plots"),
-                           br(),
-                           
-                           column(width = 3,
-                                  my_withSpinner( uiOutput("marker_to_feature_plot_tab3_dynv") )),
-                           column(width = 3,
-                                  actionButtonInput("run_feature_plot_tab3_dynv",
-                                                    HTML("Show the expression of genes at the cell level")))
-                       )
-                   ),# Ends conditional
-                   
-                   conditionalPanel (
-                       condition = "input.run_feature_plot_tab3_dynv > 0 & input.ti_expre_opt == 1",
-                       fluidRow(
-                           titlePanel("Gene expression within the trajectory"),
-                           
-                           column(width = 4,
-                                  my_withSpinner( uiOutput("ti_order_express_dynv")) ),
-                           column(width = 4,
-                                  my_withSpinner( uiOutput("ti_traject_express_dynv",
-                                                           height = "300px")) ),
-                           column(width = 4,
-                                  my_withSpinner( uiOutput("ti_graph_express_dynv",
-                                                           height = "300px")) )
-                       ), # Ends Fluid row
-                       
-                   ), # Ends conditional
-                   
-                   
-                   conditionalPanel (
-                       condition = "input.run_feature_plot_tab3 > 0",
-                       
-                       fluidRow(
-                           titlePanel("Downloading plots of gene expression within the trajectory"),
-                           
-                           p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
-                           br(),
-                           column(width = 2,
-                                  radioButtons_down_add_plots("down_add_plots_tab3")),
-                           conditionalPanel (
-                               condition = "input.down_add_plots_tab3 == 1",
-                               column(width = 2,
-                                      my_withSpinner( uiOutput("select_genes_add_plot_to_down_tab3_ui") ),
-                               ),
-                               
-                               column(2,
-                                      p(strong("Select the options for the dimension reduction plots")),
-                                      numericInput_plot_height("add_p_tab3_feat_height", value=10),
-                                      numericInput_plot_width("add_p_tab3_feat_width", value=14),
-                                      selectInput_plot_res("add_p_tab3_feat_res"),
-                                      selectInput_plot_format("add_p_tab3_feat_format")),
-                               column(2,
-                                      p(strong("Select the options for the dendrogram plots")),
-                                      numericInput_plot_height("add_p_tab3_violin_height", value=10),
-                                      numericInput_plot_width("add_p_tab3_violin_width", value=18),
-                                      selectInput_plot_res("add_p_tab3_violin_res"),
-                                      selectInput_plot_format("add_p_tab3_violin_format")),
-                               
-                               column(2,
-                                      p(strong("Select the options for the graph plots")),
-                                      numericInput_plot_height("add_p_tab3_dot_height", value=10),
-                                      numericInput_plot_width("add_p_tab3_dot_width", value=14),
-                                      selectInput_plot_res("add_p_tab3_dot_res"),
-                                      selectInput_plot_format("add_p_tab3_dot_format")),
-                               column(width = 3,
-                                      actionButtonInput("start_down_add_plots_tab3",
-                                                        HTML("Download additional plots")))
-                               
-                           ) # ends conditional
-                       ), # ends fluid row
-                   ), # ends conditional
-                   
-                   conditionalPanel (
-                       condition = "input.run_feature_plot_tab3_dynv > 0",
-                       
-                       fluidRow(
-                           
-                           titlePanel("Downloading plots showing the gene expression within the trajectory"),
-                           
-                           p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
-                           br(),
-                           column(width = 2,
-                                  radioButtons_down_add_plots("down_add_plots_tab3_dynv")),
-                           conditionalPanel (
-                               condition = "input.down_add_plots_tab3_dynv == 1",
-                               column(width = 2,
-                                      my_withSpinner( uiOutput("select_genes_add_plot_to_down_tab3_ui_dynv") ),
-                               ),
-                               
-                               column(2,
-                                      p(strong("Select the options for the dimension reduction plots")),
-                                      numericInput_plot_height("add_p_tab3_feat_height_dynv", value=10),
-                                      numericInput_plot_width("add_p_tab3_feat_width_dynv", value=14),
-                                      selectInput_plot_res("add_p_tab3_feat_res_dynv"),
-                                      selectInput_plot_format("add_p_tab3_feat_format_dynv")),
-                               column(2,
-                                      p(strong("Select the options for the dendrogram plots")),
-                                      numericInput_plot_height("add_p_tab3_violin_height_dynv", value=10),
-                                      numericInput_plot_width("add_p_tab3_violin_width_dynv", value=14),
-                                      selectInput_plot_res("add_p_tab3_violin_res_dynv"),
-                                      selectInput_plot_format("add_p_tab3_violin_format_dynv")),
-                               column(2,
-                                      p(strong("Select the options for the graph plots")),
-                                      numericInput_plot_height("add_p_tab3_dot_height_dynv", value=10),
-                                      numericInput_plot_width("add_p_tab3_dot_width_dynv", value=14),
-                                      selectInput_plot_res("add_p_tab3_dot_res_dynv"),
-                                      selectInput_plot_format("add_p_tab3_dot_format_dynv")),
-                               column(width = 3,
-                                      actionButtonInput("start_down_add_plots_tab3_dynv",
-                                                        HTML("Download additional plots")))
-                               
-                           ) # ends conditional
-                       ), # ends fluid row
-                   ), # ends conditional
-                   
-                   bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
-                   
-                   tags$hr(),
-                   p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
-          ),
+          # ##############################
+          # #### trajectory inference ####
+          # tabPanel("Trajectory inference",
+          #          br(),
+          #          p(strong("Note that at any time, you can save a bookmark (purple button at the right bottom) that will save your parameter choices. Using the saved bookmark, it is possible to re-load all selected parameters and re-execute the analysis, to reproduce the results.")),
+          #          
+          #          fluidRow(
+          #              titlePanel("Trajectory inference analysis"),
+          #              
+          #              p("For the trajectory inference analyses, users need to use data containing the cluster information obtained in the other tabs of Asc-Seurat. The file must be an RDS file located in the", code("RDS_files/"),"that can be generated using the previous tabs of Asc-Seurat."),
+          #              br(),
+          #              p("For this analysis, it is possible to indicate what cluster is expected to be at the beginning and/or end of the trajectory. Depending on the selected model, some of this information might be required."),
+          #              br(),
+          #              #    p("To start the analysis, select the file containing the data and click on", code("Run trajectory inference model"), "button."),
+          #              column(width = 3,
+          #                     
+          #                     my_withSpinner( uiOutput("load_integrated_ui_tab3") ),
+          #                     div(class = "option-group",
+          #                         radioButtons("ti_select_models",
+          #                                      "Do you want to run slingshot or another dynverse model?",
+          #                                      choices = list("Slingshot" = 0,
+          #                                                     "Dynverse model (relies on docker)" = 1
+          #                                      ),
+          #                                      selected = c(0)
+          #                         ))
+          #              ),
+          #              column(width = 3,
+          #                     div(class = "option-group",
+          #                         radioButtons("ti_sample_number",
+          #                                      "Are you using more than one (integrated) sample ?",
+          #                                      choices = list("Yes" = 1,
+          #                                                     "No" = 0),
+          #                                      selected = c(0)
+          #                         ),
+          #                     )
+          #              ),
+          #              
+          #              column(width = 3,
+          #                     div(class = "option-group",
+          #                         radioButtons("set_init_clust",
+          #                                      "Do you want to set an initial and/or ending cluster?",
+          #                                      choices = list("Yes" = 1,
+          #                                                     "No" = 0),
+          #                                      selected = c(0)
+          #                         ))),
+          #              
+          #              conditionalPanel (
+          #                  condition = "input.set_init_clust == 1",
+          #                  column(width = 2,
+          #                         div(class = "option-group",
+          #                             numericInput("traj_init_clusters",
+          #                                          label = "Set the initial cluster",
+          #                                          value = "")
+          #                         )),
+          #                  column(width = 2,
+          #                         div(class = "option-group",
+          #                             numericInput("traj_end_clusters",
+          #                                          label = "Set the ending cluster",
+          #                                          value = ""))),
+          #              ),
+          #              
+          #              conditionalPanel (
+          #                  condition = "input.ti_select_models == 1",
+          #                  
+          #                  column(width = 3,
+          #                         my_withSpinner( uiOutput("ti_methods_list_ui") )),
+          #                  
+          #                  
+          #              ),
+          #              column(width = 3,
+          #                     actionButtonInput("run_ti_model",
+          #                                       HTML("Run trajectory inference model"))),
+          #              
+          #          ), # end fluidRow
+          #          
+          #          conditionalPanel (
+          #              condition = "input.run_ti_model != 0",
+          #              fluidRow(
+          #                  
+          #                  titlePanel("Visualization of the inferred trajectory"),
+          #                  
+          #                  column(width = 4,
+          #                         my_withSpinner( plotOutput("ti_order")) ),
+          #                  
+          #                  column(width = 3,
+          #                         my_withSpinner( plotOutput("ti_traject")) ),
+          #                  
+          #                  column(width = 3,
+          #                         my_withSpinner( plotOutput("ti_graph")) ),
+          #                  
+          #                  conditionalPanel (
+          #                      condition = "input.ti_sample_number == 1",
+          #                      column(width = 2,
+          #                             div(class = "option-group",
+          #                                 radioButtons("ti_graphs_color_choice",
+          #                                              "Color plots by",
+          #                                              choices = list("Clusters" = 1,
+          #                                                             "Samples" = 0),
+          #                                              selected = c(1)
+          #                                 ))),
+          #                  ), #ends conditional
+          #                  
+          #              ), # end fluidRow
+          #              
+          #              fluidRow(
+          #                  br(),
+          #                  # download plot
+          #                  column(width = 3,
+          #                         div(class = "down-group",
+          #                             radioButtons("p9_down_opt",
+          #                                          "Select the plot to download",
+          #                                          choices = list("Dimension reduction" = 0,
+          #                                                         "Dendrogram" = 1,
+          #                                                         "Graph"= 2),
+          #                                          selected = 0))),
+          #                  column(2,
+          #                         numericInput_plot_height("p9_height", value=10),
+          #                         numericInput_plot_width("p9_width", value=12)),
+          #                  column(2,
+          #                         selectInput_plot_res("p9_res"),
+          #                         selectInput_plot_format("p9_format")),
+          #                  column(2,
+          #                         downloadButton("p9_down", HTML("Download Plot"))),
+          #              ), # Fluid row
+          #          ), #ends conditional
+          #          
+          #          br(),
+          #          br(),
+          #          conditionalPanel (
+          #              condition = "input.run_ti_model != 0",
+          #              
+          #              conditionalPanel (
+          #                  condition = "input.ti_select_models == 0",
+          #                  
+          #                  p("More than one lineage of cells can be present in the inferred trajectory. IIf that is the case, the order of the clusters representing the development pathway of each lineage will be shown below. Clusters that appear in multiple rows represent segments of the trajectory that are shared among lineages."),
+          #                  
+          #                  fluidRow(
+          #                      column(12,
+          #                             my_withSpinner( verbatimTextOutput("lineages") ))
+          #                  ),
+          #              ),
+          #          ),
+          #          br(),
+          #          fluidRow(
+          #              
+          #              titlePanel("Gene expression in the trajectory"),
+          #              
+          #              p("In this section, it is possible to observe the expression of genes in the cells that are part of each lineage/trajectory. You can either provide a list of genes of interest or use the package dynfeature to search for genes that are \"important\" in explaining the trajectory."),
+          #              br(),
+          #              p("These genes can be identified in three different ways. 1) Global overview: genes that are important to define the whole trajectory; 2) Lineage/branch: genes that are important to define a branch interest; 3) Genes that are important to define the bifurcation points (points where the trajectory splits into different branches)"),
+          #              br(),
+          #              p(strong("Note."), "Dynfeature does not calculate a p-value for the tested genes. Instead, it defines an \"importance value\" that can be used to rank the genes by their relevance."),
+          #              br(),
+          #              column(width = 3,
+          #                     div(class = "option-group",
+          #                         radioButtons("ti_expre_opt",
+          #                                      "Select the type of analysis:",
+          #                                      choices = list("Visualization of a list of genes" = 0,
+          #                                                     "Identification of important genes using Dynfeature" = 1
+          #                                      ),
+          #                                      selected = c(0)
+          #                         ))),
+          #          ), # ends fluidRow
+          #          
+          #          ##################################################
+          #          ### Expression plots - Using markers as input ####
+          #          ##################################################
+          #          
+          #          conditionalPanel(
+          #              condition = "input.ti_expre_opt == 0",
+          #              
+          #              fluidRow(
+          #                  titlePanel("Expression of markers"),
+          #                  br(),
+          #                  column(width = 3,
+          #                         fileInput_markers_list("markers_list_tab3"),
+          #                         div(class = "option-group",
+          #                             selectInput("markers_list_header_opt_tab3",
+          #                                         "Does your file have a header?",
+          #                                         choices = c("", "Yes", "No"),
+          #                                         multiple = FALSE,
+          #                                         selectize = TRUE,
+          #                                         selected = NULL)),
+          #                         div(class = "option-group",
+          #                             actionButtonInput("load_markers_tab3",
+          #                                               HTML("Load markers")))),
+          #                  column(width = 2,
+          #                         conditionalPanel(
+          #                             condition = "input.load_markers_tab3 > 0",
+          #                             my_withSpinner( uiOutput('marker_group_selec_tab3') ),
+          #                             define_if_use_all_genes_or_select("filter_genes_q_tab3"),
+          #                             
+          #                             conditionalPanel(
+          #                                 condition = "input.filter_genes_q_tab3 == 0",
+          #                                 define_what_id_to_use("genes_ids_tab3")
+          #                             ))),
+          #                  conditionalPanel(
+          #                      condition = "input.filter_genes_q_tab3 == 0",
+          #                      
+          #                      column(width = 3,
+          #                             my_withSpinner( uiOutput('marker_genes_selec_tab3') )
+          #                      )),
+          #                  column(width = 2,
+          #                         conditionalPanel(
+          #                             condition = "input.load_markers_tab3 > 0",
+          #                             radioButtons_slot_selection_heatmap("slot_selection_heatmap_tab3"))),
+          #                  column(width = 2,
+          #                         conditionalPanel(
+          #                             condition = "input.load_markers_tab3 > 0",
+          #                             actionButtonInput("run_heatmap_tab3",
+          #                                               HTML("Show heatmap"))))
+          #              ), # Fluid row
+          #              
+          #          ), #ends conditional
+          #          
+          #          conditionalPanel(
+          #              
+          #              condition = "input.run_heatmap_tab3 > 0 & input.ti_expre_opt == 0",
+          #              fluidRow(
+          #                  br(),
+          #                  
+          #                  titlePanel("Heatmap of the trajectory"),
+          #                  br(),
+          #                  column(width = 10,
+          #                         my_withSpinner( uiOutput("heat_map_ui_tab3") )),
+          #                  column(2,
+          #                         numericInput_plot_height("p10_height", value=15),
+          #                         numericInput_plot_width("p10_width", value=25),
+          #                         selectInput_plot_res("p10_res"),
+          #                         selectInput_plot_format("p10_format"),
+          #                         downloadButton("p10_down", HTML("Download Plot"))),
+          #              ),
+          #              fluidRow(
+          #                  titlePanel("Visualization of gene expression of each cell in the trajectory"),
+          #                  br(),
+          #                  column(width = 3,
+          #                         my_withSpinner( uiOutput("marker_to_feature_plot_tab3") )),
+          #                  column(width = 3,
+          #                         actionButtonInput("run_feature_plot_tab3",
+          #                                           HTML("Show the expression of genes at the cell level")))
+          #                  
+          #              )
+          #          ),# Ends conditional
+          #          
+          #          conditionalPanel (
+          #              condition = "input.run_feature_plot_tab3 > 0 & input.ti_expre_opt == 0",
+          #              fluidRow(
+          #                  titlePanel("Feature plots"),
+          #                  
+          #                  column(width = 4,
+          #                         my_withSpinner( uiOutput("ti_order_express")) ),
+          #                  column(width = 4,
+          #                         my_withSpinner( uiOutput("ti_traject_express",
+          #                                                  height = "300px")) ),
+          #                  column(width = 4,
+          #                         my_withSpinner( uiOutput("ti_graph_express",
+          #                                                  height = "300px")) )
+          #              ), # Ends Fluid row
+          #              
+          #          ), # Ends conditional
+          #          
+          #          #################################################################
+          #          ### Expression plots - Using dynverse most relevant features ####
+          #          #################################################################
+          #          
+          #          conditionalPanel(
+          #              condition = "input.ti_expre_opt == 1",
+          #              
+          #              fluidRow (
+          #                  titlePanel("Expression of markers"),
+          #                  br(),
+          #                  p("For each of the below analyses, it is possible to save the list of all expressed genes with their \"importance\" values. It is also possible to save the list of the top N genes."),
+          #                  br(),
+          #                  p("For the branch/linage analysis, you can provide the beginning (from) and end (to) of the branch/linage of interest. You can also select only one, either from or to, as long as the other box is blank."),
+          #                  br(),
+          #                  p("For the bifurcation analysis, you can provide the cluster number where a branching happened to select the genes more relevant to this point. If left in blank, the analysis will identify the \"importance\" values for each branching point."),
+          #                  br(),
+          #                  
+          #                  column(width = 3,
+          #                         div(class = "option-group",
+          #                             radioButtons("dynverse_opt",
+          #                                          "Select the analysis to perform",
+          #                                          choices = list("global overview of the most predictive genes" = 0,
+          #                                                         "Lineage/branch markers" = 1,
+          #                                                         "Genes important at bifurcation points" = 2),
+          #                                          selected = c(0) ),
+          #                             numericInput("dynverse_n_genes",
+          #                                          label = "Set the number of genes to be used in the heatmap (top relevant genes)",
+          #                                          value = 50) )),
+          #                  
+          #                  conditionalPanel ("input.dynverse_opt == 1",
+          #                                    column(width = 2,
+          #                                           
+          #                                           my_withSpinner( uiOutput("dynverse_branch_from_ui") ),
+          #                                           my_withSpinner( uiOutput("dynverse_branch_to_ui") )),
+          #                                    
+          #                  ), # ends conditional
+          #                  
+          #                  conditionalPanel ("input.dynverse_opt == 2",
+          #                                    column(width = 2,
+          #                                           div(class = "option-group",
+          #                                               numericInput("branching_milestone",
+          #                                                            label = "Select the branching point",
+          #                                                            value = NULL))),
+          #                  ), # ends conditional
+          #                  column(width = 4,
+          #                         actionButtonInput("dynverse_def_imp_genes",
+          #                                           HTML("Defines the most important genes")),
+          #                         
+          #                         conditionalPanel("input.dynverse_def_imp_genes > 0",
+          #                                          #column(width = 4,
+          #                                          downloadButton("download_dynverse_genes",
+          #                                                         HTML("Download the list of all important <br> genes in all branches <br> and their \"importance\" score."))
+          #                         )
+          #                  ),
+          #              ), # Fluid row
+          #              
+          #          ), #ends conditional
+          #          
+          #          #heat map
+          #          conditionalPanel(
+          #              
+          #              condition = "input.dynverse_def_imp_genes > 0 & input.ti_expre_opt == 1",
+          #              fluidRow(
+          #                  br(),
+          #                  
+          #                  titlePanel("Heatmap of the trajectory"),
+          #                  
+          #                  br(),
+          #                  column(width = 10,
+          #                         my_withSpinner( uiOutput("heat_map_ui_tab3_dynv") )),
+          #                  column(2,
+          #                         actionButtonInput("run_heatmap_tab3_dynverse",
+          #                                           HTML("Update heatmap")),
+          #                         numericInput_plot_height("p11_height", value=15),
+          #                         numericInput_plot_width("p11_width", value=25),
+          #                         selectInput_plot_res("p11_res"),
+          #                         selectInput_plot_format("p11_format"),
+          #                         downloadButton("p11_down", HTML("Download Plot")),
+          #                         downloadButton("download_dynverse_genes_filt",
+          #                                        HTML("Download the fittered list <br> of genes and their <br> \"importance\" score."))
+          #                  ),
+          #              ), # end row
+          #              fluidRow(
+          #                  titlePanel("Additional plots"),
+          #                  br(),
+          #                  
+          #                  column(width = 3,
+          #                         my_withSpinner( uiOutput("marker_to_feature_plot_tab3_dynv") )),
+          #                  column(width = 3,
+          #                         actionButtonInput("run_feature_plot_tab3_dynv",
+          #                                           HTML("Show the expression of genes at the cell level")))
+          #              )
+          #          ),# Ends conditional
+          #          
+          #          conditionalPanel (
+          #              condition = "input.run_feature_plot_tab3_dynv > 0 & input.ti_expre_opt == 1",
+          #              fluidRow(
+          #                  titlePanel("Gene expression within the trajectory"),
+          #                  
+          #                  column(width = 4,
+          #                         my_withSpinner( uiOutput("ti_order_express_dynv")) ),
+          #                  column(width = 4,
+          #                         my_withSpinner( uiOutput("ti_traject_express_dynv",
+          #                                                  height = "300px")) ),
+          #                  column(width = 4,
+          #                         my_withSpinner( uiOutput("ti_graph_express_dynv",
+          #                                                  height = "300px")) )
+          #              ), # Ends Fluid row
+          #              
+          #          ), # Ends conditional
+          #          
+          #          
+          #          conditionalPanel (
+          #              condition = "input.run_feature_plot_tab3 > 0",
+          #              
+          #              fluidRow(
+          #                  titlePanel("Downloading plots of gene expression within the trajectory"),
+          #                  
+          #                  p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
+          #                  br(),
+          #                  column(width = 2,
+          #                         radioButtons_down_add_plots("down_add_plots_tab3")),
+          #                  conditionalPanel (
+          #                      condition = "input.down_add_plots_tab3 == 1",
+          #                      column(width = 2,
+          #                             my_withSpinner( uiOutput("select_genes_add_plot_to_down_tab3_ui") ),
+          #                      ),
+          #                      
+          #                      column(2,
+          #                             p(strong("Select the options for the dimension reduction plots")),
+          #                             numericInput_plot_height("add_p_tab3_feat_height", value=10),
+          #                             numericInput_plot_width("add_p_tab3_feat_width", value=14),
+          #                             selectInput_plot_res("add_p_tab3_feat_res"),
+          #                             selectInput_plot_format("add_p_tab3_feat_format")),
+          #                      column(2,
+          #                             p(strong("Select the options for the dendrogram plots")),
+          #                             numericInput_plot_height("add_p_tab3_violin_height", value=10),
+          #                             numericInput_plot_width("add_p_tab3_violin_width", value=18),
+          #                             selectInput_plot_res("add_p_tab3_violin_res"),
+          #                             selectInput_plot_format("add_p_tab3_violin_format")),
+          #                      
+          #                      column(2,
+          #                             p(strong("Select the options for the graph plots")),
+          #                             numericInput_plot_height("add_p_tab3_dot_height", value=10),
+          #                             numericInput_plot_width("add_p_tab3_dot_width", value=14),
+          #                             selectInput_plot_res("add_p_tab3_dot_res"),
+          #                             selectInput_plot_format("add_p_tab3_dot_format")),
+          #                      column(width = 3,
+          #                             actionButtonInput("start_down_add_plots_tab3",
+          #                                               HTML("Download additional plots")))
+          #                      
+          #                  ) # ends conditional
+          #              ), # ends fluid row
+          #          ), # ends conditional
+          #          
+          #          conditionalPanel (
+          #              condition = "input.run_feature_plot_tab3_dynv > 0",
+          #              
+          #              fluidRow(
+          #                  
+          #                  titlePanel("Downloading plots showing the gene expression within the trajectory"),
+          #                  
+          #                  p("The files will be saved in the folder:", em("images/one_sample_plots_<current date>__<current time>")),
+          #                  br(),
+          #                  column(width = 2,
+          #                         radioButtons_down_add_plots("down_add_plots_tab3_dynv")),
+          #                  conditionalPanel (
+          #                      condition = "input.down_add_plots_tab3_dynv == 1",
+          #                      column(width = 2,
+          #                             my_withSpinner( uiOutput("select_genes_add_plot_to_down_tab3_ui_dynv") ),
+          #                      ),
+          #                      
+          #                      column(2,
+          #                             p(strong("Select the options for the dimension reduction plots")),
+          #                             numericInput_plot_height("add_p_tab3_feat_height_dynv", value=10),
+          #                             numericInput_plot_width("add_p_tab3_feat_width_dynv", value=14),
+          #                             selectInput_plot_res("add_p_tab3_feat_res_dynv"),
+          #                             selectInput_plot_format("add_p_tab3_feat_format_dynv")),
+          #                      column(2,
+          #                             p(strong("Select the options for the dendrogram plots")),
+          #                             numericInput_plot_height("add_p_tab3_violin_height_dynv", value=10),
+          #                             numericInput_plot_width("add_p_tab3_violin_width_dynv", value=14),
+          #                             selectInput_plot_res("add_p_tab3_violin_res_dynv"),
+          #                             selectInput_plot_format("add_p_tab3_violin_format_dynv")),
+          #                      column(2,
+          #                             p(strong("Select the options for the graph plots")),
+          #                             numericInput_plot_height("add_p_tab3_dot_height_dynv", value=10),
+          #                             numericInput_plot_width("add_p_tab3_dot_width_dynv", value=14),
+          #                             selectInput_plot_res("add_p_tab3_dot_res_dynv"),
+          #                             selectInput_plot_format("add_p_tab3_dot_format_dynv")),
+          #                      column(width = 3,
+          #                             actionButtonInput("start_down_add_plots_tab3_dynv",
+          #                                               HTML("Download additional plots")))
+          #                      
+          #                  ) # ends conditional
+          #              ), # ends fluid row
+          #          ), # ends conditional
+          #          
+          #          bookmarkButton(style = "position:absolute;right:2em; background-color:#BF3EFF; color:#FFFFFF;"),
+          #          
+          #          tags$hr(),
+          #          p(strong("Asc-Seurat, version 2.2.1"), "- Released on February, 2022.", align = "center")
+          # ),
           
           ##########################
           ##### Advanced plots #####

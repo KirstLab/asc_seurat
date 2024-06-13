@@ -2830,1506 +2830,1506 @@ function(input, output, session) {
         
     })
     
-    #####################################
-    ### Tab 3 - trajectory inference ####
-    #####################################
-    
-    output$load_integrated_ui_tab3 <- renderUI({
-        
-        rds_list <- list.files('./RDS_files/', pattern = "*.rds")
-        
-        div(class = "option-group",
-            shinyWidgets::pickerInput(
-                inputId = "load_integrated_tab3",
-                label = "Select the file containing the clustered data",
-                choices = sort(rds_list),
-                multiple = FALSE,
-                options = list(`actions-box` = TRUE)
-            ))
-    })
-    
-    sc_data_traj_inf <- eventReactive(input$run_ti_model, {
-        
-        showNotification("Loading the clustered data",
-                         id = "tab3_m1",
-                         duration = NULL)
-        
-        load_rds <- req(input$load_integrated_tab3)
-        sc_data <- readRDS( paste0("./RDS_files/", load_rds) )
-        
-        on.exit(removeNotification(id = "tab3_m1"), add = TRUE)
-        
-        validate(need("seurat_clusters" %in% colnames(sc_data@meta.data),
-                      "Clustering was not detected. Was the data clustered in the other tabs?", ""))
-        
-        validate( need( length( unique(sc_data@meta.data$seurat_clusters) ) > 1,
-                        "Only one cluster was detected. This module relies on the dynverse toolkit, and it does not support the analysis using a single cluster."))
-        
-        sc_data
-        
-    } )
-    
-    expressed_genes <- reactive({
-        
-        req(sc_data_traj_inf())
-        
-        sce <- as.SingleCellExperiment(sc_data_traj_inf())
-        sce@assays@data@listData$counts@Dimnames[[1]]
-        
-    })
-    
-    # extract the expression matrix from the Seurat object
-    object_expression <- reactive({
-        
-        req(sc_data_traj_inf())
-        sing_cell_data <- sc_data_traj_inf()
-        
-        Matrix::t(as(as.matrix(sing_cell_data@assays$RNA@data), 'sparseMatrix'))
-        
-    })
-    
-    object_counts <- reactive({
-        
-        req(sc_data_traj_inf())
-        sing_cell_data <- sc_data_traj_inf()
-        
-        Matrix::t(as(as.matrix(sing_cell_data@assays$RNA@counts), 'sparseMatrix'))
-        
-    })
-    
-    dataset_inf <- reactive({
-        
-        wrap_expression(
-            counts = req( object_counts() ),
-            expression = req( object_expression() )
-        )
-        
-    })
-    
-    # Extracts meta data to fill the dyno object
-    sc_meta <- reactive({
-        
-        req( sc_data_traj_inf() )
-        sing_cell_data <- sc_data_traj_inf()
-        
-        sing_cell_data[[]] %>%
-            mutate(cells = rownames(.))
-        
-    })
-    
-    ## Clustering
-    sc_meta_cluster <- reactive({
-        
-        sc_meta <- req( sc_meta() )
-        
-        data.frame(cell_id = sc_meta$cells,
-                   group_id = sc_meta$seurat_clusters)
-        
-    })
-    
-    sc_cells_time_vec <- reactive ({
-        
-        sc_meta <- req( sc_meta() )
-        
-        sc_cells_time_vec <- as.character(sc_meta$treat)
-        names(sc_cells_time_vec) <- sc_meta$cells
-        
-        sc_cells_time_vec
-    })
-    
-    output$ti_methods_list_ui <- renderUI ({
-        
-        ti_methods_list <- dynmethods::methods$method_id
-        
-        div(class = "option-group",
-            shinyWidgets::pickerInput(
-                inputId = "ti_methods_list",
-                label = "Select the dynverse method to execute",
-                choices = sort(as.character(ti_methods_list)),
-                multiple = FALSE,
-                selected = "slingshot",
-                options = list(`actions-box` = TRUE)
-            ))
-        
-    })
-    
-    model <- eventReactive(input$run_ti_model, { # change it to run model
-        
-        req(sc_data_traj_inf())
-        sing_cell_data <- sc_data_traj_inf()
-        
-        showNotification("Running trajectory inference model",
-                         id = "tab3_m2",
-                         duration = NULL)
-        
-        ## Extracts the dimension reduction info
-        dimred <- sing_cell_data@reductions$pca@cell.embeddings
-        
-        sc_meta <- req( sc_meta() )
-        sc_meta_cluster <-  req( sc_meta_cluster() )
-        object_expression <- req( object_expression() )
-        object_counts <- req( object_counts() )
-        
-        # test if the user set the initial cluster
-        if ( !is.na(input$traj_init_clusters) ) {
-            
-            start_cells <- sc_meta[sc_meta$seurat_clusters == input$traj_init_clusters, ]
-            
-            start_cells <- as.character(start_cells$cells)
-            
-        } else {
-            
-            start_cells <- NULL
-            
-        }
-        
-        # test if the user set the end cluster
-        if (!is.na(input$traj_end_clusters)) {
-            
-            end_cells <- sc_meta[sc_meta$seurat_clusters == input$traj_end_clusters, ]
-            
-            end_cells <- as.character(end_cells$cells)
-            
-        } else {
-            
-            end_cells <- NULL
-            
-        }
-        
-        if ( input$ti_select_models == 0 ) { # slingshot locally
-            
-            if (input$ti_sample_number == 1) { # there are multiple samples
-                
-                priors <- list(
-                    start_id = start_cells,
-                    end_id = end_cells,
-                    groups_id = sc_meta_cluster,
-                    dimred = dimred
-                )
-                
-            } else if (input$ti_sample_number == 0) { # there are only one sample
-                
-                priors <- list(
-                    start_id = start_cells,
-                    end_id = end_cells,
-                    groups_id = sc_meta_cluster,
-                    dimred = dimred
-                )
-                
-            }
-            
-            sds <- run_fun_slingshot(expression = object_expression, priors = priors, verbose = T)
-            
-            on.exit(removeNotification(id = "tab3_m2"), add = TRUE)
-            
-        } else if ( input$ti_select_models == 1 ) { # dynverse models - depends on docker
-            
-            dataset <- wrap_expression(
-                counts = object_counts,
-                expression = object_expression
-            )
-            
-            # fetch newest version of the method
-            method_id <- paste0("dynverse/ti_", req(input$ti_methods_list), ":latest")
-            methods_selected <- create_ti_method_container(method_id)
-            
-            if ( input$ti_sample_number == 1 ) { # there are multiple samples
-                
-                dataset <- add_prior_information(
-                    
-                    dataset,
-                    start_id = start_cells,
-                    end_id = end_cells,
-                    groups_id = sc_meta_cluster,
-                    dimred = dimred
-                )
-                
-                sds <- infer_trajectory(dataset,
-                                        req( methods_selected() ),
-                                        verbose = T,
-                                        give_priors = c("start_id",
-                                                        "end_id",
-                                                        "groups_id",
-                                                        "dimred"))
-                
-            } else if ( input$ti_sample_number == 0 ) { # there only one samples
-                
-                dataset <- add_prior_information(
-                    
-                    dataset,
-                    start_id = start_cells,
-                    end_id = end_cells,
-                    groups_id = sc_meta_cluster,
-                    dimred = dimred
-                )
-                
-                sds <- infer_trajectory(dataset,
-                                        req( methods_selected() ),
-                                        verbose = T,
-                                        give_priors = c("start_id",
-                                                        "end_id",
-                                                        "groups_id",
-                                                        "dimred"))
-                
-            }
-            
-        }
-        
-        sds
-        
-    })
-    
-    output$ti_order <- renderPlot({
-        
-        model <- req( model() )
-        sc_meta_cluster <- req( sc_meta_cluster() )
-        
-        my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
-        
-        if ( input$ti_sample_number == 0 ) {
-            
-            plot_dimred(model,
-                        grouping = sc_meta_cluster,
-                        color_density = "grouping") +
-                ggtitle("Cell grouping") +
-                scale_color_manual(values = my_color_palette) +
-                scale_fill_manual(values = my_color_palette)
-            
-        } else if (input$ti_sample_number == 1) {
-            
-            if ( input$ti_graphs_color_choice == 1 ) {
-                
-                plot_dimred(model,
-                            grouping = sc_meta_cluster,
-                            color_density = "grouping") +
-                    ggtitle("Cell grouping")  +
-                    scale_color_manual(values = my_color_palette) +
-                    scale_fill_manual(values = my_color_palette)
-                
-            } else if (input$ti_graphs_color_choice == 0 ) {
-                
-                sc_cells_time_vec <- req( sc_cells_time_vec() )
-                
-                plot_dimred(model,
-                            grouping = sc_cells_time_vec,
-                            color_density = "grouping") +
-                    ggtitle("Cell grouping")#,
-                
-            }
-        }
-        
-    })
-    
-    output$ti_traject <- renderPlot({
-        
-        model <- req( model() )
-        sc_meta_cluster <- req( sc_meta_cluster() )
-        my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
-        
-        if ( input$ti_sample_number == 0 ) {
-            
-            plot_dendro(model,
-                        grouping = sc_meta_cluster) +
-                ggtitle("Trajectory") +
-                scale_color_manual(values = my_color_palette) +
-                scale_fill_manual(values = my_color_palette)
-            
-        } else if (input$ti_sample_number == 1) {
-            
-            if ( input$ti_graphs_color_choice == 1 ) {
-                
-                plot_dendro(model,
-                            grouping = sc_meta_cluster) +
-                    ggtitle("Trajectory") +
-                    scale_color_manual(values = my_color_palette) +
-                    scale_fill_manual(values = my_color_palette)
-                
-            } else if (input$ti_graphs_color_choice == 0 ) {
-                sc_cells_time_vec <- req( sc_cells_time_vec() )
-                
-                plot_dendro(model,
-                            grouping = sc_cells_time_vec) +
-                    ggtitle("Trajectory")#,
-                
-            }
-        }
-        
-        
-    })
-    
-    output$ti_graph <- renderPlot({
-        
-        model <- req( model() )
-        sc_meta_cluster <- req( sc_meta_cluster() )
-        my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
-        
-        if ( input$ti_sample_number == 0 ) {
-            
-            plot_graph(model,
-                       grouping = sc_meta_cluster,
-                       expression_source = dataset) +
-                ggtitle("Trajectory represented as a graph") +
-                scale_color_manual(values = my_color_palette) +
-                scale_fill_manual(values = my_color_palette)
-            
-        } else if (input$ti_sample_number == 1) {
-            
-            if ( input$ti_graphs_color_choice == 1 ) {
-                
-                plot_graph(model,
-                           grouping = sc_meta_cluster,
-                           expression_source = dataset) +
-                    ggtitle("Trajectory represented as a graph") +
-                    scale_color_manual(values = my_color_palette) +
-                    scale_fill_manual(values = my_color_palette)
-                
-            } else if (input$ti_graphs_color_choice == 0 ) {
-                sc_cells_time_vec <- req( sc_cells_time_vec() )
-                
-                plot_graph(model,
-                           grouping = sc_cells_time_vec,
-                           expression_source = dataset) +
-                    ggtitle("Trajectory represented as a graph")
-                
-            }
-        }
-        
-    })
-    
-    output$p9_down <- downloadHandler(
-        
-        filename = function() {
-            
-            if ( input$p9_down_opt == 0 ) {
-                
-                paste("Trajectory_Dimension_Reduction", ".", input$p9_format, sep = "")
-                
-            } else if (input$p9_down_opt == 1) {
-                
-                paste("Trajectory_Dendrogram", ".", input$p9_format, sep = "")
-                
-            } else if (input$p9_down_opt == 2) {
-                
-                paste("Trajectory_Graph", ".", input$p9_format, sep = "")
-                
-            }
-            
-        },
-        content = function(file) {
-            
-            withProgress(message = "Please wait, preparing the data for download.",
-                         value = 0.5, {
-                             
-                             shinyFeedback::feedbackWarning("p9_height", is.na(input$p9_height), "Required value")
-                             shinyFeedback::feedbackWarning("p9_width", is.na(input$p9_width), "Required value")
-                             
-                             height <- as.numeric( req( input$p9_height) )
-                             width <- as.numeric( req( input$p9_width) )
-                             res <- as.numeric(input$p9_res)
-                             
-                             if ( input$p9_down_opt == 0 ) {
-                                 
-                                 model <- req( model() )
-                                 sc_meta_cluster <- req( sc_meta_cluster() )
-                                 my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
-                                 
-                                 if ( input$ti_sample_number == 0 ) {
-                                     
-                                     p <- plot_dimred(model,
-                                                      grouping = sc_meta_cluster,
-                                                      color_density = "grouping") +
-                                         ggtitle("Cell grouping") +
-                                         scale_color_manual(values = my_color_palette) +
-                                         scale_fill_manual(values = my_color_palette)
-                                     
-                                 } else if (input$ti_sample_number == 1) {
-                                     
-                                     if ( input$ti_graphs_color_choice == 1 ) {
-                                         
-                                         p <-  plot_dimred(model,
-                                                           grouping = sc_meta_cluster,
-                                                           color_density = "grouping") +
-                                             ggtitle("Cell grouping") +
-                                             scale_color_manual(values = my_color_palette) +
-                                             scale_fill_manual(values = my_color_palette)
-                                         
-                                     } else if (input$ti_graphs_color_choice == 0 ) {
-                                         
-                                         sc_cells_time_vec <- req( sc_cells_time_vec() )
-                                         
-                                         p <-  plot_dimred(model,
-                                                           grouping = sc_cells_time_vec,
-                                                           color_density = "grouping") +
-                                             ggtitle("Cell grouping")#,
-                                         
-                                     }
-                                 }
-                                 
-                             } else if ( input$p9_down_opt == 1 ) {
-                                 
-                                 model <- req( model() )
-                                 sc_meta_cluster <- req( sc_meta_cluster() )
-                                 my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
-                                 
-                                 if ( input$ti_sample_number == 0 ) {
-                                     
-                                     p <- plot_dendro(model,
-                                                      grouping = sc_meta_cluster) +
-                                         ggtitle("Trajectory") +
-                                         scale_color_manual(values = my_color_palette) +
-                                         scale_fill_manual(values = my_color_palette)
-                                     
-                                 } else if (input$ti_sample_number == 1) {
-                                     
-                                     if ( input$ti_graphs_color_choice == 1 ) {
-                                         
-                                         p <- plot_dendro(model,
-                                                          grouping = sc_meta_cluster) +
-                                             ggtitle("Trajectory") +
-                                             scale_color_manual(values = my_color_palette) +
-                                             scale_fill_manual(values = my_color_palette)
-                                         
-                                     } else if (input$ti_graphs_color_choice == 0 ) {
-                                         sc_cells_time_vec <- req( sc_cells_time_vec() )
-                                         
-                                         p <-  plot_dendro(model,
-                                                           grouping = sc_cells_time_vec) +
-                                             ggtitle("Trajectory")#,
-                                         
-                                     }
-                                 }
-                                 
-                             } else if ( input$p9_down_opt == 2 ) {
-                                 
-                                 model <- req( model() )
-                                 sc_meta_cluster <- req( sc_meta_cluster() )
-                                 my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
-                                 
-                                 if ( input$ti_sample_number == 0 ) {
-                                     
-                                     p <- plot_graph(model,
-                                                     grouping = sc_meta_cluster,
-                                                     expression_source = dataset) +
-                                         ggtitle("Trajectory represented as a graph") +
-                                         scale_color_manual(values = my_color_palette) +
-                                         scale_fill_manual(values = my_color_palette)
-                                     
-                                 } else if (input$ti_sample_number == 1) {
-                                     
-                                     if ( input$ti_graphs_color_choice == 1 ) {
-                                         
-                                         p <- plot_graph(model,
-                                                         grouping = sc_meta_cluster,
-                                                         expression_source = dataset) +
-                                             ggtitle("Trajectory represented as a graph") +
-                                             scale_color_manual(values = my_color_palette) +
-                                             scale_fill_manual(values = my_color_palette)
-                                         
-                                     } else if (input$ti_graphs_color_choice == 0 ) {
-                                         
-                                         sc_cells_time_vec <- req( sc_cells_time_vec() )
-                                         
-                                         p <- plot_graph(model,
-                                                         grouping = sc_cells_time_vec,
-                                                         expression_source = dataset) +
-                                             ggtitle("Trajectory represented as a graph")
-                                         
-                                     }
-                                 }
-                                 
-                             }
-                             
-                             ggplot2::ggsave(file,
-                                             p,
-                                             height=height,
-                                             width=width,
-                                             units="cm",
-                                             dpi=res,
-                                             bg = "#FFFFFF")
-                             
-                         })
-        }
-        
-    )
-    
-    ## Print the lineages that are been show in the plots
-    output$lineages <- renderPrint({
-        
-        sds <- req( model() )
-        sds$lineages
-        
-    })
-    
-    ## Gene expression
-    features_tab3 <- reactive({
-        
-        req(input$markers_list_tab3)
-        ext <- tools::file_ext(input$markers_list_tab3$name)
-        markers_list_file <- input$markers_list_tab3$datapath
-        
-        if(input$markers_list_header_opt_tab3 == "") {
-            shinyFeedback::feedbackWarning("markers_list_header_opt_tab3",
-                                           TRUE,
-                                           "Please, inform if the file has a header.")
-        }
-        req(input$markers_list_header_opt_tab3)
-        
-        read_file_markers("tab3_readfile",
-                          markers_list_file = markers_list_file,
-                          feed_ID ="markers_list_tab3",
-                          ext = ext,
-                          header_opt = input$markers_list_header_opt_tab3)
-    })
-    
-    # Load the file and offers the parameters for heatmap
-    observeEvent(input$load_markers_tab3, {
-        
-        # Painel that will apper after loading the list of markers containing the filter options
-        output$marker_group_selec_tab3 = renderUI({
-            
-            pickerInput_markers_group("features_group_tab3", genes = req( features_tab3()) )
-            
-        })
-        
-        output$marker_genes_selec_tab3 = renderUI({
-            
-            features_group <- req(input$features_group_tab3)
-            id_choice <- req(input$genes_ids_tab3)
-            
-            pickerInput_markers_genes("selected_genes_tab3",
-                                      genes = req( features_tab3() ),
-                                      features_group = features_group,
-                                      id_choice = id_choice)
-        })
-        
-    })
-    
-    # Filter accordly with the parameters selected by the user
-    filt_features_tab3 <- eventReactive(input$run_heatmap_tab3, {
-        
-        features_f <- req( features_tab3() )
-        features_group <- req(input$features_group_tab3)
-        
-        features_f <- dplyr::filter(features_f,
-                                    Group %in% features_group)
-        
-        if (input$filter_genes_q_tab3 == 0) {
-            
-            shinyFeedback::feedbackWarning("selected_genes_tab3",
-                                           is.null(input$selected_genes_tab3),
-                                           "Please, select one or more genes")
-            req(input$selected_genes_tab3)
-            
-            if (input$genes_ids_tab3 == "ID") {
-                
-                features_f <- features_f[features_f$GeneID %in% input$selected_genes_tab3, ]
-                
-            } else if (input$genes_ids_tab3 == "name") {
-                
-                features_f <- features_f[features_f$Name %in% input$selected_genes_tab3, ]
-                
-            }
-            
-        }
-        
-        features_f
-        
-    })
-    
-    dynverse_genes_list <- eventReactive(input$dynverse_def_imp_genes, {
-        
-        showNotification("Defining the most relevant genes",
-                         id = "tab3_m5",
-                         duration = NULL)
-        
-        if ( input$dynverse_opt == 0 ) { # global
-            
-            feat_importances <- dynfeature::calculate_overall_feature_importance(req( model() ),
-                                                                                 expression_source = req( dataset_inf()))
-            
-            
-        } else if ( input$dynverse_opt == 1 ) { # branch/lineage
-            
-            feat_importances <- dynfeature::calculate_branch_feature_importance(req( model() ),
-                                                                                expression_source = req( dataset_inf()) )
-            
-        } else if ( input$dynverse_opt == 2 ) { # bifurcation
-            
-            if ( is.na(input$branching_milestone) ) {
-                
-                feat_importances <- calculate_branching_point_feature_importance(req( model() ),
-                                                                                 expression_source = req( dataset_inf()) )
-                
-            } else {
-                
-                feat_importances <- calculate_branching_point_feature_importance(req( model() ),
-                                                                                 milestones_oi = input$branching_milestone,
-                                                                                 expression_source = req( dataset_inf()))
-                
-            }
-            
-        }
-        
-        on.exit(removeNotification(id = "tab3_m5"), add = TRUE)
-        
-        showNotification("Select the number of genes to show in the heatmap and trajectory plots",
-                         id = "tab3_m6",
-                         duration = 30)
-        
-        feat_importances
-        
-    })
-    
-    dynverse_genes_list_filt <- eventReactive( c(input$dynverse_def_imp_genes, input$run_heatmap_tab3_dynverse), {
-        
-        shinyFeedback::feedbackWarning("dynverse_n_genes",
-                                       is.na(input$dynverse_n_genes),
-                                       "Required value")
-        req(input$dynverse_n_genes)
-        
-        features_imp <- req( dynverse_genes_list() )
-        
-        if ( input$dynverse_opt == 0 ) { # global
-            
-            features <- features_imp %>%
-                top_n(input$dynverse_n_genes, importance)
-            
-        } else if ( input$dynverse_opt == 1 ) { # branch/lineage
-            
-            if ( is.na(req(input$dynverse_branch_from)) ) {
-                
-                features <- features_imp %>%
-                    filter(to == req(input$dynverse_branch_to)) %>%
-                    top_n(input$dynverse_n_genes, importance)
-                
-            } else if ( is.na(req(input$dynverse_branch_to)) ) {
-                
-                features <- features_imp %>%
-                    filter( from  == req(input$dynverse_branch_from)) %>%
-                    top_n(input$dynverse_n_genes, importance)
-                
-            } else {
-                
-                features <- features_imp %>%
-                    filter( from  == req(input$dynverse_branch_from) & to == req(input$dynverse_branch_to)) %>%
-                    top_n(input$dynverse_n_genes, importance)
-                
-            }
-            
-        } else if ( input$dynverse_opt == 2 ) { # bifurcation
-            
-            features <- features_imp %>%
-                top_n(input$dynverse_n_genes, importance)
-            
-        }
-        
-        features
-    })
-    
-    observeEvent( c(input$dynverse_def_imp_genes, input$run_heatmap_tab3), {
-        
-        # This calculate the height of the plot based on the n of genes
-        heatmap_n_genes_tab3 <- reactive({
-            
-            # Test what input to use for the heatmap
-            if (input$ti_expre_opt == 0) {
-                
-                features <- req( filt_features_tab3())
-                features <- unique(features$GeneID)
-                
-            } else if (input$ti_expre_opt == 1) {
-                
-                features <- req( dynverse_genes_list_filt() )
-                features <- features$feature_id
-                
-            } else if (input$ti_expre_opt == 2) {
-                
-                features <- req( tradseq_genes_list() )
-                
-            }
-            
-            as.numeric(length(features))
-        })
-        heatmap_Height_tab3 <- reactive( 250 + ( 20 * req( heatmap_n_genes_tab3() ) ) )
-        
-        # Generates the heatmap plot
-        output$heat_map_tab3 <- renderPlot({
-            
-            showNotification("Generating the heatmap",
-                             id = "tab3_m4",
-                             duration = NULL)
-            
-            # Test what input to use for the heatmap
-            if (input$ti_expre_opt == 0) {
-                
-                features <- req( filt_features_tab3() )
-                features <- unique(features$GeneID)
-                
-            } else if (input$ti_expre_opt == 1) {
-                
-                features <- req( dynverse_genes_list_filt() )
-                features <- features$feature_id
-                
-            } else if (input$ti_expre_opt == 2) {
-                
-                features <- req( tradseq_genes_list() )
-                
-            }
-            
-            features <- as.character(features)
-            
-            ### Drawing heat map ###
-            heatmap <- plot_heatmap(
-                req( model() ),
-                expression_source = req( dataset_inf() ),
-                grouping = req( sc_meta_cluster() ),
-                features_oi = features
-            )
-            
-            on.exit(removeNotification(id = "tab3_m4"), add = TRUE)
-            
-            heatmap
-            
-        }, height = req( heatmap_Height_tab3() ) )
-        
-        output$heat_map_ui_tab3 <- renderUI({
-            
-            plotOutput( "heat_map_tab3", height = req( heatmap_Height_tab3() ))
-            
-        })
-        
-        output$marker_to_feature_plot_tab3 = renderUI({
-            
-            # Test what input to use for the heatmap
-            if (input$ti_expre_opt == 0) {
-                
-                features <- req( filt_features_tab3() )
-                features <- unique(features$GeneID)
-                
-            } else if (input$ti_expre_opt == 1) {
-                
-                features <- req( dynverse_genes_list_filt() )
-                features <- features$feature_id
-                
-            } else if (input$ti_expre_opt == 2) {
-                
-                features <- req( tradseq_genes_list() )
-                
-            }
-            
-            div(class = "option-group",
-                shinyWidgets::pickerInput(
-                    inputId = "selected_genes_for_feature_plot_tab3",
-                    label = "Select the genes to feature plots",
-                    choices = sort(as.character(features)),
-                    multiple = TRUE,
-                    options = list(`actions-box` = TRUE)
-                ))
-            
-        })
-        
-        output$p10_down <- downloadHandler(
-            
-            filename = function() {
-                paste("Heatmap_int.dataset", ".", input$p10_format, sep = "")
-            },
-            content = function(file) {
-                
-                withProgress(message = "Please wait, preparing the data for download.",
-                             value = 0.5, {
-                                 
-                                 shinyFeedback::feedbackWarning("p10_height", is.na(input$p10_height), "Required value")
-                                 shinyFeedback::feedbackWarning("p10_width", is.na(input$p10_width), "Required value")
-                                 
-                                 height <- as.numeric( req( input$p10_height) )
-                                 width <- as.numeric( req( input$p10_width) )
-                                 res <- as.numeric(input$p10_res)
-                                 
-                                 # Test what input to use for the heatmap
-                                 if (input$ti_expre_opt == 0) {
-                                     
-                                     features <- req( filt_features_tab3() )
-                                     features <- unique(features$GeneID)
-                                     
-                                 } else if (input$ti_expre_opt == 1) {
-                                     
-                                     features <- req( dynverse_genes_list_filt() )
-                                     features <- features$feature_id
-                                     
-                                 } else if (input$ti_expre_opt == 2) {
-                                     
-                                     features <- req( tradseq_genes_list() )
-                                     
-                                 }
-                                 
-                                 #    features <- paste0("gene:", as.character(features))
-                                 features <- as.character(features)
-                                 
-                                 ### Drawing heat map ###
-                                 p <- plot_heatmap(
-                                     req( model() ),
-                                     expression_source = req( dataset_inf() ),
-                                     grouping = req( sc_meta_cluster() ),
-                                     features_oi = features
-                                 )
-                                 
-                                 ggplot2::ggsave(file,
-                                                 p,
-                                                 height=height,
-                                                 width=width,
-                                                 units="cm",
-                                                 dpi=res,
-                                                 bg = "#FFFFFF")
-                                 
-                             })
-            }
-            
-        )
-        
-    })
-    
-    output$dynverse_branch_from_ui <- renderUI({
-        
-        sc_meta_cluster <- req( sc_meta_cluster() )
-        clust <- unique(as.character(sc_meta_cluster$group_id))
-        
-        div(class = "option-group",
-            shinyWidgets::pickerInput(
-                inputId = "dynverse_branch_from",
-                label = "Set the start branch (from)",
-                choices = sort(as.character(clust)),
-                multiple = F,
-                options = list(`actions-box` = TRUE)
-            ))
-        
-    })
-    
-    output$dynverse_branch_to_ui <- renderUI({
-        
-        sc_meta_cluster <- req( sc_meta_cluster() )
-        
-        clust <- unique(as.character(sc_meta_cluster$group_id))
-        clust <- clust[!clust %in% req(input$dynverse_branch_from)]
-        
-        div(class = "option-group",
-            shinyWidgets::pickerInput(
-                inputId = "dynverse_branch_to",
-                label = "Set the start branch (to)",
-                choices = sort(as.character(clust)),
-                multiple = F,
-                options = list(`actions-box` = TRUE)
-            ))
-        
-    })
-    
-    observeEvent(input$run_feature_plot_tab3, {
-        
-        showNotification("Generating the expression plots",
-                         id = "tab3_m7",
-                         duration = 30)
-        
-        output$ti_order_express <- renderUI({
-            
-            shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3",
-                                           is.null(input$selected_genes_for_feature_plot_tab3),
-                                           "Please, select one or more genes")
-            req(input$selected_genes_for_feature_plot_tab3)
-            
-            feat_length <- length(req(input$selected_genes_for_feature_plot_tab3))
-            
-            plot_output_list <- lapply(1:feat_length, function(i) {
-                plotname <- paste("ti_order_exp", i, sep="")
-                plotOutput(plotname, height = 300)
-            })
-            
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
-            do.call(tagList, plot_output_list)
-        })
-        
-        output$ti_traject_express <- renderUI({
-            
-            shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3",
-                                           is.null(input$selected_genes_for_feature_plot_tab3),
-                                           "Please, select one or more genes")
-            req(input$selected_genes_for_feature_plot_tab3)
-            
-            feat_length <- length(req(input$selected_genes_for_feature_plot_tab3))
-            
-            plot_output_list <- lapply(1:feat_length, function(i) {
-                plotname <- paste("ti_traject_expr", i, sep="")
-                plotOutput(plotname, height = 300)
-            })
-            
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
-            do.call(tagList, plot_output_list)
-        })
-        
-        output$ti_graph_express <- renderUI({
-            
-            shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3",
-                                           is.null(input$selected_genes_for_feature_plot_tab3),
-                                           "Please, select one or more genes")
-            req(input$selected_genes_for_feature_plot_tab3)
-            
-            feat_length <- length(req(input$selected_genes_for_feature_plot_tab3))
-            
-            plot_output_list <- lapply(1:feat_length, function(i) {
-                plotname <- paste("ti_graph_expr", i, sep="")
-                plotOutput(plotname, height = 300)
-            })
-            
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
-            do.call(tagList, plot_output_list)
-        })
-        
-        features_to_plot <- req(input$selected_genes_for_feature_plot_tab3)
-        
-        for ( i in 1:length( features_to_plot ) ) {
-            
-            model <- req( model() )
-            
-            local({
-                
-                my_i <- i
-                
-                plotname <- paste("ti_order_exp", my_i, sep="")
-                output[[plotname]] <- renderPlot({
-                    
-                    plot_dimred(model,
-                                feature_oi = features_to_plot[my_i],
-                                expression_source = req( dataset_inf())) +
-                        ggtitle("Cell grouping")
-                    
-                })
-                
-                plotname <- paste("ti_traject_expr", my_i, sep="")
-                output[[plotname]] <- renderPlot({
-                    
-                    plot_dendro(model,
-                                feature_oi = features_to_plot[my_i],
-                                expression_source = req( dataset_inf())) +
-                        ggtitle("Trajectory")#,
-                    
-                })
-                
-                plotname <- paste("ti_graph_expr", my_i, sep="")
-                output[[plotname]] <- renderPlot({
-                    
-                    plot_graph(model,
-                               feature_oi = features_to_plot[my_i],
-                               expression_source = req( dataset_inf()) ) +
-                        ggtitle("Trajectory represented as a graph")#,
-                    
-                })
-                
-            })
-            
-        }
-        
-    })
-    
-    output$select_genes_add_plot_to_down_tab3_ui <- renderUI({
-        shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3",
-                                       is.null(input$selected_genes_for_feature_plot_tab3),
-                                       "Please, select one or more genes")
-        req(input$selected_genes_for_feature_plot_tab3)
-        
-        filt_features <- req(input$selected_genes_for_feature_plot_tab3)
-        
-        div(class = "option-group",
-            shinyWidgets::pickerInput(
-                inputId = "select_genes_add_plot_to_down_tab3",
-                label = "Select the genes that you want to download",
-                choices = sort(as.character(filt_features)),
-                multiple = TRUE,
-                options = list(`actions-box` = TRUE)
-            ))
-        
-    })
-    
-    observeEvent(input$start_down_add_plots_tab3, {
-        
-        shinyFeedback::feedbackWarning("select_genes_add_plot_to_down_tab3",
-                                       is.null(input$select_genes_add_plot_to_down_tab3),
-                                       "Please, select one or more genes")
-        
-        genes <- req(input$select_genes_add_plot_to_down_tab3)
-        
-        withProgress(message = "Please wait, preparing the data for download.",
-                     value = 0.5, {
-                         
-                         
-                         if (file.exists("./images") == F ) {
-                             dir.create('./images')
-                         }
-                         
-                         # Creates new folder to keep the plots organized. Adding date and time helps to avoid overwriting the data
-                         path_new <- paste0("./images/trajectories_plots", format(Sys.time(),'_%Y-%m-%d__%H%M%S'))
-                         
-                         dir.create(path_new)
-                         dir.create( paste0(path_new,"/Dimension_reduction") )
-                         dir.create( paste0(path_new,"/Dendrogram") )
-                         dir.create( paste0(path_new, "/Graph") )
-                         
-                         model <- req( model() )
-                         
-                         for( i in 1:length(genes) ){
-                             
-                             # Saves the feature plots
-                             p <- plot_dimred(model,
-                                              feature_oi = genes[i],
-                                              expression_source = req( dataset_inf()) ) +
-                                 ggtitle("Cell grouping")
-                             
-                             file <- paste0(path_new, "/Dimension_reduction/", genes[i], ".", input$add_p_tab3_feat_format)
-                             
-                             ggplot2::ggsave(file,
-                                             p,
-                                             height=input$add_p_tab3_feat_height,
-                                             width=input$add_p_tab3_feat_width,
-                                             units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_feat_res),
-                                             bg = "#FFFFFF")
-                             
-                             # Saves the violin plots
-                             
-                             file <- paste0(path_new, "/Dendrogram/", genes[i], ".", input$add_p_tab3_violin_format)
-                             
-                             p <- plot_dendro(model,
-                                              feature_oi = genes[i],
-                                              expression_source = req( dataset_inf()) )+
-                                 ggtitle("Trajectory")
-                             
-                             ggplot2::ggsave(file,
-                                             p,
-                                             height=input$add_p_tab3_violin_height,
-                                             width=input$add_p_tab3_violin_width,
-                                             units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_violin_res),
-                                             bg = "#FFFFFF")
-                             
-                             # Saves the dot plots
-                             file <- paste0(path_new, "/Graph/", genes[i], ".", input$add_p_tab3_dot_format)
-                             
-                             p <- plot_graph(model,
-                                             feature_oi = genes[i],
-                                             expression_source = req( dataset_inf())) +
-                                 ggtitle("Trajectory represented as a graph")#,
-                             
-                             ggplot2::ggsave(file,
-                                             p,
-                                             height=input$add_p_tab3_dot_height,
-                                             width=input$add_p_tab3_dot_width,
-                                             units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_dot_res),
-                                             bg = "#FFFFFF")
-                         }
-                     })
-        
-        showNotification("All plots were downloaded!",
-                         duration = 15,
-                         id = "")
-    })
-    
-    observeEvent(c(input$run_heatmap_tab3_dynverse, input$dynverse_def_imp_genes), {
-        
-        # This calculate the height of the plot based on the n of genes
-        heatmap_n_genes_tab3_dynv <- reactive({
-            
-            # Test what input to use for the heatmap
-            if (input$ti_expre_opt == 0) {
-                
-                features <- req( filt_features_tab3() )
-                features <- unique(features$GeneID)
-                
-            } else if (input$ti_expre_opt == 1) {
-                
-                features <- req( dynverse_genes_list_filt() )
-                features <- features$feature_id
-                
-            }
-            
-            as.numeric(length(features))
-        })
-        heatmap_Height_tab3_dynv <- reactive( 250 + ( 20 * req( heatmap_n_genes_tab3_dynv() ) ) )
-        
-        # Generates the heatmap plot
-        output$heat_map_tab3_dynv <- renderPlot({
-            
-            showNotification("Generating the heatmap",
-                             id = "tab3_m8",
-                             duration = NULL)
-            
-            # Test what input to use for the heatmap
-            if (input$ti_expre_opt == 0) {
-                
-                features <- req( filt_features_tab3() )
-                features <- unique(features$GeneID)
-                
-            } else if (input$ti_expre_opt == 1) {
-                
-                features <- req( dynverse_genes_list_filt() )
-                features <- features$feature_id
-                
-            }
-            
-            features <- as.character(features)
-            
-            ### Drawing heat map ###
-            heatmap <- plot_heatmap(
-                req(  model() ),
-                expression_source = req( dataset_inf() ),
-                grouping = req( sc_meta_cluster() ),
-                features_oi = features
-            )
-            
-            on.exit(removeNotification(id = "tab3_m8"), add = TRUE)
-            
-            heatmap
-            
-        }, height = heatmap_Height_tab3_dynv() )
-        
-        output$heat_map_ui_tab3_dynv <- renderUI({
-            
-            plotOutput( "heat_map_tab3_dynv", height = heatmap_Height_tab3_dynv() )
-            
-        })
-        
-        output$marker_to_feature_plot_tab3_dynv = renderUI({
-            
-            # Test what input to use for the heatmap
-            if (input$ti_expre_opt == 0) {
-                
-                features <- filt_features_tab3()
-                features <- features$GeneID
-                
-            } else if (input$ti_expre_opt == 1) {
-                
-                features <- dynverse_genes_list_filt()
-                features <- features$feature_id
-                
-            } else if (input$ti_expre_opt == 2) {
-                
-                features <- tradseq_genes_list()
-                
-            }
-            
-            div(class = "option-group",
-                shinyWidgets::pickerInput(
-                    inputId = "selected_genes_for_feature_plot_tab3_dynv",
-                    label = "Select the genes to feature plots",
-                    choices = sort(as.character(features)),
-                    multiple = TRUE,
-                    options = list(`actions-box` = TRUE)
-                ))
-            
-        })
-        
-        output$p11_down <- downloadHandler(
-            
-            filename = function() {
-                paste("Heatmap_int.dataset_most_important_features", ".", input$p11_format, sep = "")
-            },
-            content = function(file) {
-                
-                withProgress(message = "Please wait, preparing the data for download.",
-                             value = 0.5, {
-                                 
-                                 shinyFeedback::feedbackWarning("p11_height", is.na(input$p11_height), "Required value")
-                                 shinyFeedback::feedbackWarning("p11_width", is.na(input$p11_width), "Required value")
-                                 
-                                 height <- as.numeric( req( input$p11_height) )
-                                 width <- as.numeric( req( input$p11_width) )
-                                 res <- as.numeric(input$p11_res)
-                                 
-                                 # Test what input to use for the heatmap
-                                 if (input$ti_expre_opt == 0) {
-                                     
-                                     features <- filt_features_tab3()
-                                     features <- unique(features$GeneID)
-                                     
-                                 } else if (input$ti_expre_opt == 1) {
-                                     
-                                     features <- dynverse_genes_list_filt()
-                                     features <- features$feature_id
-                                     
-                                 }
-                                 
-                                 features <- as.character(features)
-                                 
-                                 ### Drawing heat map ###
-                                 p <- plot_heatmap(
-                                     model(),
-                                     expression_source = dataset_inf(),
-                                     grouping = sc_meta_cluster(),
-                                     features_oi = features
-                                 )
-                                 
-                                 ggplot2::ggsave(file,
-                                                 p,
-                                                 height=height,
-                                                 width=width,
-                                                 units="cm",
-                                                 dpi=res,
-                                                 bg = "#FFFFFF")
-                                 
-                             })
-            }
-            
-        )
-        
-    })
-    
-    observeEvent(input$run_feature_plot_tab3_dynv, {
-        
-        showNotification("Generating the expression plots",
-                         id = "tab3_m8",
-                         duration = 30)
-        
-        output$ti_order_express_dynv <- renderUI({
-            
-            shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3_dynv",
-                                           is.null(input$selected_genes_for_feature_plot_tab3_dynv),
-                                           "Please, select one or more genes")
-            req(input$selected_genes_for_feature_plot_tab3_dynv)
-            
-            feat_length <- length(input$selected_genes_for_feature_plot_tab3_dynv)
-            
-            plot_output_list <- lapply(1:feat_length, function(i) {
-                plotname <- paste("ti_order_exp_dynv", i, sep="")
-                plotOutput(plotname, height = 300)
-            })
-            
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
-            do.call(tagList, plot_output_list)
-        })
-        
-        output$ti_traject_express_dynv <- renderUI({
-            
-            shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3_dynv",
-                                           is.null(input$selected_genes_for_feature_plot_tab3_dynv),
-                                           "Please, select one or more genes")
-            req(input$selected_genes_for_feature_plot_tab3_dynv)
-            
-            feat_length <- length(input$selected_genes_for_feature_plot_tab3_dynv)
-            
-            plot_output_list <- lapply(1:feat_length, function(i) {
-                plotname <- paste("ti_traject_expr_dynv", i, sep="")
-                plotOutput(plotname, height = 300)
-            })
-            
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
-            do.call(tagList, plot_output_list)
-        })
-        
-        output$ti_graph_express_dynv <- renderUI({
-            
-            shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3_dynv",
-                                           is.null(input$selected_genes_for_feature_plot_tab3_dynv),
-                                           "Please, select one or more genes")
-            req(input$selected_genes_for_feature_plot_tab3_dynv)
-            
-            feat_length <- length(input$selected_genes_for_feature_plot_tab3_dynv)
-            
-            plot_output_list <- lapply(1:feat_length, function(i) {
-                plotname <- paste("ti_graph_expr_dynv", i, sep="")
-                plotOutput(plotname, height = 300)
-            })
-            
-            # Convert the list to a tagList - this is necessary for the list of items
-            # to display properly.
-            do.call(tagList, plot_output_list)
-        })
-        
-        features_to_plot <- input$selected_genes_for_feature_plot_tab3_dynv
-        
-        for (i in 1:length( features_to_plot ) ) {
-            
-            model <- model()
-            
-            local({
-                
-                my_i <- i
-                
-                plotname <- paste("ti_order_exp_dynv", my_i, sep="")
-                output[[plotname]] <- renderPlot({
-                    
-                    plot_dimred(model,
-                                feature_oi = features_to_plot[my_i],
-                                expression_source = dataset_inf()) +
-                        ggtitle("Cell grouping")
-                    
-                })
-                
-                plotname <- paste("ti_traject_expr_dynv", my_i, sep="")
-                output[[plotname]] <- renderPlot({
-                    
-                    plot_dendro(model,
-                                feature_oi = features_to_plot[my_i],
-                                expression_source = dataset_inf()) +
-                        ggtitle("Trajectory")#,
-                    
-                })
-                
-                plotname <- paste("ti_graph_expr_dynv", my_i, sep="")
-                output[[plotname]] <- renderPlot({
-                    
-                    plot_graph(model,
-                               feature_oi = features_to_plot[my_i],
-                               expression_source = dataset_inf()) +
-                        ggtitle("Trajectory represented as a graph")#,
-                    
-                })
-                
-            })
-            
-        }
-        
-    })
-    
-    output$select_genes_add_plot_to_down_tab3_ui_dynv <- renderUI({
-        
-        shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3_dynv",
-                                       is.null(input$selected_genes_for_feature_plot_tab3_dynv),
-                                       "Please, select one or more genes")
-        req(input$selected_genes_for_feature_plot_tab3_dynv)
-        
-        filt_features <- input$selected_genes_for_feature_plot_tab3_dynv
-        
-        div(class = "option-group",
-            shinyWidgets::pickerInput(
-                inputId = "select_genes_add_plot_to_down_tab3_dynv",
-                label = "Select the genes that you want to download",
-                choices = sort(as.character(filt_features)),
-                multiple = TRUE,
-                options = list(`actions-box` = TRUE)
-            ))
-        
-    })
-    
-    observeEvent(input$start_down_add_plots_tab3_dynv, {
-        
-        shinyFeedback::feedbackWarning("select_genes_add_plot_to_down_tab3_dynv",
-                                       is.null(input$select_genes_add_plot_to_down_tab3_dynv),
-                                       "Please, select one or more genes")
-        
-        genes <- req(input$select_genes_add_plot_to_down_tab3_dynv)
-        
-        withProgress(message = "Please wait, preparing the data for download.",
-                     value = 0.5, {
-                         
-                         if (file.exists("./images") == F ) {
-                             dir.create('./images')
-                         }
-                         
-                         # Creates new folder to keep the plots organized. Adding date and time helps to avoid overwriting the data
-                         path_new <- paste0("./images/trajectories_plots", format(Sys.time(),'_%Y-%m-%d__%H%M%S'))
-                         
-                         dir.create(path_new)
-                         dir.create( paste0(path_new,"/Dimension_reduction") )
-                         dir.create( paste0(path_new,"/Dendrogram") )
-                         dir.create( paste0(path_new, "/Graph") )
-                         
-                         model <- model()
-                         
-                         for( i in 1:length(genes) ){
-                             
-                             # Saves the feature plots
-                             p <- plot_dimred(model,
-                                              feature_oi = genes[i],
-                                              expression_source = dataset_inf()) +
-                                 ggtitle("Cell grouping")
-                             
-                             file <- paste0(path_new, "/Dimension_reduction/", genes[i], ".", input$add_p_tab3_feat_format_dynv)
-                             
-                             ggplot2::ggsave(file,
-                                             p,
-                                             height=input$add_p_tab3_feat_height_dynv,
-                                             width=input$add_p_tab3_feat_width_dynv,
-                                             units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_feat_res_dynv),
-                                             bg = "#FFFFFF")
-                             
-                             # Saves the violin plots
-                             file <- paste0(path_new, "/Dendrogram/", genes[i], ".", input$add_p_tab3_violin_format_dynv)
-                             
-                             p <- plot_dendro(model,
-                                              feature_oi = genes[i],
-                                              expression_source = dataset_inf()) +
-                                 ggtitle("Trajectory")
-                             
-                             ggplot2::ggsave(file,
-                                             p,
-                                             height=input$add_p_tab3_violin_height_dynv,
-                                             width=input$add_p_tab3_violin_width_dynv,
-                                             units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_violin_res_dynv),
-                                             bg = "#FFFFFF")
-                             
-                             # Saves the dot plots
-                             file <- paste0(path_new, "/Graph/", genes[i], ".", input$add_p_tab3_dot_format_dynv)
-                             
-                             p <- plot_graph(model,
-                                             feature_oi = genes[i],
-                                             expression_source = dataset_inf()) +
-                                 ggtitle("Trajectory represented as a graph")#,
-                             
-                             ggplot2::ggsave(file,
-                                             p,
-                                             height=input$add_p_tab3_dot_height_dynv,
-                                             width=input$add_p_tab3_dot_width_dynv,
-                                             units="cm",
-                                             dpi=as.numeric(input$add_p_tab3_dot_res_dynv,
-                                                            bg = "#FFFFFF"
-                                                            
-                                             ))
-                         }
-                     })
-        
-        showNotification("All plots were downloaded!",
-                         duration = 15,
-                         id = "")
-        
-    })
-    
-    output$download_dynverse_genes <- downloadHandler(
-        
-        filename = function() {
-            paste("List_of_most_important_genes_within_trajectory", ".csv", sep = "")
-        },
-        content = function(file) {
-            
-            withProgress(message = "Please wait, preparing the data for download.",
-                         value = 0.5, {
-                             
-                             write.csv(dynverse_genes_list(), file, row.names = FALSE)
-                             
-                         })
-            
-        }
-        
-    )
-    
-    output$download_dynverse_genes_filt <- downloadHandler(
-        
-        filename = function() {
-            paste("_Filtered_list_of_most_important_genes_within_trajectory", ".csv", sep = "")
-        },
-        content = function(file) {
-            
-            withProgress(message = "Please wait, preparing the data for download.",
-                         value = 0.5, {
-                             
-                             write.csv(dynverse_genes_list_filt(), file, row.names = FALSE)
-                             
-                         })
-        }
-    )
+    # #####################################
+    # ### Tab 3 - trajectory inference ####
+    # #####################################
+    # 
+    # output$load_integrated_ui_tab3 <- renderUI({
+    #     
+    #     rds_list <- list.files('./RDS_files/', pattern = "*.rds")
+    #     
+    #     div(class = "option-group",
+    #         shinyWidgets::pickerInput(
+    #             inputId = "load_integrated_tab3",
+    #             label = "Select the file containing the clustered data",
+    #             choices = sort(rds_list),
+    #             multiple = FALSE,
+    #             options = list(`actions-box` = TRUE)
+    #         ))
+    # })
+    # 
+    # sc_data_traj_inf <- eventReactive(input$run_ti_model, {
+    #     
+    #     showNotification("Loading the clustered data",
+    #                      id = "tab3_m1",
+    #                      duration = NULL)
+    #     
+    #     load_rds <- req(input$load_integrated_tab3)
+    #     sc_data <- readRDS( paste0("./RDS_files/", load_rds) )
+    #     
+    #     on.exit(removeNotification(id = "tab3_m1"), add = TRUE)
+    #     
+    #     validate(need("seurat_clusters" %in% colnames(sc_data@meta.data),
+    #                   "Clustering was not detected. Was the data clustered in the other tabs?", ""))
+    #     
+    #     validate( need( length( unique(sc_data@meta.data$seurat_clusters) ) > 1,
+    #                     "Only one cluster was detected. This module relies on the dynverse toolkit, and it does not support the analysis using a single cluster."))
+    #     
+    #     sc_data
+    #     
+    # } )
+    # 
+    # expressed_genes <- reactive({
+    #     
+    #     req(sc_data_traj_inf())
+    #     
+    #     sce <- as.SingleCellExperiment(sc_data_traj_inf())
+    #     sce@assays@data@listData$counts@Dimnames[[1]]
+    #     
+    # })
+    # 
+    # # extract the expression matrix from the Seurat object
+    # object_expression <- reactive({
+    #     
+    #     req(sc_data_traj_inf())
+    #     sing_cell_data <- sc_data_traj_inf()
+    #     
+    #     Matrix::t(as(as.matrix(sing_cell_data@assays$RNA@data), 'sparseMatrix'))
+    #     
+    # })
+    # 
+    # object_counts <- reactive({
+    #     
+    #     req(sc_data_traj_inf())
+    #     sing_cell_data <- sc_data_traj_inf()
+    #     
+    #     Matrix::t(as(as.matrix(sing_cell_data@assays$RNA@counts), 'sparseMatrix'))
+    #     
+    # })
+    # 
+    # dataset_inf <- reactive({
+    #     
+    #     wrap_expression(
+    #         counts = req( object_counts() ),
+    #         expression = req( object_expression() )
+    #     )
+    #     
+    # })
+    # 
+    # # Extracts meta data to fill the dyno object
+    # sc_meta <- reactive({
+    #     
+    #     req( sc_data_traj_inf() )
+    #     sing_cell_data <- sc_data_traj_inf()
+    #     
+    #     sing_cell_data[[]] %>%
+    #         mutate(cells = rownames(.))
+    #     
+    # })
+    # 
+    # ## Clustering
+    # sc_meta_cluster <- reactive({
+    #     
+    #     sc_meta <- req( sc_meta() )
+    #     
+    #     data.frame(cell_id = sc_meta$cells,
+    #                group_id = sc_meta$seurat_clusters)
+    #     
+    # })
+    # 
+    # sc_cells_time_vec <- reactive ({
+    #     
+    #     sc_meta <- req( sc_meta() )
+    #     
+    #     sc_cells_time_vec <- as.character(sc_meta$treat)
+    #     names(sc_cells_time_vec) <- sc_meta$cells
+    #     
+    #     sc_cells_time_vec
+    # })
+    # 
+    # output$ti_methods_list_ui <- renderUI ({
+    #     
+    #     ti_methods_list <- dynmethods::methods$method_id
+    #     
+    #     div(class = "option-group",
+    #         shinyWidgets::pickerInput(
+    #             inputId = "ti_methods_list",
+    #             label = "Select the dynverse method to execute",
+    #             choices = sort(as.character(ti_methods_list)),
+    #             multiple = FALSE,
+    #             selected = "slingshot",
+    #             options = list(`actions-box` = TRUE)
+    #         ))
+    #     
+    # })
+    # 
+    # model <- eventReactive(input$run_ti_model, { # change it to run model
+    #     
+    #     req(sc_data_traj_inf())
+    #     sing_cell_data <- sc_data_traj_inf()
+    #     
+    #     showNotification("Running trajectory inference model",
+    #                      id = "tab3_m2",
+    #                      duration = NULL)
+    #     
+    #     ## Extracts the dimension reduction info
+    #     dimred <- sing_cell_data@reductions$pca@cell.embeddings
+    #     
+    #     sc_meta <- req( sc_meta() )
+    #     sc_meta_cluster <-  req( sc_meta_cluster() )
+    #     object_expression <- req( object_expression() )
+    #     object_counts <- req( object_counts() )
+    #     
+    #     # test if the user set the initial cluster
+    #     if ( !is.na(input$traj_init_clusters) ) {
+    #         
+    #         start_cells <- sc_meta[sc_meta$seurat_clusters == input$traj_init_clusters, ]
+    #         
+    #         start_cells <- as.character(start_cells$cells)
+    #         
+    #     } else {
+    #         
+    #         start_cells <- NULL
+    #         
+    #     }
+    #     
+    #     # test if the user set the end cluster
+    #     if (!is.na(input$traj_end_clusters)) {
+    #         
+    #         end_cells <- sc_meta[sc_meta$seurat_clusters == input$traj_end_clusters, ]
+    #         
+    #         end_cells <- as.character(end_cells$cells)
+    #         
+    #     } else {
+    #         
+    #         end_cells <- NULL
+    #         
+    #     }
+    #     
+    #     if ( input$ti_select_models == 0 ) { # slingshot locally
+    #         
+    #         if (input$ti_sample_number == 1) { # there are multiple samples
+    #             
+    #             priors <- list(
+    #                 start_id = start_cells,
+    #                 end_id = end_cells,
+    #                 groups_id = sc_meta_cluster,
+    #                 dimred = dimred
+    #             )
+    #             
+    #         } else if (input$ti_sample_number == 0) { # there are only one sample
+    #             
+    #             priors <- list(
+    #                 start_id = start_cells,
+    #                 end_id = end_cells,
+    #                 groups_id = sc_meta_cluster,
+    #                 dimred = dimred
+    #             )
+    #             
+    #         }
+    #         
+    #         sds <- run_fun_slingshot(expression = object_expression, priors = priors, verbose = T)
+    #         
+    #         on.exit(removeNotification(id = "tab3_m2"), add = TRUE)
+    #         
+    #     } else if ( input$ti_select_models == 1 ) { # dynverse models - depends on docker
+    #         
+    #         dataset <- wrap_expression(
+    #             counts = object_counts,
+    #             expression = object_expression
+    #         )
+    #         
+    #         # fetch newest version of the method
+    #         method_id <- paste0("dynverse/ti_", req(input$ti_methods_list), ":latest")
+    #         methods_selected <- create_ti_method_container(method_id)
+    #         
+    #         if ( input$ti_sample_number == 1 ) { # there are multiple samples
+    #             
+    #             dataset <- add_prior_information(
+    #                 
+    #                 dataset,
+    #                 start_id = start_cells,
+    #                 end_id = end_cells,
+    #                 groups_id = sc_meta_cluster,
+    #                 dimred = dimred
+    #             )
+    #             
+    #             sds <- infer_trajectory(dataset,
+    #                                     req( methods_selected() ),
+    #                                     verbose = T,
+    #                                     give_priors = c("start_id",
+    #                                                     "end_id",
+    #                                                     "groups_id",
+    #                                                     "dimred"))
+    #             
+    #         } else if ( input$ti_sample_number == 0 ) { # there only one samples
+    #             
+    #             dataset <- add_prior_information(
+    #                 
+    #                 dataset,
+    #                 start_id = start_cells,
+    #                 end_id = end_cells,
+    #                 groups_id = sc_meta_cluster,
+    #                 dimred = dimred
+    #             )
+    #             
+    #             sds <- infer_trajectory(dataset,
+    #                                     req( methods_selected() ),
+    #                                     verbose = T,
+    #                                     give_priors = c("start_id",
+    #                                                     "end_id",
+    #                                                     "groups_id",
+    #                                                     "dimred"))
+    #             
+    #         }
+    #         
+    #     }
+    #     
+    #     sds
+    #     
+    # })
+    # 
+    # output$ti_order <- renderPlot({
+    #     
+    #     model <- req( model() )
+    #     sc_meta_cluster <- req( sc_meta_cluster() )
+    #     
+    #     my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
+    #     
+    #     if ( input$ti_sample_number == 0 ) {
+    #         
+    #         plot_dimred(model,
+    #                     grouping = sc_meta_cluster,
+    #                     color_density = "grouping") +
+    #             ggtitle("Cell grouping") +
+    #             scale_color_manual(values = my_color_palette) +
+    #             scale_fill_manual(values = my_color_palette)
+    #         
+    #     } else if (input$ti_sample_number == 1) {
+    #         
+    #         if ( input$ti_graphs_color_choice == 1 ) {
+    #             
+    #             plot_dimred(model,
+    #                         grouping = sc_meta_cluster,
+    #                         color_density = "grouping") +
+    #                 ggtitle("Cell grouping")  +
+    #                 scale_color_manual(values = my_color_palette) +
+    #                 scale_fill_manual(values = my_color_palette)
+    #             
+    #         } else if (input$ti_graphs_color_choice == 0 ) {
+    #             
+    #             sc_cells_time_vec <- req( sc_cells_time_vec() )
+    #             
+    #             plot_dimred(model,
+    #                         grouping = sc_cells_time_vec,
+    #                         color_density = "grouping") +
+    #                 ggtitle("Cell grouping")#,
+    #             
+    #         }
+    #     }
+    #     
+    # })
+    # 
+    # output$ti_traject <- renderPlot({
+    #     
+    #     model <- req( model() )
+    #     sc_meta_cluster <- req( sc_meta_cluster() )
+    #     my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
+    #     
+    #     if ( input$ti_sample_number == 0 ) {
+    #         
+    #         plot_dendro(model,
+    #                     grouping = sc_meta_cluster) +
+    #             ggtitle("Trajectory") +
+    #             scale_color_manual(values = my_color_palette) +
+    #             scale_fill_manual(values = my_color_palette)
+    #         
+    #     } else if (input$ti_sample_number == 1) {
+    #         
+    #         if ( input$ti_graphs_color_choice == 1 ) {
+    #             
+    #             plot_dendro(model,
+    #                         grouping = sc_meta_cluster) +
+    #                 ggtitle("Trajectory") +
+    #                 scale_color_manual(values = my_color_palette) +
+    #                 scale_fill_manual(values = my_color_palette)
+    #             
+    #         } else if (input$ti_graphs_color_choice == 0 ) {
+    #             sc_cells_time_vec <- req( sc_cells_time_vec() )
+    #             
+    #             plot_dendro(model,
+    #                         grouping = sc_cells_time_vec) +
+    #                 ggtitle("Trajectory")#,
+    #             
+    #         }
+    #     }
+    #     
+    #     
+    # })
+    # 
+    # output$ti_graph <- renderPlot({
+    #     
+    #     model <- req( model() )
+    #     sc_meta_cluster <- req( sc_meta_cluster() )
+    #     my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
+    #     
+    #     if ( input$ti_sample_number == 0 ) {
+    #         
+    #         plot_graph(model,
+    #                    grouping = sc_meta_cluster,
+    #                    expression_source = dataset) +
+    #             ggtitle("Trajectory represented as a graph") +
+    #             scale_color_manual(values = my_color_palette) +
+    #             scale_fill_manual(values = my_color_palette)
+    #         
+    #     } else if (input$ti_sample_number == 1) {
+    #         
+    #         if ( input$ti_graphs_color_choice == 1 ) {
+    #             
+    #             plot_graph(model,
+    #                        grouping = sc_meta_cluster,
+    #                        expression_source = dataset) +
+    #                 ggtitle("Trajectory represented as a graph") +
+    #                 scale_color_manual(values = my_color_palette) +
+    #                 scale_fill_manual(values = my_color_palette)
+    #             
+    #         } else if (input$ti_graphs_color_choice == 0 ) {
+    #             sc_cells_time_vec <- req( sc_cells_time_vec() )
+    #             
+    #             plot_graph(model,
+    #                        grouping = sc_cells_time_vec,
+    #                        expression_source = dataset) +
+    #                 ggtitle("Trajectory represented as a graph")
+    #             
+    #         }
+    #     }
+    #     
+    # })
+    # 
+    # output$p9_down <- downloadHandler(
+    #     
+    #     filename = function() {
+    #         
+    #         if ( input$p9_down_opt == 0 ) {
+    #             
+    #             paste("Trajectory_Dimension_Reduction", ".", input$p9_format, sep = "")
+    #             
+    #         } else if (input$p9_down_opt == 1) {
+    #             
+    #             paste("Trajectory_Dendrogram", ".", input$p9_format, sep = "")
+    #             
+    #         } else if (input$p9_down_opt == 2) {
+    #             
+    #             paste("Trajectory_Graph", ".", input$p9_format, sep = "")
+    #             
+    #         }
+    #         
+    #     },
+    #     content = function(file) {
+    #         
+    #         withProgress(message = "Please wait, preparing the data for download.",
+    #                      value = 0.5, {
+    #                          
+    #                          shinyFeedback::feedbackWarning("p9_height", is.na(input$p9_height), "Required value")
+    #                          shinyFeedback::feedbackWarning("p9_width", is.na(input$p9_width), "Required value")
+    #                          
+    #                          height <- as.numeric( req( input$p9_height) )
+    #                          width <- as.numeric( req( input$p9_width) )
+    #                          res <- as.numeric(input$p9_res)
+    #                          
+    #                          if ( input$p9_down_opt == 0 ) {
+    #                              
+    #                              model <- req( model() )
+    #                              sc_meta_cluster <- req( sc_meta_cluster() )
+    #                              my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
+    #                              
+    #                              if ( input$ti_sample_number == 0 ) {
+    #                                  
+    #                                  p <- plot_dimred(model,
+    #                                                   grouping = sc_meta_cluster,
+    #                                                   color_density = "grouping") +
+    #                                      ggtitle("Cell grouping") +
+    #                                      scale_color_manual(values = my_color_palette) +
+    #                                      scale_fill_manual(values = my_color_palette)
+    #                                  
+    #                              } else if (input$ti_sample_number == 1) {
+    #                                  
+    #                                  if ( input$ti_graphs_color_choice == 1 ) {
+    #                                      
+    #                                      p <-  plot_dimred(model,
+    #                                                        grouping = sc_meta_cluster,
+    #                                                        color_density = "grouping") +
+    #                                          ggtitle("Cell grouping") +
+    #                                          scale_color_manual(values = my_color_palette) +
+    #                                          scale_fill_manual(values = my_color_palette)
+    #                                      
+    #                                  } else if (input$ti_graphs_color_choice == 0 ) {
+    #                                      
+    #                                      sc_cells_time_vec <- req( sc_cells_time_vec() )
+    #                                      
+    #                                      p <-  plot_dimred(model,
+    #                                                        grouping = sc_cells_time_vec,
+    #                                                        color_density = "grouping") +
+    #                                          ggtitle("Cell grouping")#,
+    #                                      
+    #                                  }
+    #                              }
+    #                              
+    #                          } else if ( input$p9_down_opt == 1 ) {
+    #                              
+    #                              model <- req( model() )
+    #                              sc_meta_cluster <- req( sc_meta_cluster() )
+    #                              my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
+    #                              
+    #                              if ( input$ti_sample_number == 0 ) {
+    #                                  
+    #                                  p <- plot_dendro(model,
+    #                                                   grouping = sc_meta_cluster) +
+    #                                      ggtitle("Trajectory") +
+    #                                      scale_color_manual(values = my_color_palette) +
+    #                                      scale_fill_manual(values = my_color_palette)
+    #                                  
+    #                              } else if (input$ti_sample_number == 1) {
+    #                                  
+    #                                  if ( input$ti_graphs_color_choice == 1 ) {
+    #                                      
+    #                                      p <- plot_dendro(model,
+    #                                                       grouping = sc_meta_cluster) +
+    #                                          ggtitle("Trajectory") +
+    #                                          scale_color_manual(values = my_color_palette) +
+    #                                          scale_fill_manual(values = my_color_palette)
+    #                                      
+    #                                  } else if (input$ti_graphs_color_choice == 0 ) {
+    #                                      sc_cells_time_vec <- req( sc_cells_time_vec() )
+    #                                      
+    #                                      p <-  plot_dendro(model,
+    #                                                        grouping = sc_cells_time_vec) +
+    #                                          ggtitle("Trajectory")#,
+    #                                      
+    #                                  }
+    #                              }
+    #                              
+    #                          } else if ( input$p9_down_opt == 2 ) {
+    #                              
+    #                              model <- req( model() )
+    #                              sc_meta_cluster <- req( sc_meta_cluster() )
+    #                              my_color_palette <- scales::hue_pal()( length( unique(sc_meta_cluster$group_id ) ) )
+    #                              
+    #                              if ( input$ti_sample_number == 0 ) {
+    #                                  
+    #                                  p <- plot_graph(model,
+    #                                                  grouping = sc_meta_cluster,
+    #                                                  expression_source = dataset) +
+    #                                      ggtitle("Trajectory represented as a graph") +
+    #                                      scale_color_manual(values = my_color_palette) +
+    #                                      scale_fill_manual(values = my_color_palette)
+    #                                  
+    #                              } else if (input$ti_sample_number == 1) {
+    #                                  
+    #                                  if ( input$ti_graphs_color_choice == 1 ) {
+    #                                      
+    #                                      p <- plot_graph(model,
+    #                                                      grouping = sc_meta_cluster,
+    #                                                      expression_source = dataset) +
+    #                                          ggtitle("Trajectory represented as a graph") +
+    #                                          scale_color_manual(values = my_color_palette) +
+    #                                          scale_fill_manual(values = my_color_palette)
+    #                                      
+    #                                  } else if (input$ti_graphs_color_choice == 0 ) {
+    #                                      
+    #                                      sc_cells_time_vec <- req( sc_cells_time_vec() )
+    #                                      
+    #                                      p <- plot_graph(model,
+    #                                                      grouping = sc_cells_time_vec,
+    #                                                      expression_source = dataset) +
+    #                                          ggtitle("Trajectory represented as a graph")
+    #                                      
+    #                                  }
+    #                              }
+    #                              
+    #                          }
+    #                          
+    #                          ggplot2::ggsave(file,
+    #                                          p,
+    #                                          height=height,
+    #                                          width=width,
+    #                                          units="cm",
+    #                                          dpi=res,
+    #                                          bg = "#FFFFFF")
+    #                          
+    #                      })
+    #     }
+    #     
+    # )
+    # 
+    # ## Print the lineages that are been show in the plots
+    # output$lineages <- renderPrint({
+    #     
+    #     sds <- req( model() )
+    #     sds$lineages
+    #     
+    # })
+    # 
+    # ## Gene expression
+    # features_tab3 <- reactive({
+    #     
+    #     req(input$markers_list_tab3)
+    #     ext <- tools::file_ext(input$markers_list_tab3$name)
+    #     markers_list_file <- input$markers_list_tab3$datapath
+    #     
+    #     if(input$markers_list_header_opt_tab3 == "") {
+    #         shinyFeedback::feedbackWarning("markers_list_header_opt_tab3",
+    #                                        TRUE,
+    #                                        "Please, inform if the file has a header.")
+    #     }
+    #     req(input$markers_list_header_opt_tab3)
+    #     
+    #     read_file_markers("tab3_readfile",
+    #                       markers_list_file = markers_list_file,
+    #                       feed_ID ="markers_list_tab3",
+    #                       ext = ext,
+    #                       header_opt = input$markers_list_header_opt_tab3)
+    # })
+    # 
+    # # Load the file and offers the parameters for heatmap
+    # observeEvent(input$load_markers_tab3, {
+    #     
+    #     # Painel that will apper after loading the list of markers containing the filter options
+    #     output$marker_group_selec_tab3 = renderUI({
+    #         
+    #         pickerInput_markers_group("features_group_tab3", genes = req( features_tab3()) )
+    #         
+    #     })
+    #     
+    #     output$marker_genes_selec_tab3 = renderUI({
+    #         
+    #         features_group <- req(input$features_group_tab3)
+    #         id_choice <- req(input$genes_ids_tab3)
+    #         
+    #         pickerInput_markers_genes("selected_genes_tab3",
+    #                                   genes = req( features_tab3() ),
+    #                                   features_group = features_group,
+    #                                   id_choice = id_choice)
+    #     })
+    #     
+    # })
+    # 
+    # # Filter accordly with the parameters selected by the user
+    # filt_features_tab3 <- eventReactive(input$run_heatmap_tab3, {
+    #     
+    #     features_f <- req( features_tab3() )
+    #     features_group <- req(input$features_group_tab3)
+    #     
+    #     features_f <- dplyr::filter(features_f,
+    #                                 Group %in% features_group)
+    #     
+    #     if (input$filter_genes_q_tab3 == 0) {
+    #         
+    #         shinyFeedback::feedbackWarning("selected_genes_tab3",
+    #                                        is.null(input$selected_genes_tab3),
+    #                                        "Please, select one or more genes")
+    #         req(input$selected_genes_tab3)
+    #         
+    #         if (input$genes_ids_tab3 == "ID") {
+    #             
+    #             features_f <- features_f[features_f$GeneID %in% input$selected_genes_tab3, ]
+    #             
+    #         } else if (input$genes_ids_tab3 == "name") {
+    #             
+    #             features_f <- features_f[features_f$Name %in% input$selected_genes_tab3, ]
+    #             
+    #         }
+    #         
+    #     }
+    #     
+    #     features_f
+    #     
+    # })
+    # 
+    # dynverse_genes_list <- eventReactive(input$dynverse_def_imp_genes, {
+    #     
+    #     showNotification("Defining the most relevant genes",
+    #                      id = "tab3_m5",
+    #                      duration = NULL)
+    #     
+    #     if ( input$dynverse_opt == 0 ) { # global
+    #         
+    #         feat_importances <- dynfeature::calculate_overall_feature_importance(req( model() ),
+    #                                                                              expression_source = req( dataset_inf()))
+    #         
+    #         
+    #     } else if ( input$dynverse_opt == 1 ) { # branch/lineage
+    #         
+    #         feat_importances <- dynfeature::calculate_branch_feature_importance(req( model() ),
+    #                                                                             expression_source = req( dataset_inf()) )
+    #         
+    #     } else if ( input$dynverse_opt == 2 ) { # bifurcation
+    #         
+    #         if ( is.na(input$branching_milestone) ) {
+    #             
+    #             feat_importances <- calculate_branching_point_feature_importance(req( model() ),
+    #                                                                              expression_source = req( dataset_inf()) )
+    #             
+    #         } else {
+    #             
+    #             feat_importances <- calculate_branching_point_feature_importance(req( model() ),
+    #                                                                              milestones_oi = input$branching_milestone,
+    #                                                                              expression_source = req( dataset_inf()))
+    #             
+    #         }
+    #         
+    #     }
+    #     
+    #     on.exit(removeNotification(id = "tab3_m5"), add = TRUE)
+    #     
+    #     showNotification("Select the number of genes to show in the heatmap and trajectory plots",
+    #                      id = "tab3_m6",
+    #                      duration = 30)
+    #     
+    #     feat_importances
+    #     
+    # })
+    # 
+    # dynverse_genes_list_filt <- eventReactive( c(input$dynverse_def_imp_genes, input$run_heatmap_tab3_dynverse), {
+    #     
+    #     shinyFeedback::feedbackWarning("dynverse_n_genes",
+    #                                    is.na(input$dynverse_n_genes),
+    #                                    "Required value")
+    #     req(input$dynverse_n_genes)
+    #     
+    #     features_imp <- req( dynverse_genes_list() )
+    #     
+    #     if ( input$dynverse_opt == 0 ) { # global
+    #         
+    #         features <- features_imp %>%
+    #             top_n(input$dynverse_n_genes, importance)
+    #         
+    #     } else if ( input$dynverse_opt == 1 ) { # branch/lineage
+    #         
+    #         if ( is.na(req(input$dynverse_branch_from)) ) {
+    #             
+    #             features <- features_imp %>%
+    #                 filter(to == req(input$dynverse_branch_to)) %>%
+    #                 top_n(input$dynverse_n_genes, importance)
+    #             
+    #         } else if ( is.na(req(input$dynverse_branch_to)) ) {
+    #             
+    #             features <- features_imp %>%
+    #                 filter( from  == req(input$dynverse_branch_from)) %>%
+    #                 top_n(input$dynverse_n_genes, importance)
+    #             
+    #         } else {
+    #             
+    #             features <- features_imp %>%
+    #                 filter( from  == req(input$dynverse_branch_from) & to == req(input$dynverse_branch_to)) %>%
+    #                 top_n(input$dynverse_n_genes, importance)
+    #             
+    #         }
+    #         
+    #     } else if ( input$dynverse_opt == 2 ) { # bifurcation
+    #         
+    #         features <- features_imp %>%
+    #             top_n(input$dynverse_n_genes, importance)
+    #         
+    #     }
+    #     
+    #     features
+    # })
+    # 
+    # observeEvent( c(input$dynverse_def_imp_genes, input$run_heatmap_tab3), {
+    #     
+    #     # This calculate the height of the plot based on the n of genes
+    #     heatmap_n_genes_tab3 <- reactive({
+    #         
+    #         # Test what input to use for the heatmap
+    #         if (input$ti_expre_opt == 0) {
+    #             
+    #             features <- req( filt_features_tab3())
+    #             features <- unique(features$GeneID)
+    #             
+    #         } else if (input$ti_expre_opt == 1) {
+    #             
+    #             features <- req( dynverse_genes_list_filt() )
+    #             features <- features$feature_id
+    #             
+    #         } else if (input$ti_expre_opt == 2) {
+    #             
+    #             features <- req( tradseq_genes_list() )
+    #             
+    #         }
+    #         
+    #         as.numeric(length(features))
+    #     })
+    #     heatmap_Height_tab3 <- reactive( 250 + ( 20 * req( heatmap_n_genes_tab3() ) ) )
+    #     
+    #     # Generates the heatmap plot
+    #     output$heat_map_tab3 <- renderPlot({
+    #         
+    #         showNotification("Generating the heatmap",
+    #                          id = "tab3_m4",
+    #                          duration = NULL)
+    #         
+    #         # Test what input to use for the heatmap
+    #         if (input$ti_expre_opt == 0) {
+    #             
+    #             features <- req( filt_features_tab3() )
+    #             features <- unique(features$GeneID)
+    #             
+    #         } else if (input$ti_expre_opt == 1) {
+    #             
+    #             features <- req( dynverse_genes_list_filt() )
+    #             features <- features$feature_id
+    #             
+    #         } else if (input$ti_expre_opt == 2) {
+    #             
+    #             features <- req( tradseq_genes_list() )
+    #             
+    #         }
+    #         
+    #         features <- as.character(features)
+    #         
+    #         ### Drawing heat map ###
+    #         heatmap <- plot_heatmap(
+    #             req( model() ),
+    #             expression_source = req( dataset_inf() ),
+    #             grouping = req( sc_meta_cluster() ),
+    #             features_oi = features
+    #         )
+    #         
+    #         on.exit(removeNotification(id = "tab3_m4"), add = TRUE)
+    #         
+    #         heatmap
+    #         
+    #     }, height = req( heatmap_Height_tab3() ) )
+    #     
+    #     output$heat_map_ui_tab3 <- renderUI({
+    #         
+    #         plotOutput( "heat_map_tab3", height = req( heatmap_Height_tab3() ))
+    #         
+    #     })
+    #     
+    #     output$marker_to_feature_plot_tab3 = renderUI({
+    #         
+    #         # Test what input to use for the heatmap
+    #         if (input$ti_expre_opt == 0) {
+    #             
+    #             features <- req( filt_features_tab3() )
+    #             features <- unique(features$GeneID)
+    #             
+    #         } else if (input$ti_expre_opt == 1) {
+    #             
+    #             features <- req( dynverse_genes_list_filt() )
+    #             features <- features$feature_id
+    #             
+    #         } else if (input$ti_expre_opt == 2) {
+    #             
+    #             features <- req( tradseq_genes_list() )
+    #             
+    #         }
+    #         
+    #         div(class = "option-group",
+    #             shinyWidgets::pickerInput(
+    #                 inputId = "selected_genes_for_feature_plot_tab3",
+    #                 label = "Select the genes to feature plots",
+    #                 choices = sort(as.character(features)),
+    #                 multiple = TRUE,
+    #                 options = list(`actions-box` = TRUE)
+    #             ))
+    #         
+    #     })
+    #     
+    #     output$p10_down <- downloadHandler(
+    #         
+    #         filename = function() {
+    #             paste("Heatmap_int.dataset", ".", input$p10_format, sep = "")
+    #         },
+    #         content = function(file) {
+    #             
+    #             withProgress(message = "Please wait, preparing the data for download.",
+    #                          value = 0.5, {
+    #                              
+    #                              shinyFeedback::feedbackWarning("p10_height", is.na(input$p10_height), "Required value")
+    #                              shinyFeedback::feedbackWarning("p10_width", is.na(input$p10_width), "Required value")
+    #                              
+    #                              height <- as.numeric( req( input$p10_height) )
+    #                              width <- as.numeric( req( input$p10_width) )
+    #                              res <- as.numeric(input$p10_res)
+    #                              
+    #                              # Test what input to use for the heatmap
+    #                              if (input$ti_expre_opt == 0) {
+    #                                  
+    #                                  features <- req( filt_features_tab3() )
+    #                                  features <- unique(features$GeneID)
+    #                                  
+    #                              } else if (input$ti_expre_opt == 1) {
+    #                                  
+    #                                  features <- req( dynverse_genes_list_filt() )
+    #                                  features <- features$feature_id
+    #                                  
+    #                              } else if (input$ti_expre_opt == 2) {
+    #                                  
+    #                                  features <- req( tradseq_genes_list() )
+    #                                  
+    #                              }
+    #                              
+    #                              #    features <- paste0("gene:", as.character(features))
+    #                              features <- as.character(features)
+    #                              
+    #                              ### Drawing heat map ###
+    #                              p <- plot_heatmap(
+    #                                  req( model() ),
+    #                                  expression_source = req( dataset_inf() ),
+    #                                  grouping = req( sc_meta_cluster() ),
+    #                                  features_oi = features
+    #                              )
+    #                              
+    #                              ggplot2::ggsave(file,
+    #                                              p,
+    #                                              height=height,
+    #                                              width=width,
+    #                                              units="cm",
+    #                                              dpi=res,
+    #                                              bg = "#FFFFFF")
+    #                              
+    #                          })
+    #         }
+    #         
+    #     )
+    #     
+    # })
+    # 
+    # output$dynverse_branch_from_ui <- renderUI({
+    #     
+    #     sc_meta_cluster <- req( sc_meta_cluster() )
+    #     clust <- unique(as.character(sc_meta_cluster$group_id))
+    #     
+    #     div(class = "option-group",
+    #         shinyWidgets::pickerInput(
+    #             inputId = "dynverse_branch_from",
+    #             label = "Set the start branch (from)",
+    #             choices = sort(as.character(clust)),
+    #             multiple = F,
+    #             options = list(`actions-box` = TRUE)
+    #         ))
+    #     
+    # })
+    # 
+    # output$dynverse_branch_to_ui <- renderUI({
+    #     
+    #     sc_meta_cluster <- req( sc_meta_cluster() )
+    #     
+    #     clust <- unique(as.character(sc_meta_cluster$group_id))
+    #     clust <- clust[!clust %in% req(input$dynverse_branch_from)]
+    #     
+    #     div(class = "option-group",
+    #         shinyWidgets::pickerInput(
+    #             inputId = "dynverse_branch_to",
+    #             label = "Set the start branch (to)",
+    #             choices = sort(as.character(clust)),
+    #             multiple = F,
+    #             options = list(`actions-box` = TRUE)
+    #         ))
+    #     
+    # })
+    # 
+    # observeEvent(input$run_feature_plot_tab3, {
+    #     
+    #     showNotification("Generating the expression plots",
+    #                      id = "tab3_m7",
+    #                      duration = 30)
+    #     
+    #     output$ti_order_express <- renderUI({
+    #         
+    #         shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3",
+    #                                        is.null(input$selected_genes_for_feature_plot_tab3),
+    #                                        "Please, select one or more genes")
+    #         req(input$selected_genes_for_feature_plot_tab3)
+    #         
+    #         feat_length <- length(req(input$selected_genes_for_feature_plot_tab3))
+    #         
+    #         plot_output_list <- lapply(1:feat_length, function(i) {
+    #             plotname <- paste("ti_order_exp", i, sep="")
+    #             plotOutput(plotname, height = 300)
+    #         })
+    #         
+    #         # Convert the list to a tagList - this is necessary for the list of items
+    #         # to display properly.
+    #         do.call(tagList, plot_output_list)
+    #     })
+    #     
+    #     output$ti_traject_express <- renderUI({
+    #         
+    #         shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3",
+    #                                        is.null(input$selected_genes_for_feature_plot_tab3),
+    #                                        "Please, select one or more genes")
+    #         req(input$selected_genes_for_feature_plot_tab3)
+    #         
+    #         feat_length <- length(req(input$selected_genes_for_feature_plot_tab3))
+    #         
+    #         plot_output_list <- lapply(1:feat_length, function(i) {
+    #             plotname <- paste("ti_traject_expr", i, sep="")
+    #             plotOutput(plotname, height = 300)
+    #         })
+    #         
+    #         # Convert the list to a tagList - this is necessary for the list of items
+    #         # to display properly.
+    #         do.call(tagList, plot_output_list)
+    #     })
+    #     
+    #     output$ti_graph_express <- renderUI({
+    #         
+    #         shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3",
+    #                                        is.null(input$selected_genes_for_feature_plot_tab3),
+    #                                        "Please, select one or more genes")
+    #         req(input$selected_genes_for_feature_plot_tab3)
+    #         
+    #         feat_length <- length(req(input$selected_genes_for_feature_plot_tab3))
+    #         
+    #         plot_output_list <- lapply(1:feat_length, function(i) {
+    #             plotname <- paste("ti_graph_expr", i, sep="")
+    #             plotOutput(plotname, height = 300)
+    #         })
+    #         
+    #         # Convert the list to a tagList - this is necessary for the list of items
+    #         # to display properly.
+    #         do.call(tagList, plot_output_list)
+    #     })
+    #     
+    #     features_to_plot <- req(input$selected_genes_for_feature_plot_tab3)
+    #     
+    #     for ( i in 1:length( features_to_plot ) ) {
+    #         
+    #         model <- req( model() )
+    #         
+    #         local({
+    #             
+    #             my_i <- i
+    #             
+    #             plotname <- paste("ti_order_exp", my_i, sep="")
+    #             output[[plotname]] <- renderPlot({
+    #                 
+    #                 plot_dimred(model,
+    #                             feature_oi = features_to_plot[my_i],
+    #                             expression_source = req( dataset_inf())) +
+    #                     ggtitle("Cell grouping")
+    #                 
+    #             })
+    #             
+    #             plotname <- paste("ti_traject_expr", my_i, sep="")
+    #             output[[plotname]] <- renderPlot({
+    #                 
+    #                 plot_dendro(model,
+    #                             feature_oi = features_to_plot[my_i],
+    #                             expression_source = req( dataset_inf())) +
+    #                     ggtitle("Trajectory")#,
+    #                 
+    #             })
+    #             
+    #             plotname <- paste("ti_graph_expr", my_i, sep="")
+    #             output[[plotname]] <- renderPlot({
+    #                 
+    #                 plot_graph(model,
+    #                            feature_oi = features_to_plot[my_i],
+    #                            expression_source = req( dataset_inf()) ) +
+    #                     ggtitle("Trajectory represented as a graph")#,
+    #                 
+    #             })
+    #             
+    #         })
+    #         
+    #     }
+    #     
+    # })
+    # 
+    # output$select_genes_add_plot_to_down_tab3_ui <- renderUI({
+    #     shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3",
+    #                                    is.null(input$selected_genes_for_feature_plot_tab3),
+    #                                    "Please, select one or more genes")
+    #     req(input$selected_genes_for_feature_plot_tab3)
+    #     
+    #     filt_features <- req(input$selected_genes_for_feature_plot_tab3)
+    #     
+    #     div(class = "option-group",
+    #         shinyWidgets::pickerInput(
+    #             inputId = "select_genes_add_plot_to_down_tab3",
+    #             label = "Select the genes that you want to download",
+    #             choices = sort(as.character(filt_features)),
+    #             multiple = TRUE,
+    #             options = list(`actions-box` = TRUE)
+    #         ))
+    #     
+    # })
+    # 
+    # observeEvent(input$start_down_add_plots_tab3, {
+    #     
+    #     shinyFeedback::feedbackWarning("select_genes_add_plot_to_down_tab3",
+    #                                    is.null(input$select_genes_add_plot_to_down_tab3),
+    #                                    "Please, select one or more genes")
+    #     
+    #     genes <- req(input$select_genes_add_plot_to_down_tab3)
+    #     
+    #     withProgress(message = "Please wait, preparing the data for download.",
+    #                  value = 0.5, {
+    #                      
+    #                      
+    #                      if (file.exists("./images") == F ) {
+    #                          dir.create('./images')
+    #                      }
+    #                      
+    #                      # Creates new folder to keep the plots organized. Adding date and time helps to avoid overwriting the data
+    #                      path_new <- paste0("./images/trajectories_plots", format(Sys.time(),'_%Y-%m-%d__%H%M%S'))
+    #                      
+    #                      dir.create(path_new)
+    #                      dir.create( paste0(path_new,"/Dimension_reduction") )
+    #                      dir.create( paste0(path_new,"/Dendrogram") )
+    #                      dir.create( paste0(path_new, "/Graph") )
+    #                      
+    #                      model <- req( model() )
+    #                      
+    #                      for( i in 1:length(genes) ){
+    #                          
+    #                          # Saves the feature plots
+    #                          p <- plot_dimred(model,
+    #                                           feature_oi = genes[i],
+    #                                           expression_source = req( dataset_inf()) ) +
+    #                              ggtitle("Cell grouping")
+    #                          
+    #                          file <- paste0(path_new, "/Dimension_reduction/", genes[i], ".", input$add_p_tab3_feat_format)
+    #                          
+    #                          ggplot2::ggsave(file,
+    #                                          p,
+    #                                          height=input$add_p_tab3_feat_height,
+    #                                          width=input$add_p_tab3_feat_width,
+    #                                          units="cm",
+    #                                          dpi=as.numeric(input$add_p_tab3_feat_res),
+    #                                          bg = "#FFFFFF")
+    #                          
+    #                          # Saves the violin plots
+    #                          
+    #                          file <- paste0(path_new, "/Dendrogram/", genes[i], ".", input$add_p_tab3_violin_format)
+    #                          
+    #                          p <- plot_dendro(model,
+    #                                           feature_oi = genes[i],
+    #                                           expression_source = req( dataset_inf()) )+
+    #                              ggtitle("Trajectory")
+    #                          
+    #                          ggplot2::ggsave(file,
+    #                                          p,
+    #                                          height=input$add_p_tab3_violin_height,
+    #                                          width=input$add_p_tab3_violin_width,
+    #                                          units="cm",
+    #                                          dpi=as.numeric(input$add_p_tab3_violin_res),
+    #                                          bg = "#FFFFFF")
+    #                          
+    #                          # Saves the dot plots
+    #                          file <- paste0(path_new, "/Graph/", genes[i], ".", input$add_p_tab3_dot_format)
+    #                          
+    #                          p <- plot_graph(model,
+    #                                          feature_oi = genes[i],
+    #                                          expression_source = req( dataset_inf())) +
+    #                              ggtitle("Trajectory represented as a graph")#,
+    #                          
+    #                          ggplot2::ggsave(file,
+    #                                          p,
+    #                                          height=input$add_p_tab3_dot_height,
+    #                                          width=input$add_p_tab3_dot_width,
+    #                                          units="cm",
+    #                                          dpi=as.numeric(input$add_p_tab3_dot_res),
+    #                                          bg = "#FFFFFF")
+    #                      }
+    #                  })
+    #     
+    #     showNotification("All plots were downloaded!",
+    #                      duration = 15,
+    #                      id = "")
+    # })
+    # 
+    # observeEvent(c(input$run_heatmap_tab3_dynverse, input$dynverse_def_imp_genes), {
+    #     
+    #     # This calculate the height of the plot based on the n of genes
+    #     heatmap_n_genes_tab3_dynv <- reactive({
+    #         
+    #         # Test what input to use for the heatmap
+    #         if (input$ti_expre_opt == 0) {
+    #             
+    #             features <- req( filt_features_tab3() )
+    #             features <- unique(features$GeneID)
+    #             
+    #         } else if (input$ti_expre_opt == 1) {
+    #             
+    #             features <- req( dynverse_genes_list_filt() )
+    #             features <- features$feature_id
+    #             
+    #         }
+    #         
+    #         as.numeric(length(features))
+    #     })
+    #     heatmap_Height_tab3_dynv <- reactive( 250 + ( 20 * req( heatmap_n_genes_tab3_dynv() ) ) )
+    #     
+    #     # Generates the heatmap plot
+    #     output$heat_map_tab3_dynv <- renderPlot({
+    #         
+    #         showNotification("Generating the heatmap",
+    #                          id = "tab3_m8",
+    #                          duration = NULL)
+    #         
+    #         # Test what input to use for the heatmap
+    #         if (input$ti_expre_opt == 0) {
+    #             
+    #             features <- req( filt_features_tab3() )
+    #             features <- unique(features$GeneID)
+    #             
+    #         } else if (input$ti_expre_opt == 1) {
+    #             
+    #             features <- req( dynverse_genes_list_filt() )
+    #             features <- features$feature_id
+    #             
+    #         }
+    #         
+    #         features <- as.character(features)
+    #         
+    #         ### Drawing heat map ###
+    #         heatmap <- plot_heatmap(
+    #             req(  model() ),
+    #             expression_source = req( dataset_inf() ),
+    #             grouping = req( sc_meta_cluster() ),
+    #             features_oi = features
+    #         )
+    #         
+    #         on.exit(removeNotification(id = "tab3_m8"), add = TRUE)
+    #         
+    #         heatmap
+    #         
+    #     }, height = heatmap_Height_tab3_dynv() )
+    #     
+    #     output$heat_map_ui_tab3_dynv <- renderUI({
+    #         
+    #         plotOutput( "heat_map_tab3_dynv", height = heatmap_Height_tab3_dynv() )
+    #         
+    #     })
+    #     
+    #     output$marker_to_feature_plot_tab3_dynv = renderUI({
+    #         
+    #         # Test what input to use for the heatmap
+    #         if (input$ti_expre_opt == 0) {
+    #             
+    #             features <- filt_features_tab3()
+    #             features <- features$GeneID
+    #             
+    #         } else if (input$ti_expre_opt == 1) {
+    #             
+    #             features <- dynverse_genes_list_filt()
+    #             features <- features$feature_id
+    #             
+    #         } else if (input$ti_expre_opt == 2) {
+    #             
+    #             features <- tradseq_genes_list()
+    #             
+    #         }
+    #         
+    #         div(class = "option-group",
+    #             shinyWidgets::pickerInput(
+    #                 inputId = "selected_genes_for_feature_plot_tab3_dynv",
+    #                 label = "Select the genes to feature plots",
+    #                 choices = sort(as.character(features)),
+    #                 multiple = TRUE,
+    #                 options = list(`actions-box` = TRUE)
+    #             ))
+    #         
+    #     })
+    #     
+    #     output$p11_down <- downloadHandler(
+    #         
+    #         filename = function() {
+    #             paste("Heatmap_int.dataset_most_important_features", ".", input$p11_format, sep = "")
+    #         },
+    #         content = function(file) {
+    #             
+    #             withProgress(message = "Please wait, preparing the data for download.",
+    #                          value = 0.5, {
+    #                              
+    #                              shinyFeedback::feedbackWarning("p11_height", is.na(input$p11_height), "Required value")
+    #                              shinyFeedback::feedbackWarning("p11_width", is.na(input$p11_width), "Required value")
+    #                              
+    #                              height <- as.numeric( req( input$p11_height) )
+    #                              width <- as.numeric( req( input$p11_width) )
+    #                              res <- as.numeric(input$p11_res)
+    #                              
+    #                              # Test what input to use for the heatmap
+    #                              if (input$ti_expre_opt == 0) {
+    #                                  
+    #                                  features <- filt_features_tab3()
+    #                                  features <- unique(features$GeneID)
+    #                                  
+    #                              } else if (input$ti_expre_opt == 1) {
+    #                                  
+    #                                  features <- dynverse_genes_list_filt()
+    #                                  features <- features$feature_id
+    #                                  
+    #                              }
+    #                              
+    #                              features <- as.character(features)
+    #                              
+    #                              ### Drawing heat map ###
+    #                              p <- plot_heatmap(
+    #                                  model(),
+    #                                  expression_source = dataset_inf(),
+    #                                  grouping = sc_meta_cluster(),
+    #                                  features_oi = features
+    #                              )
+    #                              
+    #                              ggplot2::ggsave(file,
+    #                                              p,
+    #                                              height=height,
+    #                                              width=width,
+    #                                              units="cm",
+    #                                              dpi=res,
+    #                                              bg = "#FFFFFF")
+    #                              
+    #                          })
+    #         }
+    #         
+    #     )
+    #     
+    # })
+    # 
+    # observeEvent(input$run_feature_plot_tab3_dynv, {
+    #     
+    #     showNotification("Generating the expression plots",
+    #                      id = "tab3_m8",
+    #                      duration = 30)
+    #     
+    #     output$ti_order_express_dynv <- renderUI({
+    #         
+    #         shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3_dynv",
+    #                                        is.null(input$selected_genes_for_feature_plot_tab3_dynv),
+    #                                        "Please, select one or more genes")
+    #         req(input$selected_genes_for_feature_plot_tab3_dynv)
+    #         
+    #         feat_length <- length(input$selected_genes_for_feature_plot_tab3_dynv)
+    #         
+    #         plot_output_list <- lapply(1:feat_length, function(i) {
+    #             plotname <- paste("ti_order_exp_dynv", i, sep="")
+    #             plotOutput(plotname, height = 300)
+    #         })
+    #         
+    #         # Convert the list to a tagList - this is necessary for the list of items
+    #         # to display properly.
+    #         do.call(tagList, plot_output_list)
+    #     })
+    #     
+    #     output$ti_traject_express_dynv <- renderUI({
+    #         
+    #         shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3_dynv",
+    #                                        is.null(input$selected_genes_for_feature_plot_tab3_dynv),
+    #                                        "Please, select one or more genes")
+    #         req(input$selected_genes_for_feature_plot_tab3_dynv)
+    #         
+    #         feat_length <- length(input$selected_genes_for_feature_plot_tab3_dynv)
+    #         
+    #         plot_output_list <- lapply(1:feat_length, function(i) {
+    #             plotname <- paste("ti_traject_expr_dynv", i, sep="")
+    #             plotOutput(plotname, height = 300)
+    #         })
+    #         
+    #         # Convert the list to a tagList - this is necessary for the list of items
+    #         # to display properly.
+    #         do.call(tagList, plot_output_list)
+    #     })
+    #     
+    #     output$ti_graph_express_dynv <- renderUI({
+    #         
+    #         shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3_dynv",
+    #                                        is.null(input$selected_genes_for_feature_plot_tab3_dynv),
+    #                                        "Please, select one or more genes")
+    #         req(input$selected_genes_for_feature_plot_tab3_dynv)
+    #         
+    #         feat_length <- length(input$selected_genes_for_feature_plot_tab3_dynv)
+    #         
+    #         plot_output_list <- lapply(1:feat_length, function(i) {
+    #             plotname <- paste("ti_graph_expr_dynv", i, sep="")
+    #             plotOutput(plotname, height = 300)
+    #         })
+    #         
+    #         # Convert the list to a tagList - this is necessary for the list of items
+    #         # to display properly.
+    #         do.call(tagList, plot_output_list)
+    #     })
+    #     
+    #     features_to_plot <- input$selected_genes_for_feature_plot_tab3_dynv
+    #     
+    #     for (i in 1:length( features_to_plot ) ) {
+    #         
+    #         model <- model()
+    #         
+    #         local({
+    #             
+    #             my_i <- i
+    #             
+    #             plotname <- paste("ti_order_exp_dynv", my_i, sep="")
+    #             output[[plotname]] <- renderPlot({
+    #                 
+    #                 plot_dimred(model,
+    #                             feature_oi = features_to_plot[my_i],
+    #                             expression_source = dataset_inf()) +
+    #                     ggtitle("Cell grouping")
+    #                 
+    #             })
+    #             
+    #             plotname <- paste("ti_traject_expr_dynv", my_i, sep="")
+    #             output[[plotname]] <- renderPlot({
+    #                 
+    #                 plot_dendro(model,
+    #                             feature_oi = features_to_plot[my_i],
+    #                             expression_source = dataset_inf()) +
+    #                     ggtitle("Trajectory")#,
+    #                 
+    #             })
+    #             
+    #             plotname <- paste("ti_graph_expr_dynv", my_i, sep="")
+    #             output[[plotname]] <- renderPlot({
+    #                 
+    #                 plot_graph(model,
+    #                            feature_oi = features_to_plot[my_i],
+    #                            expression_source = dataset_inf()) +
+    #                     ggtitle("Trajectory represented as a graph")#,
+    #                 
+    #             })
+    #             
+    #         })
+    #         
+    #     }
+    #     
+    # })
+    # 
+    # output$select_genes_add_plot_to_down_tab3_ui_dynv <- renderUI({
+    #     
+    #     shinyFeedback::feedbackWarning("selected_genes_for_feature_plot_tab3_dynv",
+    #                                    is.null(input$selected_genes_for_feature_plot_tab3_dynv),
+    #                                    "Please, select one or more genes")
+    #     req(input$selected_genes_for_feature_plot_tab3_dynv)
+    #     
+    #     filt_features <- input$selected_genes_for_feature_plot_tab3_dynv
+    #     
+    #     div(class = "option-group",
+    #         shinyWidgets::pickerInput(
+    #             inputId = "select_genes_add_plot_to_down_tab3_dynv",
+    #             label = "Select the genes that you want to download",
+    #             choices = sort(as.character(filt_features)),
+    #             multiple = TRUE,
+    #             options = list(`actions-box` = TRUE)
+    #         ))
+    #     
+    # })
+    # 
+    # observeEvent(input$start_down_add_plots_tab3_dynv, {
+    #     
+    #     shinyFeedback::feedbackWarning("select_genes_add_plot_to_down_tab3_dynv",
+    #                                    is.null(input$select_genes_add_plot_to_down_tab3_dynv),
+    #                                    "Please, select one or more genes")
+    #     
+    #     genes <- req(input$select_genes_add_plot_to_down_tab3_dynv)
+    #     
+    #     withProgress(message = "Please wait, preparing the data for download.",
+    #                  value = 0.5, {
+    #                      
+    #                      if (file.exists("./images") == F ) {
+    #                          dir.create('./images')
+    #                      }
+    #                      
+    #                      # Creates new folder to keep the plots organized. Adding date and time helps to avoid overwriting the data
+    #                      path_new <- paste0("./images/trajectories_plots", format(Sys.time(),'_%Y-%m-%d__%H%M%S'))
+    #                      
+    #                      dir.create(path_new)
+    #                      dir.create( paste0(path_new,"/Dimension_reduction") )
+    #                      dir.create( paste0(path_new,"/Dendrogram") )
+    #                      dir.create( paste0(path_new, "/Graph") )
+    #                      
+    #                      model <- model()
+    #                      
+    #                      for( i in 1:length(genes) ){
+    #                          
+    #                          # Saves the feature plots
+    #                          p <- plot_dimred(model,
+    #                                           feature_oi = genes[i],
+    #                                           expression_source = dataset_inf()) +
+    #                              ggtitle("Cell grouping")
+    #                          
+    #                          file <- paste0(path_new, "/Dimension_reduction/", genes[i], ".", input$add_p_tab3_feat_format_dynv)
+    #                          
+    #                          ggplot2::ggsave(file,
+    #                                          p,
+    #                                          height=input$add_p_tab3_feat_height_dynv,
+    #                                          width=input$add_p_tab3_feat_width_dynv,
+    #                                          units="cm",
+    #                                          dpi=as.numeric(input$add_p_tab3_feat_res_dynv),
+    #                                          bg = "#FFFFFF")
+    #                          
+    #                          # Saves the violin plots
+    #                          file <- paste0(path_new, "/Dendrogram/", genes[i], ".", input$add_p_tab3_violin_format_dynv)
+    #                          
+    #                          p <- plot_dendro(model,
+    #                                           feature_oi = genes[i],
+    #                                           expression_source = dataset_inf()) +
+    #                              ggtitle("Trajectory")
+    #                          
+    #                          ggplot2::ggsave(file,
+    #                                          p,
+    #                                          height=input$add_p_tab3_violin_height_dynv,
+    #                                          width=input$add_p_tab3_violin_width_dynv,
+    #                                          units="cm",
+    #                                          dpi=as.numeric(input$add_p_tab3_violin_res_dynv),
+    #                                          bg = "#FFFFFF")
+    #                          
+    #                          # Saves the dot plots
+    #                          file <- paste0(path_new, "/Graph/", genes[i], ".", input$add_p_tab3_dot_format_dynv)
+    #                          
+    #                          p <- plot_graph(model,
+    #                                          feature_oi = genes[i],
+    #                                          expression_source = dataset_inf()) +
+    #                              ggtitle("Trajectory represented as a graph")#,
+    #                          
+    #                          ggplot2::ggsave(file,
+    #                                          p,
+    #                                          height=input$add_p_tab3_dot_height_dynv,
+    #                                          width=input$add_p_tab3_dot_width_dynv,
+    #                                          units="cm",
+    #                                          dpi=as.numeric(input$add_p_tab3_dot_res_dynv,
+    #                                                         bg = "#FFFFFF"
+    #                                                         
+    #                                          ))
+    #                      }
+    #                  })
+    #     
+    #     showNotification("All plots were downloaded!",
+    #                      duration = 15,
+    #                      id = "")
+    #     
+    # })
+    # 
+    # output$download_dynverse_genes <- downloadHandler(
+    #     
+    #     filename = function() {
+    #         paste("List_of_most_important_genes_within_trajectory", ".csv", sep = "")
+    #     },
+    #     content = function(file) {
+    #         
+    #         withProgress(message = "Please wait, preparing the data for download.",
+    #                      value = 0.5, {
+    #                          
+    #                          write.csv(dynverse_genes_list(), file, row.names = FALSE)
+    #                          
+    #                      })
+    #         
+    #     }
+    #     
+    # )
+    # 
+    # output$download_dynverse_genes_filt <- downloadHandler(
+    #     
+    #     filename = function() {
+    #         paste("_Filtered_list_of_most_important_genes_within_trajectory", ".csv", sep = "")
+    #     },
+    #     content = function(file) {
+    #         
+    #         withProgress(message = "Please wait, preparing the data for download.",
+    #                      value = 0.5, {
+    #                          
+    #                          write.csv(dynverse_genes_list_filt(), file, row.names = FALSE)
+    #                          
+    #                      })
+    #     }
+    # )
     
     # ############################
     # ### Annotation - BioMart ###
