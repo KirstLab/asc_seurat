@@ -14,7 +14,7 @@ textInput_regex <- function(id, value = "--") {
     
     div(class = "option-group",
         textInput(id,
-                  label = "Common identifier of mitochondrial genes",
+                  label = "Identifier of mitochondrial genes",
                   value = value)
     )
     
@@ -31,13 +31,12 @@ numericInput_var_genes <- function(id,
 }
 
 numericInput_n_of_PCs <- function(id,
-                                  label = "Select the number of components",
-                                  value = 30) {
+                                  label = "Select the number of components") {
     
     div(class = "option-group",
         numericInput(id,
                      label = label,
-                     value = value)
+                     value = NA)
     )
     
 }
@@ -70,7 +69,7 @@ numericInput_max_mito_perc <- function(id, value = 2) {
     
     div(class = "option-group",
         numericInput(id,
-                     label = "Exclude cells with more than this percentage of transcripts belonging to mitochondrial genes",
+                     label = "Exclude cells with more than this % of mitochondrial molecules",
                      value = value)
     )
     
@@ -134,8 +133,8 @@ numericInput_resolution_clust <- function(id) {
     div(class = "option-group",
         numericInput(id,
                      label = "Select the resolution for clustering",
-                     value = 0.6,
-                     step = 0.1)
+                     step = 0.1,
+                     value = 0.4)
     )
 }
 

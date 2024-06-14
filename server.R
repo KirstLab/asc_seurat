@@ -33,10 +33,11 @@ suppressMessages( require(ComplexHeatmap) )
 suppressMessages( require(SingleCellExperiment) )
 suppressMessages( require(slingshot) )
 suppressMessages( require(multtest) )
-
-## New packages in version 2.1
 suppressMessages( require(glmGamPoi) ) # Bioconductor
-##
+
+## New packages 
+suppressMessages( require(scCustomize) )
+suppressMessages( require(cowplot) )
 
 if (dir.exists('/app/user_work')) {
     
@@ -71,6 +72,7 @@ showtext_auto()
 
 min_cells = 3
 min_features = 1
+most_var_method = "vst"
 
 function(input, output, session) {
     
@@ -111,12 +113,12 @@ function(input, output, session) {
     })
     
     is_load_10X_rds_clicked <- reactiveVal(FALSE)
-    observeEvent(input$load_10X_rds, {
+    observeEvent( input$load_10X_rds, {
         is_load_10X_rds_clicked(TRUE)
     })
     
     is_run_clustering_clicked <- reactiveVal(FALSE)
-    observeEvent(input$run_clustering, {
+    observeEvent( input$run_clustering, {
         is_run_clustering_clicked(TRUE)
     })
     
@@ -124,27 +126,27 @@ function(input, output, session) {
         
         shinyFeedback::feedbackWarning("min_cells", is.na(min_cells), "Required value")
         shinyFeedback::feedbackWarning("min_features", is.na(min_features), "Required value")
-        shinyFeedback::feedbackWarning("mito_regex", !shiny::isTruthy(input$mito_regex), "Required value")
+        shinyFeedback::feedbackWarning("mito_regex", !shiny::isTruthy( isolate( input$mito_regex) ), "Required value")
         
         req(min_cells)
         req(min_features)
-        req(input$mito_regex)
+        req( isolate( input$mito_regex) )
         
         showNotification("Loading the data",
                          duration = NULL,
                          id = "p1")
         
-        sing_cell_data.data <- Seurat::Read10X(data.dir = req(input$sample_folder_tab1))
+        sing_cell_data.data <- Seurat::Read10X(data.dir = req(  isolate( input$sample_folder_tab1)) )
         
         # Initialize the Seurat object with the raw (non-normalized data).
         sing_cell_data <- Seurat::CreateSeuratObject(counts = sing_cell_data.data,
-                                                     project = input$proj_name,
+                                                     project =  isolate( input$proj_name ),
                                                      min.cells = min_cells,
                                                      min.features = min_features)
         
         # Calculate the % of mithocondrial contamination
         sing_cell_data <- Seurat::PercentageFeatureSet(sing_cell_data,
-                                                       pattern = input$mito_regex,
+                                                       pattern =  isolate( input$mito_regex),
                                                        col.name = "percent.mt")
         
         return(sing_cell_data)
@@ -156,7 +158,7 @@ function(input, output, session) {
         output$target_genes_mitho <- renderPrint({
             
             sc_object <- req(single_cell_data_reac())
-            mito_regex <- req(input$mito_regex)
+            mito_regex <- req( isolate( input$mito_regex) )
             assay <- DefaultAssay(object = sc_object)
             
             mitho_genes <- grep(pattern = mito_regex,
@@ -165,7 +167,7 @@ function(input, output, session) {
             
             if ( length(mitho_genes) <= 0) {
                 
-                print("No gene target by the common identifier!")
+                print("No gene was target by the identifier!")
                 
             }else {
                 
@@ -182,61 +184,60 @@ function(input, output, session) {
         data_set <- req( single_cell_data_reac() )
         on.exit(removeNotification(id = "p1"), add = TRUE)
         
-        Seurat::VlnPlot(data_set,
-                        features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
-                        ncol = 3,
-                        split.plot = F)
+        myVlnPlot(sc_data = data_set,
+                  show_box_median = input$Vln_box)
         
-    })
+    }, height = 500)
     
-    observeEvent(input$run_vinplot, {
+    observeEvent( input$run_vinplot, {
         
         data_sc <- req( single_cell_data_reac() )
         
-        test_cond <- if( !is.na(input$max_count) && !is.na(input$min_count) ) {
+        test_cond <- if( !is.na( isolate( input$max_count) ) && !is.na( isolate( input$min_count) ) ) {
             
             shinyFeedback::feedbackWarning("max_count",
-                                           input$min_count > input$max_count,
+                                           isolate( input$min_count ) >  isolate( input$max_count),
                                            "No cells will be selected by appling this parameters!")
             
             shinyFeedback::feedbackWarning("min_count",
-                                           input$min_count > input$max_count,
+                                           isolate( input$min_count ) >  isolate( input$max_count) ,
                                            "No cells will be selected by appling this parameters!")
             
-            validate(need(input$min_count < input$max_count, "Error: No cells will be selected by appling this parameters!"))
+            validate( need(  isolate( input$min_count ) <  isolate( input$max_count ),
+                             "Error: No cells will be selected by appling this parameters!"))
             
         }
         
-        if ( !is.na(input$min_count) ) {
+        if ( !is.na(  isolate( input$min_count) ) ) {
             
             data_sc <- base::subset(data_sc,
-                                    subset = nFeature_RNA > input$min_count)
+                                    subset = nFeature_RNA >  isolate( input$min_count) )
             
         }
         
-        if ( !is.na(input$max_count) ) {
+        if ( !is.na( isolate( input$max_count) ) ) {
             
             shinyFeedback::feedbackWarning("max_count",
-                                           input$max_count <= 0,
+                                           isolate( input$max_count ) <= 0,
                                            "No cells will be selected by appling this parameters!")
             
-            validate(need(input$max_count > 0, "Error: No cells will be selected by appling this parameters!"))
+            validate( need(  isolate( input$max_count ) > 0, "Error: No cells will be selected by appling this parameters!"))
             
             data_sc <- base::subset(data_sc,
-                                    subset =  nFeature_RNA < input$max_count)
+                                    subset =  nFeature_RNA <  isolate( input$max_count) )
             
         }
         
-        if ( !is.na(input$max_mito_perc) ) {
+        if ( !is.na(  isolate( input$max_mito_perc) ) ) {
             
             shinyFeedback::feedbackWarning("max_mito_perc",
-                                           input$max_mito_perc <= 0,
+                                           isolate( input$max_mito_perc ) <= 0,
                                            "No cells will be selected by appling this parameters!")
             
-            validate(need(input$max_mito_perc > 0, "Error: No cells will be selected by appling this parameters!"))
+            validate(need(  isolate( input$max_mito_perc ) > 0, "Error: No cells will be selected by appling this parameters!"))
             
             data_sc <- base::subset(data_sc,
-                                    subset =  percent.mt < input$max_mito_perc)
+                                    subset =  percent.mt <  isolate( input$max_mito_perc) )
             
         }
         
@@ -244,19 +245,17 @@ function(input, output, session) {
         
         output$VlnPlot_filt <- renderPlot({
             
-            Seurat::VlnPlot(single_cell_data_filt,
-                            features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
-                            ncol = 3,
-                            split.plot = F)
+            myVlnPlot(sc_data = single_cell_data_filt,
+                      show_box_median = input$Vln_box)
             
-        })
+        }, height = 500)
         
     })
     
     output$p1_down <- downloadHandler(
         
         filename = function() {
-            paste("Violin_plot", ".", input$p1_format, sep = "")
+            paste("Violin_plot", ".",  isolate( input$p1_format ), sep = "")
         },
         content = function(file) {
             
@@ -265,61 +264,60 @@ function(input, output, session) {
                              
                              data_sc <- req( single_cell_data_reac() )
                              
-                             test_cond <- if( !is.na(input$max_count) && !is.na(input$min_count) ) {
+                             test_cond <- if( !is.na(  isolate( input$max_count) ) && !is.na(  isolate( input$min_count) ) ) {
                                  
                                  shinyFeedback::feedbackWarning("max_count",
-                                                                input$min_count > input$max_count,
+                                                                isolate( input$min_count ) >  isolate( input$max_count) ,
                                                                 "No cells will be selected by appling this parameters!")
                                  
                                  shinyFeedback::feedbackWarning("min_count",
-                                                                input$min_count > input$max_count,
+                                                                isolate( input$min_count ) > isolate( input$max_count ),
                                                                 "No cells will be selected by appling this parameters!")
                                  
-                                 validate(need(input$min_count < input$max_count, "Error: No cells will be selected by appling this parameters!"))
+                                 validate( need( isolate( input$min_count ) < isolate( input$max_count ),
+                                                 "Error: No cells will be selected by appling this parameters!"))
                                  
                              }
                              
-                             if ( !is.na(input$min_count) ) {
+                             if ( !is.na( isolate( input$min_count) ) ) {
                                  
                                  data_sc <- base::subset(data_sc,
-                                                         subset = nFeature_RNA > input$min_count)
+                                                         subset = nFeature_RNA > isolate( input$min_count) )
                                  
                              }
                              
-                             if ( !is.na(input$max_count) ) {
+                             if ( !is.na( isolate( input$max_count) ) ) {
                                  
                                  shinyFeedback::feedbackWarning("max_count",
-                                                                input$max_count <= 0,
+                                                                isolate( input$max_count ) <= 0,
                                                                 "No cells will be selected by appling this parameters!")
                                  
-                                 validate(need(input$max_count > 0, "Error: No cells will be selected by appling this parameters!"))
+                                 validate( need( isolate( input$max_count ) > 0, "Error: No cells will be selected by appling this parameters!"))
                                  
                                  data_sc <- base::subset(data_sc,
-                                                         subset =  nFeature_RNA < input$max_count)
+                                                         subset =  nFeature_RNA < isolate( input$max_count) )
                                  
                              }
                              
-                             if ( !is.na(input$max_mito_perc) ) {
+                             if ( !is.na( isolate( input$max_mito_perc) ) ) {
                                  
                                  shinyFeedback::feedbackWarning("max_mito_perc",
-                                                                input$max_mito_perc <= 0,
+                                                                isolate( input$max_mito_perc ) <= 0,
                                                                 "No cells will be selected by appling this parameters!")
                                  
-                                 validate(need(input$max_mito_perc > 0, "Error: No cells will be selected by appling this parameters!"))
+                                 validate( need( isolate( input$max_mito_perc ) > 0, "Error: No cells will be selected by appling this parameters!"))
                                  
                                  data_sc <- base::subset(data_sc,
-                                                         subset =  percent.mt < input$max_mito_perc)
+                                                         subset =  percent.mt < isolate( input$max_mito_perc) )
                                  
                              }
                              
-                             height <- as.numeric( req( input$p1_height) )
-                             width <- as.numeric( req( input$p1_width) )
-                             res <- as.numeric( req( input$p1_res) )
+                             height <- as.numeric( req( isolate(  input$p1_height) ) )
+                             width <- as.numeric( req( isolate(  input$p1_width) ) )
+                             res <- as.numeric( req(  isolate( input$p1_res) ) )
                              
-                             p <- Seurat::VlnPlot(data_sc,
-                                                  features = c("nFeature_RNA", "nCount_RNA", "percent.mt"),
-                                                  ncol = 3,
-                                                  split.plot = F)
+                             p <-  myVlnPlot(sc_data = single_cell_data_filt,
+                                             show_box_median = input$Vln_box)
                              
                              ggplot2::ggsave(file,
                                              p,
@@ -334,49 +332,49 @@ function(input, output, session) {
         }
     )
     
-    single_cell_data_pca <- eventReactive( c(input$run_pca, input$rerun_after_filtering), {
+    single_cell_data_pca <- eventReactive( c( input$run_pca, input$rerun_after_filtering ), {
         
         sc_data <- req( single_cell_data_reac() )
         
-        if (input$filter_clusters == 1) { to_filter <- req( to_filter() )}
+        if ( isolate( input$filter_clusters) == 1) { to_filter <- req( to_filter() )}
         
-        req(input$min_count)
-        req(input$max_count)
-        req(input$max_mito_perc)
-        req(input$filter_clusters)
-        req(input$filter_clusters_opt)
-        req(input$most_var_method)
+        req( isolate( input$min_count) )
+        req( isolate( input$max_count) )
+        req( isolate( input$max_mito_perc) )
+        req( isolate( input$filter_clusters) )
+        req( isolate( input$filter_clusters_opt) )
+        req( isolate( most_var_method) )
         
-        if (input$normaliz_method == 0) { #LogNormalize
+        if ( isolate( input$normaliz_method) == 0) { #LogNormalize
             
-            shinyFeedback::feedbackWarning("scale_factor", is.na(input$scale_factor), "Required value")
-            shinyFeedback::feedbackWarning("n_of_var_genes", is.na(input$n_of_var_genes), "Required value")
+            shinyFeedback::feedbackWarning("scale_factor", is.na(  isolate( input$scale_factor) ), "Required value")
+            shinyFeedback::feedbackWarning("n_of_var_genes", is.na( isolate( input$n_of_var_genes) ), "Required value")
             
-            req(input$scale_factor)
-            req(input$n_of_var_genes)
+            req( isolate( input$scale_factor) )
+            req( isolate( input$n_of_var_genes) )
             
             sc_data2 <- lognorm_function("Test",
                                          to_filter = to_filter,
                                          sc_data = sc_data,
-                                         min_count = input$min_count,
-                                         max_count = input$max_count,
-                                         max_mito_perc = input$max_mito_perc,
-                                         scale_factor = input$scale_factor,
-                                         filter_clusters = input$filter_clusters,
-                                         filter_clusters_opt = input$filter_clusters_opt,
-                                         most_var_method = input$most_var_method,
-                                         n_of_var_genes = input$n_of_var_genes)
+                                         min_count =  isolate( input$min_count),
+                                         max_count =  isolate( input$max_count),
+                                         max_mito_perc =  isolate( input$max_mito_perc),
+                                         scale_factor =  isolate( input$scale_factor),
+                                         filter_clusters =  isolate( input$filter_clusters),
+                                         filter_clusters_opt =  isolate( input$filter_clusters_opt),
+                                         most_var_method =  isolate( most_var_method),
+                                         n_of_var_genes =  isolate( input$n_of_var_genes) )
             
-        } else if (input$normaliz_method == 1) { #"SCTransform"
+        } else if ( isolate( input$normaliz_method == 1) ) { #"SCTransform"
             
             sc_data2 <- SCTransform_function("Test",
                                              to_filter = to_filter,
                                              sc_data = sc_data,
-                                             min_count = input$min_count,
-                                             max_count = input$max_count,
-                                             max_mito_perc = input$max_mito_perc,
-                                             filter_clusters = input$filter_clusters,
-                                             filter_clusters_opt = input$filter_clusters_opt)
+                                             min_count =  isolate( input$min_count ),
+                                             max_count =  isolate( input$max_count ),
+                                             max_mito_perc =  isolate( input$max_mito_perc ),
+                                             filter_clusters =  isolate( input$filter_clusters ),
+                                             filter_clusters_opt =  isolate( input$filter_clusters_opt) )
             
             # This won't be used until the DE analysis and visualization. Here is a good place to perform the normalization since it works even after the user filter the clusters of interest.
             
@@ -396,7 +394,7 @@ function(input, output, session) {
         
     })
     
-    observeEvent(c(input$rerun_after_filtering), {
+    observeEvent( c( input$rerun_after_filtering), {
         
         output$n_of_PCAs <- renderPlot({
             
@@ -411,11 +409,11 @@ function(input, output, session) {
     # ## This remove the plots and reset the PCA value when the user select or exclude clusters. The goal is to make the user evaluate the parameters before executing
     is_remove_plots_clicked <- reactiveVal(FALSE)
     
-    observeEvent(input$rerun_after_filtering, {
+    observeEvent( input$rerun_after_filtering, {
         is_remove_plots_clicked(TRUE)
     })
     
-    observeEvent(input$rerun_after_filtering, {
+    observeEvent( input$rerun_after_filtering, {
         
         if ( is_remove_plots_clicked() ) {
             updateNumericInput(session, "n_of_PCs", value = NA) ## <<<<
@@ -426,19 +424,19 @@ function(input, output, session) {
     output$p2_down <- downloadHandler(
         
         filename = function() {
-            paste("Elbow_Plot", ".", input$p2_format, sep = "")
+            paste("Elbow_Plot", ".",  isolate( input$p2_format ), sep = "")
         },
         content = function(file) {
             
             withProgress(message = "Please wait, preparing the data for download.",
                          value = 0.5, {
                              
-                             shinyFeedback::feedbackWarning("p2_height", is.na(input$p2_height), "Required value")
-                             shinyFeedback::feedbackWarning("p2_width", is.na(input$p2_width), "Required value")
+                             shinyFeedback::feedbackWarning("p2_height", is.na( isolate( input$p2_height) ), "Required value")
+                             shinyFeedback::feedbackWarning("p2_width", is.na( isolate( input$p2_width) ), "Required value")
                              
-                             height <- as.numeric( req( input$p2_height) )
-                             width <- as.numeric( req( input$p2_width) )
-                             res <- as.numeric(input$p2_res)
+                             height <- as.numeric( req(  isolate( input$p2_height) ) )
+                             width <- as.numeric( req(  isolate( input$p2_width) ) )
+                             res <- as.numeric( isolate( input$p2_res) )
                              
                              p <- Seurat::ElbowPlot(req( single_cell_data_pca()), ndims = 50, reduction = "pca")
                              
@@ -479,24 +477,24 @@ function(input, output, session) {
     to_filter <- reactive({
         
         shinyFeedback::feedbackWarning("cluster_list",
-                                       is.null(input$cluster_list),
+                                       is.null(  isolate( input$cluster_list) ),
                                        "Required value")
-        req(input$cluster_list)
+        req( isolate( input$cluster_list) )
         
-        if ( input$filter_clusters_opt == 0 ) { # "select"
+        if (  isolate( input$filter_clusters_opt) == 0 ) { # "select"
             
             to_filter <- base::subset(req( single_cell_data_reso_umap() ),
-                                      idents = as.numeric(input$cluster_list))
+                                      idents = as.numeric( isolate( input$cluster_list)) )
             
             to_filter_ch <- to_filter@meta.data
             to_filter_ch <- base::rownames(to_filter_ch)
             
             to_filter_ch
             
-        } else if ( input$filter_clusters_opt == 1 ) { # exclude
+        } else if (  isolate( input$filter_clusters_opt) == 1 ) { # exclude
             
             to_filter <- base::subset(req( single_cell_data_reso_umap() ),
-                                      idents = as.numeric(input$cluster_list),
+                                      idents = as.numeric( isolate( input$cluster_list) ),
                                       invert = TRUE)
             
             to_filter_ch <- to_filter@meta.data
@@ -511,38 +509,43 @@ function(input, output, session) {
     rv = reactiveValues(type1 = NULL, type2 = NULL, PCs = NULL)
     
     # set plot type at the time "go" was clicked and data
-    observeEvent(input$run_clustering, {
+    observeEvent( input$run_clustering, {
+        
+        shinyFeedback::feedbackWarning("n_of_PCs",
+                                       is.na( isolate( input$n_of_PCs) ),
+                                       "Required value")
+        shinyFeedback::feedbackWarning("resolution_clust", 
+                                       is.na( isolate( input$resolution_clust) ),
+                                       "Required value")
+        
         rv$type2 = "umap"
         rv$type3 = "tsne"
-        rv$PCs = input$n_of_PCs 
+        rv$PCs =  isolate( req(input$n_of_PCs ) )
     })
     
-    single_cell_data_reso_umap <- eventReactive(  list(input$run_clustering, input$load_10X_rds), {
+    single_cell_data_reso_umap <- eventReactive(  list( input$run_clustering, input$load_10X_rds ), {
         
-        if ( input$sample_tab1_options == 1 & is_load_10X_rds_clicked() ) { # Load file
+        if (  isolate( input$sample_tab1_options) == 1 & is_load_10X_rds_clicked() ) { # Load file
             
             showNotification("Loading the data",
                              id = "m9",
                              duration = NULL)
             
-            sc_data <- readRDS( paste0("./RDS_files/", req(input$select_sample_tab1_rds) ) )
+            sc_data <- readRDS( paste0("./RDS_files/", req( isolate( input$select_sample_tab1_rds) ) ) )
             
             validate(need("seurat_clusters" %in% colnames(sc_data@meta.data),
                           "Clustering was not detected in the rds file", ""))
             
             on.exit(removeNotification(id = "m9"), add = TRUE)
             
-        } else if (input$sample_tab1_options == 0 ) { # new analysis
+        } else if ( isolate( input$sample_tab1_options) == 0 ) { # new analysis
             
-            if (is.na(input$n_of_PCs) || input$n_of_PCs != rv$PCs || is.null(rv$PCs)) {
+            if (is.na( isolate( input$n_of_PCs) ) ||  isolate( input$n_of_PCs) != rv$PCs || is.null(rv$PCs)) {
                 NULL
             }  else {
                 
-                shinyFeedback::feedbackWarning("n_of_PCs", is.na(input$n_of_PCs), "Required value")
-                shinyFeedback::feedbackWarning("resolution_clust", is.na(input$resolution_clust), "Required value")
-                
-                req(input$n_of_PCs)
-                req(input$resolution_clust)
+                req( isolate( input$n_of_PCs) )
+                req( isolate( input$resolution_clust) )
                 
                 showNotification("Running the clustering step",
                                  duration = NULL,
@@ -550,9 +553,9 @@ function(input, output, session) {
                 
                 data_sc <- req( single_cell_data_pca() )
                 
-                data_sc <- Seurat::FindNeighbors(data_sc, dims = 1:isolate(input$n_of_PCs) )
+                data_sc <- Seurat::FindNeighbors(data_sc, dims = 1:isolate( isolate( input$n_of_PCs) ) )
                 
-                data_sc <- Seurat::FindClusters(data_sc, resolution = input$resolution_clust)
+                data_sc <- Seurat::FindClusters(data_sc, resolution =  isolate( input$resolution_clust) )
                 
                 sc_data <- Seurat::RunUMAP(data_sc, dims = 1:isolate(input$n_of_PCs))
                 sc_data <- Seurat::RunTSNE(sc_data, dims = 1:isolate(input$n_of_PCs))
@@ -564,14 +567,14 @@ function(input, output, session) {
     
     
     
-    observeEvent( list(input$run_clustering, input$load_10X_rds), {
+    observeEvent( list( input$run_clustering, input$load_10X_rds ), {
         
         if ( is_load_10X_rds_clicked() | is_run_clustering_clicked() ) {
             
             output$tSNE <- renderPlot({
-                input$run_clustering
+                isolate( input$run_clustering)
                 
-                if (is.na(input$n_of_PCs) || input$n_of_PCs != rv$PCs || is.null(rv$PCs)) {
+                if (is.na( isolate( input$n_of_PCs) ) ||  isolate( input$n_of_PCs ) != rv$PCs || is.null(rv$PCs)) {
                     NULL
                 }  else {
                     
@@ -581,15 +584,16 @@ function(input, output, session) {
             })
             
             output$umap <- renderPlot({
-                input$run_clustering
-                if (is.na(input$n_of_PCs) || input$n_of_PCs != rv$PCs || is.null(rv$PCs)) {
+                isolate( input$run_clustering )
+                
+                if (is.na( isolate( input$n_of_PCs) ) ||  isolate( input$n_of_PCs ) != rv$PCs || is.null(rv$PCs)) {
                     NULL
                 }  else {
                     Seurat::DimPlot(req( single_cell_data_reso_umap()), reduction = "umap", label = T, pt.size = .1)
                 }
             })
             
-            output$cluster_size <-  renderTable({
+            output$cluster_size_plot <- renderPlot({
                 
                 sing_cell_data <- req( single_cell_data_reso_umap() )
                 
@@ -604,32 +608,66 @@ function(input, output, session) {
                     dplyr::rename(Cluster = "Var1",
                                   `N. of cells` = "Freq")
                 
+                table_n <- table_n %>%
+                    dplyr::rename(Cluster = "Var1",
+                                  `N. of cells` = "Freq")
+
+                                ggplot(table_n, aes(x = Cluster, y = `N. of cells`)) +
+                    geom_bar(stat = "identity", fill = "#008ac2ff") +
+                    labs(x = "Cluster", y = "Number of Cells", title = "Number of Cells per Cluster") +
+                    theme_minimal() +
+                    geom_text(aes(label = `N. of cells`), vjust = -0.5, size = 7) +
+                    theme(
+                        axis.title = element_text(size = 20),   # Axis titles
+                        axis.text = element_text(size = 16),    # Axis tick labels
+                        plot.title = element_blank(),   # Plot title
+                        legend.text = element_text(size = 12),  # Legend text (if you have a legend)
+                        legend.title = element_text(size = 14)  # Legend title (if you have a legend)
+                    )
+                
             })
+            
+            # output$cluster_size <-  renderTable({
+            #     
+            #     sing_cell_data <- req( single_cell_data_reso_umap() )
+            #     
+            #     sc_meta <- as.data.frame(sing_cell_data[[]])
+            #     sc_meta$cellcluster <- base::rownames(sc_meta)
+            #     sc_meta <- sc_meta[, c("cellcluster", "seurat_clusters")]
+            #     
+            #     on.exit(removeNotification(id = "m6"), add = TRUE)
+            #     
+            #     table_n <- as.data.frame(base::table(sc_meta$seurat_clusters))
+            #     table_n %>%
+            #         dplyr::rename(Cluster = "Var1",
+            #                       `N. of cells` = "Freq")
+            #     
+            # })
         }
     })
     
     output$p3_down <- downloadHandler(
         
         filename = function() {
-            paste("clustering_plot_",  input$p3_down_opt, ".", input$p3_format, sep = "")
+            paste("clustering_plot_",   isolate( input$p3_down_opt ), ".",  isolate( input$p3_format ), sep = "")
         },
         content = function(file) {
             
             withProgress(message = "Please wait, preparing the data for download.",
                          value = 0.5, {
                              
-                             shinyFeedback::feedbackWarning("p3_height", is.na(input$p3_height), "Required value")
-                             shinyFeedback::feedbackWarning("p3_width", is.na(input$p3_width), "Required value")
+                             shinyFeedback::feedbackWarning("p3_height", is.na( isolate( input$p3_height) ), "Required value")
+                             shinyFeedback::feedbackWarning("p3_width", is.na( isolate( input$p3_width) ), "Required value")
                              
-                             height <- as.numeric( req( input$p3_height) )
-                             width <- as.numeric( req( input$p3_width) )
-                             res <- as.numeric(input$p3_res)
+                             height <- as.numeric( req(  isolate( input$p3_height) ) )
+                             width <- as.numeric( req(  isolate( input$p3_width) ) )
+                             res <- as.numeric( isolate( input$p3_res) )
                              
-                             if ( input$p3_down_opt == "UMAP" ) {
+                             if (  isolate( input$p3_down_opt) == "UMAP" ) {
                                  
                                  p <- Seurat::DimPlot( req( single_cell_data_reso_umap() ), reduction = "umap", label = T, pt.size = .1)
                                  
-                             } else if ( input$p3_down_opt == "t-SNE") {
+                             } else if (  isolate( input$p3_down_opt) == "t-SNE") {
                                  
                                  p <- Seurat::DimPlot(req( single_cell_data_reso_umap() ), reduction = "tsne", label = T, pt.size = .1)
                                  
@@ -706,7 +744,7 @@ function(input, output, session) {
         clusters <- req( clusters_single_cell_data_reso_umap() )
         
         # Exclude the cluster already selected in the option 1, since the two cluster must be different
-        clusters <- clusters[ !clusters == input$find_markers_clust_ID1_tab1]
+        clusters <- clusters[ !clusters ==  isolate( input$find_markers_clust_ID1_tab1 )]
         
         shinyWidgets::pickerInput(
             inputId = "find_markers_clust_ID2_tab1",
@@ -722,29 +760,29 @@ function(input, output, session) {
     markers_tab1 <- eventReactive( input$run_ident_markers_tab1, {
         
         shinyFeedback::feedbackWarning("find_markers_tab1_return_thresh",
-                                       is.na(input$find_markers_tab1_return_thresh),
+                                       is.na( isolate( input$find_markers_tab1_return_thresh) ),
                                        "Required value")
         shinyFeedback::feedbackWarning("find_markers_tab1_logfc_threshold",
-                                       is.na(input$find_markers_tab1_logfc_threshold),
+                                       is.na( isolate( input$find_markers_tab1_logfc_threshold) ),
                                        "Required value")
         shinyFeedback::feedbackWarning("find_markers_tab1_min_pct",
-                                       is.na(input$find_markers_tab1_min_pct),
+                                       is.na( isolate( input$find_markers_tab1_min_pct) ),
                                        "Required value")
         
-        req(input$find_markers_tab1_return_thresh)
-        req(input$find_markers_tab1_logfc_threshold)
-        req(input$find_markers_tab1_min_pct)
+        req( isolate( input$find_markers_tab1_return_thresh) )
+        req( isolate( input$find_markers_tab1_logfc_threshold) )
+        req( isolate( input$find_markers_tab1_min_pct) )
         
         sc_data <- req( single_cell_data_reso_umap() )
         
-        if (input$find_markers_tab1_opt == 2) { #distinguishing a cluster from other
+        if ( isolate( input$find_markers_tab1_opt) == 2) { #distinguishing a cluster from other
             
-            ident_1 = input$find_markers_clust_ID1_tab1
-            ident_2 = input$find_markers_clust_ID2_tab1
+            ident_1 =  isolate( input$find_markers_clust_ID1_tab1 )
+            ident_2 =  isolate( input$find_markers_clust_ID2_tab1 )
             
-        } else if (input$find_markers_tab1_opt == 1 ) {
+        } else if ( isolate( input$find_markers_tab1_opt) == 1 ) {
             
-            ident_1 = input$find_markers_clust_id_tab1
+            ident_1 =  isolate( input$find_markers_clust_id_tab1)
             
         }
         
@@ -755,14 +793,14 @@ function(input, output, session) {
         finding_markers("finding_markers_tab1",
                         sc_data,
                         assay_choice = "RNA",
-                        find_markers_tab1_opt = input$find_markers_tab1_opt,
-                        find_markers_tab1_return.thresh = input$find_markers_tab1_return_thresh,
-                        find_markers_tab1_logfc.threshold = input$find_markers_tab1_logfc_threshold,
-                        find_markers_tab1_min.pct = input$find_markers_tab1_min_pct,
-                        find_markers_tab1_test.use = input$find_markers_tab1_test.use,
+                        find_markers_tab1_opt =  isolate( input$find_markers_tab1_opt),
+                        find_markers_tab1_return.thresh =  isolate( input$find_markers_tab1_return_thresh),
+                        find_markers_tab1_logfc.threshold =  isolate( input$find_markers_tab1_logfc_threshold),
+                        find_markers_tab1_min.pct =  isolate( input$find_markers_tab1_min_pct),
+                        find_markers_tab1_test.use =  isolate( input$find_markers_tab1_test.use),
                         ident.1 = ident_1,
                         ident.2 = ident_2,
-                        find_markers_tab1_filt_pos = input$find_markers_tab1_filt_pos
+                        find_markers_tab1_filt_pos =  isolate( input$find_markers_tab1_filt_pos)
         )
         
     })
@@ -771,19 +809,19 @@ function(input, output, session) {
         
         markers_tab1 <- req( markers_tab1() )
         
-        if (input$find_markers_tab1_opt == 1) {
+        if ( isolate( input$find_markers_tab1_opt) == 1) {
             
             markers_tab1$cluster <- isolate(input$find_markers_clust_id_tab1)
             markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
             
-        } else if (input$find_markers_tab1_opt == 2) {
+        } else if ( isolate( input$find_markers_tab1_opt ) == 2) {
             
             markers_tab1$cluster <- paste0( isolate(input$find_markers_clust_ID1_tab1),
                                             "_vs_" ,
                                             isolate(input$find_markers_clust_ID2_tab1))
             markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
             
-        } else if (input$find_markers_tab1_opt == 0) {
+        } else if ( isolate( input$find_markers_tab1_opt) == 0) {
             
             markers_tab1 <- markers_tab1[, c(1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
             
@@ -799,17 +837,17 @@ function(input, output, session) {
         
         filename = function() {
             
-            if ( input$find_markers_tab1_opt == 0 ) {
+            if (  isolate( input$find_markers_tab1_opt) == 0 ) {
                 
                 paste("list_of_markers_all_clusters", ".csv", sep = "")
                 
-            } else if (input$find_markers_tab1_opt == 1) {
+            } else if ( isolate( input$find_markers_tab1_opt) == 1) {
                 
-                paste("list_of_markers_", "cluster", input$find_markers_clust_id_tab1, ".csv", sep = "")
+                paste("list_of_markers_", "cluster",  isolate( input$find_markers_clust_id_tab1), ".csv", sep = "")
                 
-            } else if (input$find_markers_tab1_opt == 2) {
+            } else if ( isolate( input$find_markers_tab1_opt) == 2) {
                 
-                paste("list_of_markers_", "cluster", input$find_markers_clust_ID1_tab1, "vs" , input$find_markers_clust_ID2_tab1, ".csv", sep = "")
+                paste("list_of_markers_", "cluster",  isolate( input$find_markers_clust_ID1_tab1), "vs" ,  isolate( input$find_markers_clust_ID2_tab1), ".csv", sep = "")
                 
             }
             
@@ -821,17 +859,17 @@ function(input, output, session) {
                              
                              markers_tab1 <- req( markers_tab1() )
                              
-                             if (input$find_markers_tab1_opt == 1) {
+                             if ( isolate( input$find_markers_tab1_opt) == 1) {
                                  
-                                 markers_tab1$cluster <- input$find_markers_clust_id_tab1
+                                 markers_tab1$cluster <-  isolate( input$find_markers_clust_id_tab1)
                                  markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
                                  
-                             } else if (input$find_markers_tab1_opt == 2) {
+                             } else if ( isolate( input$find_markers_tab1_opt ) == 2) {
                                  
-                                 markers_tab1$cluster <- paste0(input$find_markers_clust_ID1_tab1, "_vs_" , input$find_markers_clust_ID2_tab1)
+                                 markers_tab1$cluster <- paste0( isolate( input$find_markers_clust_ID1_tab1), "_vs_" ,  isolate( input$find_markers_clust_ID2_tab1) )
                                  markers_tab1 <- markers_tab1[, c( 1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
                                  
-                             } else if (input$find_markers_tab1_opt == 0) {
+                             } else if ( isolate( input$find_markers_tab1_opt) == 0) {
                                  
                                  markers_tab1 <- markers_tab1[, c(1, ncol(markers_tab1), 2 : ( ncol(markers_tab1) - 1) ) ]
                                  
@@ -845,11 +883,11 @@ function(input, output, session) {
     
     features <- reactive({
         
-        req(input$markers_list)
-        ext <- tools::file_ext(input$markers_list$name)
-        markers_list_file <- input$markers_list$datapath
+        req( isolate( input$markers_list) )
+        ext <- tools::file_ext( isolate( input$markers_list$name) )
+        markers_list_file <-  isolate( input$markers_list$datapath )
         
-        if ( input$markers_list_header_opt == "" ) {
+        if (  isolate( input$markers_list_header_opt ) == "" ) {
             
             shinyFeedback::feedbackWarning("markers_list_header_opt",
                                            TRUE,
@@ -857,13 +895,13 @@ function(input, output, session) {
             
         }
         
-        req(input$markers_list_header_opt)
+        req( isolate( input$markers_list_header_opt) )
         
         read_file_markers("tab1_readfile",
                           markers_list_file = markers_list_file,
                           feed_ID ="markers_list",
                           ext = ext,
-                          header_opt = input$markers_list_header_opt)
+                          header_opt =  isolate( input$markers_list_header_opt) )
     })
     
     observeEvent(input$load_markers, {
@@ -876,8 +914,8 @@ function(input, output, session) {
         
         output$marker_genes_selec = renderUI({
             
-            features_group <- req(input$features_group)
-            id_choice <- req(input$genes_ids)
+            features_group <- req( isolate( input$features_group) )
+            id_choice <- req( isolate( input$genes_ids) )
             
             pickerInput_markers_genes("selected_genes",
                                       genes = req( features() ),
@@ -890,25 +928,25 @@ function(input, output, session) {
     filt_features <- eventReactive(input$run_heatmap, {
         
         features_f <- req( features() )
-        features_group <- req(input$features_group)
+        features_group <- req( isolate( input$features_group) )
         
         features_f <- dplyr::filter(features_f,
                                     Group %in% features_group)
         
-        if (input$filter_genes_q == 0) {
+        if ( isolate( input$filter_genes_q) == 0) {
             
             shinyFeedback::feedbackWarning("selected_genes",
-                                           is.null(input$selected_genes),
+                                           is.null( isolate( input$selected_genes) ),
                                            "Please, select one or more genes")
-            req(input$selected_genes)
+            req( isolate( input$selected_genes) )
             
-            if (input$genes_ids == "ID") {
+            if ( isolate( input$genes_ids) == "ID") {
                 
-                features_f <- features_f[features_f$GeneID %in% input$selected_genes, ]
+                features_f <- features_f[features_f$GeneID %in%  isolate( input$selected_genes), ]
                 
-            } else if (input$genes_ids == "name") {
+            } else if ( isolate( input$genes_ids) == "name") {
                 
-                features_f <- features_f[features_f$Name %in% input$selected_genes, ]
+                features_f <- features_f[features_f$Name %in%  isolate( input$selected_genes ), ]
                 
             }
             
@@ -918,7 +956,7 @@ function(input, output, session) {
         
     })
     
-    sc_data_av_react <- eventReactive(input$run_heatmap, {
+    sc_data_av_react <- eventReactive( input$run_heatmap, {
         
         sc_data_av <- Seurat::AggregateExpression( req( single_cell_data_reso_umap() ),
                                                    assays = "RNA"#,
@@ -932,7 +970,7 @@ function(input, output, session) {
         
     })
     
-    observeEvent(input$run_heatmap, {
+    observeEvent( input$run_heatmap, {
         
         # This calculate the height of the plot based on the n of genes so the plot can be adjusted to fit all genes
         heatmap_n_genes <- reactive({
@@ -994,26 +1032,26 @@ function(input, output, session) {
             feature_plots_gene_selection("selected_genes_for_feature_plot",
                                          genes_names = req( filt_features() ),
                                          sc_data_av_react = req( sc_data_av_react() ),
-                                         genes_ids = input$genes_ids)
+                                         genes_ids =  isolate( input$genes_ids) )
             
         })
         
         output$p4_down <- downloadHandler(
             
             filename = function() {
-                paste("Heatmap", ".", input$p4_format, sep = "")
+                paste("Heatmap", ".",  isolate( input$p4_format ), sep = "")
             },
             content = function(file) {
                 
                 withProgress(message = "Please wait, preparing the data for download.",
                              value = 0.5, {
                                  
-                                 shinyFeedback::feedbackWarning("p4_height", is.na(input$p4_height), "Required value")
-                                 shinyFeedback::feedbackWarning("p4_width", is.na(input$p4_width), "Required value")
+                                 shinyFeedback::feedbackWarning("p4_height", is.na( isolate( input$p4_height) ), "Required value")
+                                 shinyFeedback::feedbackWarning("p4_width", is.na( isolate( input$p4_width) ), "Required value")
                                  
-                                 height <- as.numeric( req( input$p4_height) )
-                                 width <- as.numeric( req( input$p4_width) )
-                                 res <- as.numeric(input$p4_res)
+                                 height <- as.numeric( req(  isolate( input$p4_height) ) )
+                                 width <- as.numeric( req(  isolate( input$p4_width) ) )
+                                 res <- as.numeric( isolate( input$p4_res) )
                                  
                                  heat_map_prep <- req( heat_map_prep() )
                                  heat_map_prep <- as(heat_map_prep, "sparseMatrix")
@@ -1043,16 +1081,16 @@ function(input, output, session) {
         
     })
     
-    features_selec <- eventReactive(input$run_feature_plot, {
+    features_selec <- eventReactive( input$run_feature_plot, {
         
         shinyFeedback::feedbackWarning("selected_genes_for_feature_plot",
-                                       is.null(input$selected_genes_for_feature_plot),
+                                       is.null( isolate( input$selected_genes_for_feature_plot) ),
                                        "Please, select one or more genes.")
-        req(input$selected_genes_for_feature_plot)
+        req( isolate( input$selected_genes_for_feature_plot) )
         
         features <- req( filt_features() )
         
-        if (input$genes_ids == "ID") {
+        if ( isolate( input$genes_ids) == "ID") {
             
             features_f <- dplyr::filter(features,
                                         GeneID %in% input$selected_genes_for_feature_plot)
@@ -1069,7 +1107,7 @@ function(input, output, session) {
         
     })
     
-    observeEvent(input$run_feature_plot, {
+    observeEvent( input$run_feature_plot, {
         
         output$feature_plot <- renderUI({
             
@@ -1152,7 +1190,7 @@ function(input, output, session) {
                     suppressMessages( Seurat::FeaturePlot(sc_data,
                                                           cols = c("lightgrey", "red"),
                                                           features = features[my_i],
-                                                          layer = input$slot_selection_feature_plot,
+                                                          layer =  isolate( input$slot_selection_feature_plot),
                                                           reduction = "umap") +
                                           scale_colour_gradient2(limits=c(minimal, maximal),
                                                                  midpoint = maximal / 2,
@@ -1173,7 +1211,7 @@ function(input, output, session) {
                     suppressMessages( Seurat::FeaturePlot(sc_data,
                                                           cols = c("lightgrey", "red"),
                                                           features = features[my_i],
-                                                          layer = input$slot_selection_feature_plot,
+                                                          layer =  isolate( input$slot_selection_feature_plot),
                                                           reduction = "umap") +
                                           scale_colour_gradient2(limits=c(minimal, maximal),
                                                                  midpoint = maximal / 2,
@@ -1196,7 +1234,7 @@ function(input, output, session) {
                     
                     Seurat::VlnPlot(sc_data,
                                     features = features[my_i],
-                                    layer = input$slot_selection_feature_plot)
+                                    layer =  isolate( input$slot_selection_feature_plot) )
                     
                 })
                 
@@ -1229,7 +1267,7 @@ function(input, output, session) {
         
         output$select_genes_add_plot_to_down_ui <- renderUI({
             
-            filt_features <- req(input$selected_genes_for_feature_plot)
+            filt_features <- req( isolate( input$selected_genes_for_feature_plot) )
             
             div(class = "option-group",
                 shinyWidgets::pickerInput(
@@ -1244,15 +1282,15 @@ function(input, output, session) {
         
     })
     
-    observeEvent(input$start_down_add_plots_tab1, {
+    observeEvent( input$start_down_add_plots_tab1, {
         
         on.exit(removeNotification(id = "m8"), add = TRUE)
         
         shinyFeedback::feedbackWarning("select_genes_add_plot_to_down",
-                                       is.null(input$select_genes_add_plot_to_down),
+                                       is.null( isolate( input$select_genes_add_plot_to_down) ),
                                        "Please, select one or more genes.")
         
-        genes <- req(input$select_genes_add_plot_to_down)
+        genes <- req( isolate( input$select_genes_add_plot_to_down) )
         
         withProgress(message = "Please wait, preparing the data for download.",
                      value = 0.5, {
@@ -1280,7 +1318,7 @@ function(input, output, session) {
                              p <- suppressMessages(Seurat::FeaturePlot(sc_data,
                                                                        cols = c("lightgrey", "red"),
                                                                        features = genes[i],
-                                                                       layer = input$slot_selection_feature_plot,
+                                                                       layer =  isolate( input$slot_selection_feature_plot),
                                                                        reduction = "umap") +
                                                        scale_colour_gradient2(limits=c(minimal, maximal),
                                                                               midpoint = maximal / 2,
@@ -1288,31 +1326,31 @@ function(input, output, session) {
                                                                               mid = "gold",
                                                                               high = "red"))
                              
-                             file <- paste0(path_new, "/feature_plots/", genes[i], ".", input$add_p_tab1_feat_format)
+                             file <- paste0(path_new, "/feature_plots/", genes[i], ".",  isolate( input$add_p_tab1_feat_format) )
                              
                              ggplot2::ggsave(file,
                                              p,
-                                             height=input$add_p_tab1_feat_height,
-                                             width=input$add_p_tab1_feat_width,
+                                             height= isolate( input$add_p_tab1_feat_height),
+                                             width= isolate( input$add_p_tab1_feat_width),
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab1_feat_res),
+                                             dpi=as.numeric( isolate( input$add_p_tab1_feat_res) ),
                                              bg = "#FFFFFF")
                              
-                             file <- paste0(path_new, "/violin_plots/", genes[i], ".", input$add_p_tab1_violin_format)
+                             file <- paste0(path_new, "/violin_plots/", genes[i], ".",  isolate( input$add_p_tab1_violin_format) )
                              
                              p <- Seurat::VlnPlot(sc_data,
                                                   features = genes[i],
-                                                  layer = input$slot_selection_feature_plot)
+                                                  layer =  isolate( input$slot_selection_feature_plot) )
                              
                              ggplot2::ggsave(file,
                                              p,
-                                             height=input$add_p_tab1_violin_height,
-                                             width=input$add_p_tab1_violin_width,
+                                             height= isolate( input$add_p_tab1_violin_height ),
+                                             width= isolate( input$add_p_tab1_violin_width),
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab1_violin_res),
+                                             dpi=as.numeric( isolate( input$add_p_tab1_violin_res) ),
                                              bg = "#FFFFFF")
                              
-                             file <- paste0(path_new, "/dot_plots/", genes[i], ".", input$add_p_tab1_dot_format)
+                             file <- paste0(path_new, "/dot_plots/", genes[i], ".",  isolate( input$add_p_tab1_dot_format) )
                              
                              p <- Seurat::DotPlot(sc_data,
                                                   features = genes[i],
@@ -1329,10 +1367,10 @@ function(input, output, session) {
                              
                              ggplot2::ggsave(file,
                                              p,
-                                             height=input$add_p_tab1_dot_height,
-                                             width=input$add_p_tab1_dot_width,
+                                             height= isolate( input$add_p_tab1_dot_height),
+                                             width= isolate( input$add_p_tab1_dot_width),
                                              units="cm",
-                                             dpi=as.numeric(input$add_p_tab1_dot_res),
+                                             dpi=as.numeric( isolate( input$add_p_tab1_dot_res) ),
                                              bg = "#FFFFFF")
                          }
                          
@@ -1457,7 +1495,7 @@ function(input, output, session) {
     #                                            project_name = project_name,
     #                                            int_regex_mito = int_regex_mito,
     #                                            scale_factor_tab2 = scale_factor_tab2,
-    #                                            most_var_method_integration = input$most_var_method_tab2,
+    #                                            most_var_method_integration = most_var_method_tab2,
     #                                            n_of_var_genes_integration = n_of_var_genes_integration,
     #                                            n_of_PCs_integration = n_of_PCs_integration)
     #             
