@@ -19,11 +19,31 @@
   </p>
 </p>
 
-
-
-
 <!-- ABOUT THE PROJECT -->
 ## About Asc-Seurat
+
+> [!WARNING]
+> ## This repository has moved
+>
+> This is the **legacy repository** for `asc_seurat` and contains versions up to **v2**.
+>
+> Starting with **v3**, the active repository is:
+>
+> # 👉 https://github.com/Pereira-Lab-UF/asc_seurat
+>
+> Please use the new repository for:
+>
+> - latest installation instructions
+> - documentation
+> - bug reports
+> - feature requests
+> - future releases
+>
+> This repository remains available only to preserve the version referenced in the original publication.
+
+
+
+
 
 
 Asc-Seurat (Analytical single-cell Seurat-based web application) is a web application based on [Shiny](https://shiny.rstudio.com/). Pronounced as “ask Seurat”, it provides a click-based, easy-to-install, and easy-to-use interface that allows the execution of all steps necessary for scRNA-seq analysis. It integrates many of the capabilities of the [Seurat](https://satijalab.org/seurat/) and [Dynverse](https://dynverse.org/) and also allows an instantaneous functional annotation of genes of interest using [BioMart](http://www.biomart.org/).
