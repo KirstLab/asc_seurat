@@ -10,12 +10,17 @@ WORKDIR /app
 COPY www /app/www
 COPY R /app/R
 
-RUN apt-get update && apt-get install -y xml2 libxml2-dev libssl-dev && apt-get clean
+RUN apt-get update --allow-releaseinfo-change && apt-get upgrade -y && apt-get clean
+RUN apt-get remove -y binutils && apt-get clean
+RUN apt-get install -y xml2 libxml2-dev libssl-dev && apt-get clean
 RUN apt-get install -y libcurl4-openssl-dev unixodbc-dev && apt-get clean
-RUN apt-get install -y gfortran
-RUN apt-get update && apt-get clean
+RUN apt-get update --allow-releaseinfo-change && apt-get clean
 RUN apt-get install -y libhdf5-dev
 RUN apt-get -y install libcairo2-dev libxt-dev libfontconfig1-dev
+# support libraries added tested with buld on mac, addresses tidyverse build issue, fftw3 added for "metap"
+RUN apt-get install -y build-essential
+RUN apt-get install -y libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+RUN apt-get install -y libgsl-dev
 RUN apt-get update && apt-get clean
 
 
@@ -27,6 +32,8 @@ RUN R -e 'library(BiocManager)'
 RUN R -e 'install.packages("tidyverse", dep = T)'
 RUN R -e 'library(tidyverse)'
 # seurat
+# * added gfortran overide to build-essential for newer package - tidyverse uses the older version
+RUN apt-get install -y gfortran
 RUN R -e 'install.packages("Seurat", dep = T)'
 RUN R -e 'library(Seurat)'
 RUN R -e 'install.packages("SeuratObject", dep = T)'
@@ -133,3 +140,26 @@ RUN chmod a+rwx -R /app
 # Init image
 CMD ./init_app.sh
 
+# The error is caused by the fact that the 'tidyverse' package is not installed in the system. You can fix it by modifying the Dockerfile to include the installation of the 'tidyverse' package before calling the 'library' function. Here is an updated version of the Dockerfile:
+# 
+# ```
+# FROM rocker/tidyverse:latest
+# 
+# # install dependencies
+# RUN apt-get update && apt-get install -y git-core libssl-dev libcurl4-gnutls-dev
+# 
+# # install packages
+# RUN R -e 'install.packages(c("tidyverse", "Seurat"), dependencies = TRUE)'
+# 
+# # set working directory
+# WORKDIR /app
+# 
+# # copy files
+# COPY . /app
+# 
+# # run analysis
+# CMD ["Rscript", "analysis.R"]
+# ```
+# 
+# Note that we have added the installation of the 'tidyverse' package, along with the 'Seurat' package, using the same R command. This should fix the issue and allow you to run the Docker container without errors.
+# 
